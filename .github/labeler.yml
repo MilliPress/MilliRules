@@ -1,0 +1,48 @@
+# Labeler configuration for automatic PR labeling
+# See: https://github.com/actions/labeler
+
+'🚀 feature':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/Actions/**/*'
+      - 'src/Conditions/**/*'
+
+'🐛 bug':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*'
+
+'📝 docs':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'docs/**/*'
+      - '*.md'
+      - '.github/**/*.md'
+
+'🧪 tests':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'tests/**/*'
+
+'🔧 config':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'composer.json'
+      - 'phpstan.neon'
+      - 'phpcs.xml'
+      - '.github/**/*'
+
+'📦 packages':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/Packages/**/*'
+
+'⚡ performance':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*'
+
+'🔥 breaking':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*'

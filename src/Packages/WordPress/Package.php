@@ -1,0 +1,433 @@
+<?php
+/**
+ * WordPress Package
+ *
+ * Provides WordPress-specific conditions, actions, and context for MilliRules.
+ * This package is only available in WordPress environments and extends PHP functionality.
+ *
+ * Features:
+ * - WordPress conditions (post type, user logged in, query conditionals, constants)
+ * - WordPress context building (post, user, query, constants data)
+ * - WordPress placeholder resolution ({wp.post.id}, {wp.user.login}, etc.)
+ * - Hook-based rule execution integrated with WordPress lifecycle
+ *
+ * This package requires the PHP package as a dependency.
+ *
+ * @package     MilliRules
+ * @subpackage  WordPress
+ * @author      Philipp Wellmer
+ * @since 1.0.0
+ */
+
+namespace MilliRules\Packages\WordPress;
+
+use MilliRules\Packages\BasePackage;
+use MilliRules\RuleEngine;
+
+/**
+ * Class Package
+ *
+ * WordPress package implementation providing WP-specific conditions and context.
+ * Uses hook-based rule execution strategy where rules are grouped by WordPress hook
+ * and executed when the corresponding hook fires.
+ *
+ * @since 1.0.0
+ */
+class Package extends BasePackage {
+	/**
+	 * Rules grouped by WordPress hook name.
+	 *
+	 * Structure: ['hook_name' => [rule1, rule2, ...]]
+	 *
+	 * @since 1.0.0
+	 * @var array<string, array<int, array<string, mixed>>>
+	 */
+	private array $rules_by_hook = array();
+
+	/**
+	 * Tracks which hooks have been registered with WordPress.
+	 *
+	 * Prevents duplicate hook registrations.
+	 *
+	 * @since 1.0.0
+	 * @var array<string, bool>
+	 */
+	private array $hooks_registered = array();
+
+	/**
+	 * Hooks pending registration.
+	 *
+	 * Stores hooks that need to be registered when WordPress becomes available.
+	 * Format: ['hook_name' => priority]
+	 *
+	 * @since 1.0.0
+	 * @var array<string, int>
+	 */
+	private array $pending_hooks = array();
+
+	/**
+	 * Custom callback for hook registration.
+	 *
+	 * Allows overriding add_action() for testing or non-WordPress environments.
+	 * Signature: function(string $hook, callable $function, int $priority): void
+	 *
+	 * @since 1.0.0
+	 * @var callable|null
+	 */
+	private static $hook_callback = null;
+
+	/**
+	 * Get the unique package identifier.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string The package name 'WP'.
+	 */
+	public function get_name(): string {
+		return 'WP';
+	}
+
+	/**
+	 * Get the namespaces provided by this package.
+	 *
+	 * Returns namespaces for WordPress conditions and actions.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<int, string> Array of namespace strings.
+	 */
+	public function get_namespaces(): array {
+		return array(
+			'MilliRules\Packages\WordPress\Conditions',
+			'MilliRules\Packages\WordPress\Actions',
+		);
+	}
+
+	/**
+	 * Check if this package is available in the current environment.
+	 *
+	 * WordPress package is available if WordPress functions exist.
+	 * Checks for add_action() as a reliable indicator.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return bool True if WordPress is available, false otherwise.
+	 */
+	public function is_available(): bool {
+		return function_exists( 'add_action' );
+	}
+
+	/**
+	 * Get the names of packages required by this package.
+	 *
+	 * WordPress package requires PHP package as it extends PHP context
+	 * with WordPress-specific data.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<int, string> Array with 'PHP' as the required dependency.
+	 */
+	public function get_required_packages(): array {
+		return array( 'PHP' );
+	}
+
+	/**
+	 * Build the context array for this package.
+	 *
+	 * Creates WordPress context using ContextProvider.
+	 * Includes HTTP context plus WordPress-specific data (post, user, query, constants).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, mixed> WordPress context array with 'request' and 'wp' keys.
+	 */
+	public function build_context(): array {
+		$provider = new ContextProvider();
+		return $provider->build_context();
+	}
+
+	/**
+	 * Get a placeholder resolver instance for this package.
+	 *
+	 * Returns PlaceholderResolver configured with the given context.
+	 * Supports WordPress placeholders like {wp.post.id}, {wp.user.login}, {wp.query.is_singular}
+	 * plus all HTTP placeholders via inheritance.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array<string, mixed> $context The execution context.
+	 * @return PlaceholderResolver PlaceholderResolver instance.
+	 */
+	public function get_placeholder_resolver( array $context ) {
+		return new PlaceholderResolver( $context );
+	}
+
+	/**
+	 * Set a custom callback for hook registration.
+	 *
+	 * Allows overriding add_action() behavior for testing or custom environments.
+	 * The callback should have a signature: function(string $hook, callable $function, int $priority): void
+	 *
+	 * Example usage in tests:
+	 * <code>
+	 * WordPressPackage::set_hook_callback(function($hook, $callback, $priority) {
+	 *     // Custom hook registration logic
+	 * });
+	 * </code>
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param callable $callback Function to call instead of add_action().
+	 * @return void
+	 */
+	public static function set_hook_callback( callable $callback ): void {
+		self::$hook_callback = $callback;
+	}
+
+	/**
+	 * Register a rule with this package using hook-based storage.
+	 *
+	 * Groups rules by their WordPress hook for execution when the hook fires.
+	 * If WordPress is not available yet (add_action() doesn't exist), stores the rule
+	 * and adds the hook to pending_hooks for later registration.
+	 *
+	 * When WordPress becomes available, pending hooks are automatically registered
+	 * on the next register_rule() call, or can be manually registered via
+	 * register_pending_hooks().
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array<string, mixed> $rule     The rule configuration.
+	 * @param array<string, mixed> $metadata Additional metadata (order, hooks, etc.).
+	 * @return void
+	 */
+	public function register_rule( array $rule, array $metadata ): void {
+		// Extract hook information from metadata.
+		$hook     = $metadata['hook'] ?? 'template_redirect';
+		$priority = $metadata['hook_priority'] ?? 20;
+
+		// Ensure metadata is in rule for consistency.
+		$rule['_metadata'] = $metadata;
+
+		// Group by hook.
+		if ( ! isset( $this->rules_by_hook[ $hook ] ) ) {
+			$this->rules_by_hook[ $hook ] = array();
+		}
+		$this->rules_by_hook[ $hook ][] = $rule;
+
+		// Also add to parent's flat rules array for get_rules() compatibility.
+		$this->rules[] = $rule;
+
+		// Check if WordPress is available.
+		if ( ! $this->is_available() ) {
+			// WordPress not available yet - add to pending hooks.
+			if ( ! isset( $this->pending_hooks[ $hook ] ) ) {
+				$this->pending_hooks[ $hook ] = $priority;
+			}
+			return;
+		}
+
+		// WordPress is available - register pending hooks if any.
+		if ( ! empty( $this->pending_hooks ) ) {
+			$this->register_pending_hooks();
+		}
+
+		// Register this hook if not already registered.
+		if ( ! isset( $this->hooks_registered[ $hook ] ) ) {
+			$this->register_hook( $hook, $priority );
+			$this->hooks_registered[ $hook ] = true;
+		}
+	}
+
+	/**
+	 * Register all pending WordPress hooks.
+	 *
+	 * This method is called automatically when WordPress becomes available and there are
+	 * pending hooks waiting to be registered. It can also be called manually if needed
+	 * for specific timing requirements.
+	 *
+	 * Processes all hooks stored in $pending_hooks, registers them with WordPress,
+	 * and clears the pending hooks array.
+	 *
+	 * Typically this is called automatically on the first register_rule() call after
+	 * WordPress becomes available, so manual calls are rarely needed.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function register_pending_hooks(): void {
+		// Check if WordPress is available.
+		if ( ! $this->is_available() ) {
+			return;
+		}
+
+		// No pending hooks to register.
+		if ( empty( $this->pending_hooks ) ) {
+			return;
+		}
+
+		$count = 0;
+
+		// Register all pending hooks.
+		foreach ( $this->pending_hooks as $hook => $priority ) {
+			if ( ! isset( $this->hooks_registered[ $hook ] ) ) {
+				$this->register_hook( $hook, $priority );
+				$this->hooks_registered[ $hook ] = true;
+				++$count;
+			}
+		}
+
+		// Clear pending hooks.
+		$this->pending_hooks = array();
+
+		// Log success.
+		if ( $count > 0 ) {
+			error_log( "MilliRules: Registered {$count} pending WordPress hooks" );
+		}
+	}
+
+	/**
+	 * Register a WordPress hook for rule execution.
+	 *
+	 * Registers a single callback with WordPress for this hook/priority combination.
+	 * All rules for the same hook are grouped and execute together when the hook fires.
+	 *
+	 * Hook Priority Behavior:
+	 * - WordPress executes hooks in priority order (lower numbers first)
+	 * - Multiple rules with the same hook and priority share the same callback
+	 * - Rule execution order within the same priority is controlled by rule order field
+	 * - Rule order field determines sequence: lower order = executes first (0-999)
+	 *
+	 * Example:
+	 * - Rule A: hook='init', priority=10, order=5
+	 * - Rule B: hook='init', priority=10, order=15
+	 * - Rule C: hook='init', priority=20, order=5
+	 * Execution: A → B (same priority, ordered by order field) → C (higher priority)
+	 *
+	 * If add_action() is not available (WordPress not loaded yet), this method
+	 * returns early. The hook will be registered later when WordPress is available.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $hook     The WordPress hook name.
+	 * @param int    $priority The hook priority.
+	 * @return void
+	 */
+	private function register_hook( string $hook, int $priority ): void {
+		// Check if WordPress is available.
+		if ( ! function_exists( 'add_action' ) && null === self::$hook_callback ) {
+			// WordPress not available yet - registration will happen later.
+			return;
+		}
+
+		try {
+			// Create closure that calls execute_rules_for_hook.
+			$closure = function () use ( $hook ) {
+				$this->execute_rules_for_hook( $hook );
+			};
+
+			// Register hook using custom callback or add_action.
+			if ( null !== self::$hook_callback ) {
+				call_user_func( self::$hook_callback, $hook, $closure, $priority );
+			} else {
+				add_action( $hook, $closure, $priority, 0 );
+			}
+		} catch ( \Exception $e ) {
+			error_log( "MilliRules: Error registering hook '{$hook}': " . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Execute all rules for a specific WordPress hook.
+	 *
+	 * Called automatically when the WordPress hook fires.
+	 * Builds context, sorts rules by order, and executes them via RuleEngine.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $hook The WordPress hook name.
+	 * @return void
+	 */
+	private function execute_rules_for_hook( string $hook ): void {
+		// Get rules for this hook.
+		$rules = $this->rules_by_hook[ $hook ] ?? array();
+
+		if ( empty( $rules ) ) {
+			return;
+		}
+
+		try {
+			// Sort rules by order field.
+			$sorted_rules = $this->sort_rules_by_order( $rules );
+
+			// Build context.
+			$context = $this->build_context();
+
+			// Create engine and execute.
+			$engine = new RuleEngine();
+			$engine->execute( $sorted_rules, $context );
+		} catch ( \Exception $e ) {
+			error_log( "MilliRules: Error executing rules for hook '{$hook}': " . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Execute rules for this package.
+	 *
+	 * For WordPress package, primary execution happens via WordPress hooks (execute_rules_for_hook).
+	 * This method exists for manual execution (tests, Bootstrap phase) and delegates to BasePackage.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array<int, array<string, mixed>> $rules   The rules to execute.
+	 * @param array<string, mixed>             $context The execution context.
+	 * @return array<string, mixed> Execution result with 'stopped', 'trigger_actions', and 'debug' keys.
+	 */
+	public function execute_rules( array $rules, array $context ): array {
+		// Delegate to base implementation for manual execution.
+		return parent::execute_rules( $rules, $context );
+	}
+
+	/**
+	 * Get all rules registered with this package.
+	 *
+	 * Returns a flat array of all rules across all hooks.
+	 * Rules are stored both by hook (for execution) and in flat list (for retrieval).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<int, array<string, mixed>> Array of all registered rules.
+	 */
+	public function get_rules(): array {
+		// Use parent's flat rules array (populated in register_rule).
+		return parent::get_rules();
+	}
+
+	/**
+	 * Clear all registered rules from this package.
+	 *
+	 * Removes all rules from both flat storage and hook-based storage.
+	 * Also clears pending hooks that haven't been registered yet.
+	 *
+	 * Note: Does not unregister WordPress hooks that are already registered
+	 * ($hooks_registered remains intact to prevent duplicate hook registrations).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function clear(): void {
+		// Clear parent's flat rules array.
+		parent::clear();
+
+		// Clear hook-based storage.
+		$this->rules_by_hook = array();
+
+		// Clear pending hooks.
+		$this->pending_hooks = array();
+
+		// Note: We keep $hooks_registered intact so hooks don't get re-registered.
+		// This allows rules to be cleared and re-registered without duplicate hooks.
+	}
+}

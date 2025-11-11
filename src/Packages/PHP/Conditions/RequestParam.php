@@ -1,0 +1,79 @@
+<?php
+/**
+ * Request Parameter Condition
+ *
+ * Checks URL/query parameter values.
+ *
+ * @package     MilliRules
+ * @author      Philipp Wellmer
+ */
+
+namespace MilliRules\Packages\PHP\Conditions;
+
+use MilliRules\Conditions\BaseCondition;
+
+/**
+ * Class RequestParam
+ *
+ * Checks URL query parameter existence and values.
+ * Works with GET/POST parameters and query strings.
+ *
+ * Supported operators:
+ * - EXISTS/IS: Check if parameter exists (when no value specified)
+ * - IS NOT/!=: Check if parameter doesn't exist (when no value specified)
+ * - =: Exact value match
+ * - !=: Value doesn't match
+ * - LIKE: Pattern matching with wildcards (* and ?)
+ * - REGEXP: Regular expression matching
+ * - IN: Check if value is in array
+ * - >, >=, <, <=: Numeric or alphabetic comparison
+ *
+ * Examples:
+ * Array syntax:
+ * - Check existence: ['type' => 'request_param', 'name' => 'utm_source']
+ * - Check value: ['type' => 'request_param', 'name' => 'action', 'value' => 'edit']
+ * - Pattern match: ['type' => 'request_param', 'name' => 'ref', 'value' => 'google*', 'operator' => 'LIKE']
+ * - Multiple values: ['type' => 'request_param', 'name' => 'status', 'value' => ['active', 'pending'], 'operator' => 'IN']
+ * - Param doesn't exist: ['type' => 'request_param', 'name' => 'debug', 'operator' => 'IS NOT']
+ *
+ * Builder syntax:
+ * - ->request_param('utm_source') // exists
+ * - ->request_param('action', 'edit') // exact match
+ * - ->request_param('ref', 'google*', 'LIKE') // pattern match
+ *
+ * @since 1.0.0
+ */
+class RequestParam extends BaseCondition {
+	/**
+	 * Get the condition type.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string The condition type identifier.
+	 */
+	public function get_type(): string {
+		return 'request_param';
+	}
+
+	/**
+	 * Get the actual value from context.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array<string, mixed> $context The execution context.
+	 * @return string The parameter value or empty string if not found.
+	 */
+	protected function get_actual_value( array $context ): string {
+		if ( ! isset( $context['request'] ) || ! is_array( $context['request'] ) ) {
+			return '';
+		}
+
+		$param_name = $this->config['name'] ?? $this->config['param'] ?? '';
+
+		if ( empty( $param_name ) ) {
+			return '';
+		}
+
+		return $context['request']['params'][ $param_name ] ?? '';
+	}
+}

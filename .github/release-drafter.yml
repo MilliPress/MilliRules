@@ -1,0 +1,138 @@
+# Release Drafter configuration
+# See: https://github.com/release-drafter/release-drafter
+
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+# Categories for organizing release notes
+categories:
+  - title: '🔥 Breaking Changes'
+    labels:
+      - '🔥 breaking'
+  - title: '🚀 New Features'
+    labels:
+      - '🚀 feature'
+  - title: '📦 Package System'
+    labels:
+      - '📦 packages'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - '🐛 bug'
+  - title: '⚡ Performance Improvements'
+    labels:
+      - '⚡ performance'
+  - title: '📝 Documentation'
+    labels:
+      - '📝 docs'
+  - title: '🧪 Testing'
+    labels:
+      - '🧪 tests'
+  - title: '🔧 Configuration & Maintenance'
+    labels:
+      - '🔧 config'
+
+# Version resolver: how to bump version numbers
+version-resolver:
+  major:
+    labels:
+      - '🔥 breaking'
+  minor:
+    labels:
+      - '🚀 feature'
+  patch:
+    labels:
+      - '🐛 bug'
+      - '📝 docs'
+      - '🧪 tests'
+      - '🔧 config'
+      - '⚡ performance'
+      - '📦 packages'
+  default: patch
+
+# Change template for each PR entry
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&'
+
+# Template for the release notes body
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  ## New Contributors
+
+  $CONTRIBUTORS
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
+# Exclude certain labels from appearing in the changelog
+exclude-labels:
+  - 'skip-changelog'
+  - 'duplicate'
+  - 'invalid'
+  - 'wontfix'
+
+# Exclude contributors
+exclude-contributors:
+  - 'dependabot'
+  - 'dependabot[bot]'
+
+# Autolabeler rules (applied when PRs are created)
+autolabeler:
+  - label: '📝 docs'
+    files:
+      - 'docs/**/*'
+      - '*.md'
+  - label: '🧪 tests'
+    files:
+      - 'tests/**/*'
+  - label: '🔧 config'
+    files:
+      - 'composer.json'
+      - 'phpstan.neon'
+      - 'phpcs.xml'
+      - '.github/**/*'
+  - label: '📦 packages'
+    files:
+      - 'src/Packages/**/*'
+  - label: '🚀 feature'
+    files:
+      - 'src/Actions/**/*'
+      - 'src/Conditions/**/*'
+    branch:
+      - '/^feature\/.+/'
+      - '/^feat\/.+/'
+  - label: '🐛 bug'
+    branch:
+      - '/^fix\/.+/'
+      - '/^bugfix\/.+/'
+      - '/^hotfix\/.+/'
+  - label: '📝 docs'
+    branch:
+      - '/^docs?\/.+/'
+  - label: '🔥 breaking'
+    title:
+      - '/^break(ing)?(\(.*\))?!:/'
+      - '/^BREAKING CHANGE:/'
+    body:
+      - '/BREAKING CHANGE:/'
+
+# Replacers for manipulating text in the release notes
+replacers:
+  # Standardize PR title formats
+  - search: '/^(feat|feature)(\(.*\))?:/i'
+    replace: '🚀'
+  - search: '/^fix(\(.*\))?:/i'
+    replace: '🐛'
+  - search: '/^docs?(\(.*\))?:/i'
+    replace: '📝'
+  - search: '/^test(\(.*\))?:/i'
+    replace: '🧪'
+  - search: '/^chore(\(.*\))?:/i'
+    replace: '🔧'
+  - search: '/^perf(\(.*\))?:/i'
+    replace: '⚡'
+  - search: '/^refactor(\(.*\))?:/i'
+    replace: '♻️'
+  - search: '/^style(\(.*\))?:/i'
+    replace: '💎'

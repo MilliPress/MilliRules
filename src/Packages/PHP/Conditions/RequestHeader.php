@@ -1,0 +1,90 @@
+<?php
+/**
+ * Request Header Condition
+ *
+ * Checks HTTP request header values.
+ *
+ * @package     MilliRules
+ * @author      Philipp Wellmer
+ */
+
+namespace MilliRules\Packages\PHP\Conditions;
+
+use MilliRules\Conditions\BaseCondition;
+
+/**
+ * Class RequestHeader
+ *
+ * Checks HTTP request header existence and values.
+ * Performs case-insensitive header name matching per HTTP specification.
+ *
+ * Supported operators:
+ * - EXISTS/IS: Check if header exists (when no value specified)
+ * - IS NOT/!=: Check if header doesn't exist (when no value specified)
+ * - =: Exact value match
+ * - !=: Value doesn't match
+ * - LIKE: Pattern matching with wildcards (* and ?)
+ * - REGEXP: Regular expression matching
+ * - IN: Check if value is in array
+ * - >, >=, <, <=: Numeric or alphabetic comparison
+ *
+ * Examples:
+ * Array syntax:
+ * - Check existence: ['type' => 'request_header', 'name' => 'X-Forwarded-For']
+ * - Check value: ['type' => 'request_header', 'name' => 'User-Agent', 'value' => '*Chrome*', 'operator' => 'LIKE']
+ * - Check origin: ['type' => 'request_header', 'name' => 'Origin', 'value' => 'https://example.com']
+ * - Multiple values: ['type' => 'request_header', 'name' => 'Accept-Language', 'value' => ['en', 'de', 'fr'], 'operator' => 'IN']
+ * - Header doesn't exist: ['type' => 'request_header', 'name' => 'X-Debug', 'operator' => 'IS NOT']
+ *
+ * Builder syntax:
+ * - ->request_header('X-Forwarded-For') // exists
+ * - ->request_header('User-Agent', '*Chrome*', 'LIKE') // pattern match
+ * - ->request_header('Origin', 'https://example.com') // exact match
+ *
+ * @since 1.0.0
+ */
+class RequestHeader extends BaseCondition {
+	/**
+	 * Get the condition type.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string The condition type identifier.
+	 */
+	public function get_type(): string {
+		return 'request_header';
+	}
+
+	/**
+	 * Get the actual value from context.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array<string, mixed> $context The execution context.
+	 * @return string The header value or empty string if not found.
+	 */
+	protected function get_actual_value( array $context ): string {
+		$header_name = $this->config['name'] ?? $this->config['header'] ?? '';
+
+		if ( ! isset( $context['request'] ) || ! is_array( $context['request'] ) ) {
+			return '';
+		}
+
+		$headers = $context['request']['headers'] ?? array();
+
+		if ( ! is_string( $header_name ) || empty( $header_name ) ) {
+			return '';
+		}
+
+		if ( ! is_array( $headers ) ) {
+			return '';
+		}
+
+		// Headers are case-insensitive, normalize to lowercase.
+		$headers     = array_change_key_case( $headers, CASE_LOWER );
+		$header_name = strtolower( $header_name );
+
+		$value = $headers[ $header_name ] ?? '';
+		return is_string( $value ) ? $value : '';
+	}
+}
