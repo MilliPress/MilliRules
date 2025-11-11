@@ -1,18 +1,6 @@
 ---
 post_title: 'Creating Custom Packages'
 post_excerpt: 'Learn how to create custom MilliRules packages with conditions, actions, context building, and placeholder resolvers for complete extensibility.'
-taxonomy:
-  category:
-    - documentation
-    - guides
-    - advanced
-  post_tag:
-    - custom-packages
-    - packageinterface
-    - namespaces
-    - context
-    - extending
-menu_order: 11
 ---
 
 # Creating Custom Packages
@@ -777,11 +765,11 @@ public function build_context(): array {
 
 ## Next Steps
 
-- **[Advanced Usage Patterns](12-advanced-usage.md)** - Advanced package techniques
-- **[WordPress Integration](13-wordpress-integration.md)** - WordPress-specific patterns
-- **[API Reference](14-api-reference.md)** - Complete API documentation
-- **[Real-World Examples](15-examples.md)** - See complete package implementations
+- **[Advanced Usage Patterns](../advanced/usage.md)** - Advanced package techniques
+- **[WordPress Integration](../advanced/wordpress-integration.md)** - WordPress-specific patterns
+- **[API Reference](../reference/api.md)** - Complete API documentation
+- **[Real-World Examples](../advanced/examples.md)** - See complete package implementations
 
 ---
 
-**Ready for advanced techniques?** Continue to [Advanced Usage Patterns](12-advanced-usage.md) to learn optimization strategies and advanced rule patterns.
+**Ready for advanced techniques?** Continue to [Advanced Usage Patterns](../advanced/usage.md) to learn optimization strategies and advanced rule patterns.

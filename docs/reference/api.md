@@ -1,17 +1,6 @@
 ---
 post_title: 'Complete API Reference'
 post_excerpt: 'Comprehensive API reference for all MilliRules classes, methods, interfaces, and functions with parameters, return types, and usage examples.'
-taxonomy:
-  category:
-    - documentation
-    - reference
-  post_tag:
-    - api
-    - methods
-    - classes
-    - interfaces
-    - reference
-menu_order: 14
 ---
 
 # Complete API Reference
@@ -912,10 +901,10 @@ Register namespace for class resolution.
 
 ## Next Steps
 
-- **[Real-World Examples](15-examples.md)** - See API usage in complete examples
-- **[Getting Started](01-getting-started.md)** - Basic usage guide
-- **[Building Rules](03-building-rules.md)** - Fluent API guide
+- **[Real-World Examples](../advanced/examples.md)** - See API usage in complete examples
+- **[Getting Started](../getting-started/introduction.md)** - Basic usage guide
+- **[Building Rules](../core/building-rules.md)** - Fluent API guide
 
 ---
 
-**Ready for complete examples?** Continue to [Real-World Examples](15-examples.md) to see the API in action with full working code.
+**Ready for complete examples?** Continue to [Real-World Examples](../advanced/examples.md) to see the API in action with full working code.

@@ -1,18 +1,6 @@
 ---
 post_title: 'Creating Custom Conditions'
 post_excerpt: 'Learn how to extend MilliRules with custom conditions using callback functions or BaseCondition classes for powerful, reusable logic.'
-taxonomy:
-  category:
-    - documentation
-    - guides
-    - advanced
-  post_tag:
-    - custom-conditions
-    - extending
-    - callbacks
-    - basecondition
-    - advanced
-menu_order: 9
 ---
 
 # Creating Custom Conditions
@@ -635,11 +623,11 @@ Rules::register_condition('good_condition', function($context, $config) {
 
 ## Next Steps
 
-- **[Creating Custom Actions](10-custom-actions.md)** - Build custom actions
-- **[Creating Custom Packages](11-custom-packages.md)** - Package your conditions
-- **[Advanced Usage](12-advanced-usage.md)** - Advanced techniques
-- **[Real-World Examples](15-examples.md)** - See complete implementations
+- **[Creating Custom Actions](custom-actions.md)** - Build custom actions
+- **[Creating Custom Packages](custom-packages.md)** - Package your conditions
+- **[Advanced Usage](../advanced/usage.md)** - Advanced techniques
+- **[Real-World Examples](../advanced/examples.md)** - See complete implementations
 
 ---
 
-**Ready to create custom actions?** Continue to [Creating Custom Actions](10-custom-actions.md) to learn how to build powerful actions for your rules.
+**Ready to create custom actions?** Continue to [Creating Custom Actions](custom-actions.md) to learn how to build powerful actions for your rules.

@@ -1,16 +1,6 @@
 ---
 post_title: 'Getting Started with MilliRules'
 post_excerpt: 'Learn how to install MilliRules and create your first rule with this step-by-step guide for WordPress and PHP developers.'
-taxonomy:
-  category:
-    - documentation
-    - getting-started
-  post_tag:
-    - installation
-    - quick-start
-    - composer
-    - first-rule
-menu_order: 1
 ---
 
 # Getting Started with MilliRules
@@ -240,10 +230,10 @@ echo 'Actions executed: ' . $result['actions_executed'] . "\n";
 
 Now that you've created your first rule, you're ready to explore more advanced features:
 
-- **[Core Concepts](02-core-concepts.md)** - Understand rules, conditions, actions, and the package system
-- **[Building Rules](03-building-rules.md)** - Master the fluent API and rule builder
-- **[Built-in Conditions](04-built-in-conditions.md)** - Discover all available conditions
-- **[Operators](06-operators.md)** - Learn about pattern matching and comparison operators
+- **[Core Concepts](../core/concepts.md)** - Understand rules, conditions, actions, and the package system
+- **[Building Rules](../core/building-rules.md)** - Master the fluent API and rule builder
+- **[Built-in Conditions](../reference/conditions.md)** - Discover all available conditions
+- **[Operators](../reference/operators.md)** - Learn about pattern matching and comparison operators
 
 ## Common Pitfalls
 
@@ -308,8 +298,8 @@ If you see "Package not available" errors:
 
 ### Getting Help
 
-- Review the [API Reference](14-api-reference.md) for detailed method documentation
-- Check [Real-World Examples](15-examples.md) for complete working code
+- Review the [API Reference](../reference/api.md) for detailed method documentation
+- Check [Real-World Examples](../advanced/examples.md) for complete working code
 - Examine your error logs for detailed error messages
 
 ## Best Practices
@@ -323,4 +313,4 @@ If you see "Package not available" errors:
 
 ---
 
-**Ready to dive deeper?** Continue to [Core Concepts](02-core-concepts.md) to understand the fundamental architecture of MilliRules.
+**Ready to dive deeper?** Continue to [Core Concepts](../core/concepts.md) to understand the fundamental architecture of MilliRules.

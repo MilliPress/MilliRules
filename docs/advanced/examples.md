@@ -1,17 +1,6 @@
 ---
 post_title: 'Real-World Examples'
 post_excerpt: 'Complete, working examples of MilliRules implementations including caching, access control, redirects, content manipulation, and more.'
-taxonomy:
-  category:
-    - documentation
-    - examples
-  post_tag:
-    - examples
-    - recipes
-    - use-cases
-    - complete-code
-    - implementations
-menu_order: 15
 ---
 
 # Real-World Examples
@@ -952,9 +941,9 @@ These examples demonstrate:
 
 ## Next Steps
 
-- **[Getting Started](01-getting-started.md)** - Begin your MilliRules journey
-- **[Core Concepts](02-core-concepts.md)** - Understand the fundamentals
-- **[API Reference](14-api-reference.md)** - Complete method documentation
+- **[Getting Started](../getting-started/introduction.md)** - Begin your MilliRules journey
+- **[Core Concepts](../core/concepts.md)** - Understand the fundamentals
+- **[API Reference](../reference/api.md)** - Complete method documentation
 
 ---
 

@@ -25,7 +25,7 @@ composer require millipress/millirules
 ## Quick Start
 
 ```php
-use MilliRules\RuleBuilder as Rules;
+use MilliRules\Rules;
 
 // Simple HTTP rule
 Rules::create('api_check')

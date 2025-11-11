@@ -1,17 +1,6 @@
 ---
 post_title: 'Advanced Usage Patterns'
 post_excerpt: 'Master advanced MilliRules techniques including early execution, performance optimization, debugging strategies, and complex rule patterns.'
-taxonomy:
-  category:
-    - documentation
-    - advanced
-  post_tag:
-    - early-execution
-    - debugging
-    - package-filtering
-    - performance
-    - optimization
-menu_order: 12
 ---
 
 # Advanced Usage Patterns
@@ -572,10 +561,10 @@ function test_complete_workflow() {
 
 ## Next Steps
 
-- **[WordPress Integration Guide](13-wordpress-integration.md)** - WordPress-specific patterns
-- **[API Reference](14-api-reference.md)** - Complete method documentation
-- **[Real-World Examples](15-examples.md)** - Complete working examples
+- **[WordPress Integration Guide](wordpress-integration.md)** - WordPress-specific patterns
+- **[API Reference](../reference/api.md)** - Complete method documentation
+- **[Real-World Examples](examples.md)** - Complete working examples
 
 ---
 
-**Ready to explore WordPress integration?** Continue to [WordPress Integration Guide](13-wordpress-integration.md) for WordPress-specific techniques and patterns.
+**Ready to explore WordPress integration?** Continue to [WordPress Integration Guide](wordpress-integration.md) for WordPress-specific techniques and patterns.

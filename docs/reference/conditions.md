@@ -1,18 +1,6 @@
 ---
 post_title: 'Built-in Conditions Reference'
 post_excerpt: 'Complete reference guide for all built-in MilliRules conditions including PHP request conditions and WordPress-specific conditions.'
-taxonomy:
-  category:
-    - documentation
-    - reference
-  post_tag:
-    - conditions
-    - php
-    - wordpress
-    - request
-    - cookies
-    - headers
-menu_order: 4
 ---
 
 # Built-in Conditions Reference
@@ -891,7 +879,7 @@ Rules::create('weekend_special')
     ->register();
 ```
 
-See [Creating Custom Conditions](09-custom-conditions.md) for detailed information.
+See [Creating Custom Conditions](../customization/custom-conditions.md) for detailed information.
 
 ## Best Practices
 
@@ -963,11 +951,11 @@ Rules::create('complex_caching')
 
 ## Next Steps
 
-- **[Built-in Actions](05-built-in-actions.md)** - Learn about available actions
-- **[Operators](06-operators.md)** - Master comparison and pattern matching
-- **[Custom Conditions](09-custom-conditions.md)** - Create your own conditions
-- **[Examples](15-examples.md)** - See conditions in real-world scenarios
+- **[Built-in Actions](actions.md)** - Learn about available actions
+- **[Operators](operators.md)** - Master comparison and pattern matching
+- **[Custom Conditions](../customization/custom-conditions.md)** - Create your own conditions
+- **[Examples](../advanced/examples.md)** - See conditions in real-world scenarios
 
 ---
 
-**Need more details?** Check the [API Reference](14-api-reference.md) for complete method signatures and parameters.
+**Need more details?** Check the [API Reference](api.md) for complete method signatures and parameters.

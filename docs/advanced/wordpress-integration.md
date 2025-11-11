@@ -1,18 +1,6 @@
 ---
 post_title: 'WordPress Integration Guide'
 post_excerpt: 'Complete guide to integrating MilliRules with WordPress including hooks, queries, plugins, themes, and WordPress-specific best practices.'
-taxonomy:
-  category:
-    - documentation
-    - wordpress
-  post_tag:
-    - wordpress
-    - hooks
-    - queries
-    - plugins
-    - themes
-    - integration
-menu_order: 13
 ---
 
 # WordPress Integration Guide
@@ -695,10 +683,10 @@ add_action('template_redirect', function() {
 
 ## Next Steps
 
-- **[API Reference](14-api-reference.md)** - Complete method documentation
-- **[Real-World Examples](15-examples.md)** - WordPress integration examples
-- **[Advanced Usage](12-advanced-usage.md)** - Advanced WordPress patterns
+- **[API Reference](../reference/api.md)** - Complete method documentation
+- **[Real-World Examples](examples.md)** - WordPress integration examples
+- **[Advanced Usage](usage.md)** - Advanced WordPress patterns
 
 ---
 
-**Ready for complete examples?** Continue to [Real-World Examples](15-examples.md) to see full WordPress implementations and use cases.
+**Ready for complete examples?** Continue to [Real-World Examples](examples.md) to see full WordPress implementations and use cases.

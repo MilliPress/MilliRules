@@ -1,18 +1,6 @@
 ---
 post_title: 'Creating Custom Actions'
 post_excerpt: 'Master creating custom actions in MilliRules using callback functions or ActionInterface classes for flexible, reusable functionality.'
-taxonomy:
-  category:
-    - documentation
-    - guides
-    - advanced
-  post_tag:
-    - custom-actions
-    - extending
-    - callbacks
-    - actioninterface
-    - advanced
-menu_order: 10
 ---
 
 # Creating Custom Actions
@@ -768,11 +756,11 @@ Rules::register_action('good_state_management', function($context, $config) {
 
 ## Next Steps
 
-- **[Creating Custom Packages](11-custom-packages.md)** - Package your actions
-- **[Advanced Usage](12-advanced-usage.md)** - Advanced action techniques
-- **[WordPress Integration](13-wordpress-integration.md)** - WordPress-specific actions
-- **[Real-World Examples](15-examples.md)** - Complete action implementations
+- **[Creating Custom Packages](custom-packages.md)** - Package your actions
+- **[Advanced Usage](../advanced/usage.md)** - Advanced action techniques
+- **[WordPress Integration](../advanced/wordpress-integration.md)** - WordPress-specific actions
+- **[Real-World Examples](../advanced/examples.md)** - Complete action implementations
 
 ---
 
-**Ready to package your code?** Continue to [Creating Custom Packages](11-custom-packages.md) to learn how to bundle conditions, actions, and context into reusable packages.
+**Ready to package your code?** Continue to [Creating Custom Packages](custom-packages.md) to learn how to bundle conditions, actions, and context into reusable packages.

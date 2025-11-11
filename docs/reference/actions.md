@@ -1,16 +1,6 @@
 ---
 post_title: 'Built-in Actions Reference'
 post_excerpt: 'Learn about MilliRules action system, including custom callback actions, class-based actions, and creating reusable action patterns.'
-taxonomy:
-  category:
-    - documentation
-    - reference
-  post_tag:
-    - actions
-    - callbacks
-    - triggers
-    - custom-actions
-menu_order: 5
 ---
 
 # Built-in Actions Reference
@@ -220,7 +210,7 @@ Rules::create('dynamic_logging')
 // Logs: "API request to /api/users from 192.168.1.1"
 ```
 
-See [Dynamic Placeholders](07-placeholders.md) for complete placeholder syntax.
+See [Dynamic Placeholders](placeholders.md) for complete placeholder syntax.
 
 ---
 
@@ -749,11 +739,11 @@ Rules::register_action('conditional_processing', function($context, $config) {
 
 ## Next Steps
 
-- **[Operators and Pattern Matching](06-operators.md)** - Master condition operators
-- **[Dynamic Placeholders](07-placeholders.md)** - Use dynamic values in actions
-- **[Creating Custom Actions](10-custom-actions.md)** - Advanced action development
-- **[Real-World Examples](15-examples.md)** - See actions in complete examples
+- **[Operators and Pattern Matching](operators.md)** - Master condition operators
+- **[Dynamic Placeholders](placeholders.md)** - Use dynamic values in actions
+- **[Creating Custom Actions](../customization/custom-actions.md)** - Advanced action development
+- **[Real-World Examples](../advanced/examples.md)** - See actions in complete examples
 
 ---
 
-**Ready to create custom actions?** Continue to [Creating Custom Actions](10-custom-actions.md) for advanced techniques and patterns.
+**Ready to create custom actions?** Continue to [Creating Custom Actions](../customization/custom-actions.md) for advanced techniques and patterns.

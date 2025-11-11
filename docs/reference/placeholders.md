@@ -1,16 +1,6 @@
 ---
 post_title: 'Dynamic Placeholders'
 post_excerpt: 'Use dynamic placeholders to inject runtime values into your MilliRules conditions and actions with flexible context-based resolution.'
-taxonomy:
-  category:
-    - documentation
-    - advanced
-  post_tag:
-    - placeholders
-    - dynamic-values
-    - context
-    - runtime
-menu_order: 7
 ---
 
 # Dynamic Placeholders
@@ -670,11 +660,11 @@ Rules::register_action('safe_wp_action', function($context, $config) {
 
 ## Next Steps
 
-- **[Understanding the Package System](08-packages.md)** - Learn about package architecture
-- **[Creating Custom Actions](10-custom-actions.md)** - Implement actions with placeholders
-- **[Advanced Usage Patterns](12-advanced-usage.md)** - Advanced placeholder techniques
-- **[Real-World Examples](15-examples.md)** - See placeholders in action
+- **[Understanding the Package System](../core/packages.md)** - Learn about package architecture
+- **[Creating Custom Actions](../customization/custom-actions.md)** - Implement actions with placeholders
+- **[Advanced Usage Patterns](../advanced/usage.md)** - Advanced placeholder techniques
+- **[Real-World Examples](../advanced/examples.md)** - See placeholders in action
 
 ---
 
-**Ready to extend MilliRules?** Continue to [Creating Custom Packages](11-custom-packages.md) to learn how to add your own context data and placeholders.
+**Ready to extend MilliRules?** Continue to [Creating Custom Packages](../customization/custom-packages.md) to learn how to add your own context data and placeholders.

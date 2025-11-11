@@ -1,17 +1,6 @@
 ---
 post_title: 'Building Rules with the Fluent API'
 post_excerpt: 'Master the MilliRules fluent API for creating powerful rules with chained methods, match types, and flexible condition building.'
-taxonomy:
-  category:
-    - documentation
-    - guides
-  post_tag:
-    - fluent-api
-    - rule-builder
-    - chaining
-    - match-types
-    - conditions
-menu_order: 3
 ---
 
 # Building Rules with the Fluent API
@@ -407,7 +396,7 @@ Rules::create('auto_operators')
 > [!TIP]
 > Let MilliRules auto-detect operators for cleaner code. Only specify operators explicitly when you need precise control or when auto-detection doesn't match your intent.
 
-For complete operator documentation, see [Operators and Pattern Matching](06-operators.md).
+For complete operator documentation, see [Operators and Pattern Matching](../reference/operators.md).
 
 ## Custom Conditions
 
@@ -451,7 +440,7 @@ Rules::create('business_hours')
     ->register();
 ```
 
-See [Creating Custom Conditions](09-custom-conditions.md) for advanced techniques.
+See [Creating Custom Conditions](../customization/custom-conditions.md) for advanced techniques.
 
 ## WordPress Hook Integration
 
@@ -837,11 +826,11 @@ Rules::create('debug_rule')
 
 ## Next Steps
 
-- **[Built-in Conditions Reference](04-built-in-conditions.md)** - Explore all available conditions
-- **[Operators and Pattern Matching](06-operators.md)** - Master comparison operators
-- **[Custom Conditions](09-custom-conditions.md)** - Create your own conditions
-- **[WordPress Integration](13-wordpress-integration.md)** - WordPress-specific features
+- **[Built-in Conditions Reference](../reference/conditions.md)** - Explore all available conditions
+- **[Operators and Pattern Matching](../reference/operators.md)** - Master comparison operators
+- **[Custom Conditions](../customization/custom-conditions.md)** - Create your own conditions
+- **[WordPress Integration](../advanced/wordpress-integration.md)** - WordPress-specific features
 
 ---
 
-**Need more examples?** Check out [Real-World Examples](15-examples.md) for complete, working code samples.
+**Need more examples?** Check out [Real-World Examples](../advanced/examples.md) for complete, working code samples.

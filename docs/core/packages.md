@@ -1,17 +1,6 @@
 ---
 post_title: 'Understanding the Package System'
 post_excerpt: 'Deep dive into MilliRules package architecture, including PHP and WordPress packages, auto-loading, dependencies, and the PackageManager.'
-taxonomy:
-  category:
-    - documentation
-    - fundamentals
-  post_tag:
-    - packages
-    - php-package
-    - wordpress-package
-    - loading
-    - dependencies
-menu_order: 8
 ---
 
 # Understanding the Package System
@@ -738,11 +727,11 @@ error_log('Available context keys: ' . implode(', ', array_keys($context)));
 
 ## Next Steps
 
-- **[Creating Custom Conditions](09-custom-conditions.md)** - Extend package conditions
-- **[Creating Custom Packages](11-custom-packages.md)** - Build your own packages
-- **[Advanced Usage](12-advanced-usage.md)** - Advanced package techniques
-- **[WordPress Integration](13-wordpress-integration.md)** - WordPress package details
+- **[Creating Custom Conditions](../customization/custom-conditions.md)** - Extend package conditions
+- **[Creating Custom Packages](../customization/custom-packages.md)** - Build your own packages
+- **[Advanced Usage](../advanced/usage.md)** - Advanced package techniques
+- **[WordPress Integration](../advanced/wordpress-integration.md)** - WordPress package details
 
 ---
 
-**Ready to create your own package?** Continue to [Creating Custom Packages](11-custom-packages.md) to learn how to extend MilliRules with your own functionality.
+**Ready to create your own package?** Continue to [Creating Custom Packages](../customization/custom-packages.md) to learn how to extend MilliRules with your own functionality.
