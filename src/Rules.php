@@ -759,7 +759,7 @@ class Rules {
 		}
 
 		// Check if WordPress package is required.
-		if ( in_array( 'WordPress', $required_packages, true ) ) {
+		if ( in_array( 'WP', $required_packages, true ) ) {
 			return 'wp';
 		}
 
