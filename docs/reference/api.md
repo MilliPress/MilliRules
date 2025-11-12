@@ -1,5 +1,5 @@
 ---
-post_title: 'Complete API Reference'
+title: 'Complete API Reference'
 post_excerpt: 'Comprehensive API reference for all MilliRules classes, methods, interfaces, and functions with parameters, return types, and usage examples.'
 ---
 

@@ -1,5 +1,5 @@
 ---
-post_title: 'Built-in Actions Reference'
+title: 'Built-in Actions Reference'
 post_excerpt: 'Learn about MilliRules action system, including custom callback actions, class-based actions, and creating reusable action patterns.'
 ---
 

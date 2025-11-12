@@ -1,5 +1,5 @@
 ---
-post_title: 'Advanced Usage Patterns'
+title: 'Advanced Usage Patterns'
 post_excerpt: 'Master advanced MilliRules techniques including early execution, performance optimization, debugging strategies, and complex rule patterns.'
 ---
 

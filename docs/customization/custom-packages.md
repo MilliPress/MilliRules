@@ -1,5 +1,5 @@
 ---
-post_title: 'Creating Custom Packages'
+title: 'Creating Custom Packages'
 post_excerpt: 'Learn how to create custom MilliRules packages with conditions, actions, context building, and placeholder resolvers for complete extensibility.'
 ---
 

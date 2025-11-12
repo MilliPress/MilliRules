@@ -1,5 +1,5 @@
 ---
-post_title: 'Creating Custom Conditions'
+title: 'Creating Custom Conditions'
 post_excerpt: 'Learn how to extend MilliRules with custom conditions using callback functions or BaseCondition classes for powerful, reusable logic.'
 ---
 

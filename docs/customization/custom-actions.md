@@ -1,5 +1,5 @@
 ---
-post_title: 'Creating Custom Actions'
+title: 'Creating Custom Actions'
 post_excerpt: 'Master creating custom actions in MilliRules using callback functions or ActionInterface classes for flexible, reusable functionality.'
 ---
 

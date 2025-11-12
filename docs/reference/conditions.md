@@ -1,5 +1,5 @@
 ---
-post_title: 'Built-in Conditions Reference'
+title: 'Built-in Conditions Reference'
 post_excerpt: 'Complete reference guide for all built-in MilliRules conditions including PHP request conditions and WordPress-specific conditions.'
 ---
 

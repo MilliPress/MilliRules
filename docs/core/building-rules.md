@@ -1,5 +1,5 @@
 ---
-post_title: 'Building Rules with the Fluent API'
+title: 'Building Rules with the Fluent API'
 post_excerpt: 'Master the MilliRules fluent API for creating powerful rules with chained methods, match types, and flexible condition building.'
 ---
 

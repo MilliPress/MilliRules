@@ -1,5 +1,5 @@
 ---
-post_title: 'WordPress Integration Guide'
+title: 'WordPress Integration Guide'
 post_excerpt: 'Complete guide to integrating MilliRules with WordPress including hooks, queries, plugins, themes, and WordPress-specific best practices.'
 ---
 

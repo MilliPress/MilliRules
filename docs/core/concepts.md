@@ -1,5 +1,5 @@
 ---
-post_title: 'Core Concepts - Rules, Conditions, and Actions'
+title: 'Core Concepts - Rules, Conditions, and Actions'
 post_excerpt: 'Understand the fundamental architecture of MilliRules including rules, conditions, actions, context, and the package system.'
 ---
 

@@ -1,5 +1,5 @@
 ---
-post_title: 'Operators and Pattern Matching'
+title: 'Operators and Pattern Matching'
 post_excerpt: 'Complete guide to MilliRules operators including equality, comparison, pattern matching with wildcards and regex, and boolean logic.'
 ---
 

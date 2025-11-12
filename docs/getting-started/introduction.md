@@ -1,5 +1,5 @@
 ---
-post_title: 'Getting Started with MilliRules'
+title: 'Getting Started with MilliRules'
 post_excerpt: 'Learn how to install MilliRules and create your first rule with this step-by-step guide for WordPress and PHP developers.'
 ---
 
