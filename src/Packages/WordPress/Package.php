@@ -390,18 +390,19 @@ class Package extends BasePackage {
 	}
 
 	/**
-	 * Get all rules registered with this package.
+	 * Get all rules registered with this package grouped by hook.
 	 *
-	 * Returns a flat array of all rules across all hooks.
-	 * Rules are stored both by hook (for execution) and in flat list (for retrieval).
+	 * Returns rules organized by WordPress hook name, preventing execution via
+	 * manual MilliRules::execute_rules() calls (which expect a flat array).
+	 * This ensures rules only fire when their specific WordPress hooks are triggered.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return array<int, array<string, mixed>> Array of all registered rules.
+	 * @return array<string, array<int, array<string, mixed>>> Array of rules grouped by hook name.
+	 *         Structure: ['hook_name' => [rule1, rule2, ...]]
 	 */
 	public function get_rules(): array {
-		// Use parent's flat rules array (populated in register_rule).
-		return parent::get_rules();
+		return $this->rules_by_hook;
 	}
 
 	/**
