@@ -323,15 +323,17 @@ class Package extends BasePackage {
 
 		try {
 			// Create closure that calls execute_rules_for_hook.
-			$closure = function () use ( $hook ) {
-				$this->execute_rules_for_hook( $hook );
+			// Accepts variadic args from WordPress hooks (e.g., save_post passes $post_id, $post, $update).
+			$closure = function ( ...$args ) use ( $hook ) {
+				$this->execute_rules_for_hook( $hook, $args );
 			};
 
 			// Register hook using custom callback or add_action.
 			if ( null !== self::$hook_callback ) {
 				call_user_func( self::$hook_callback, $hook, $closure, $priority );
 			} else {
-				add_action( $hook, $closure, $priority, 0 );
+				// Accept up to 99 arguments from the hook (e.g., save_post passes 3 args).
+				add_action( $hook, $closure, $priority, 99 );
 			}
 		} catch ( \Exception $e ) {
 			error_log( "MilliRules: Error registering hook '{$hook}': " . $e->getMessage() );
@@ -343,13 +345,15 @@ class Package extends BasePackage {
 	 *
 	 * Called automatically when the WordPress hook fires.
 	 * Builds context, sorts rules by order, and executes them via RuleEngine.
+	 * Hook arguments are added to the context under 'hook' key for access by conditions/actions.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $hook The WordPress hook name.
+	 * @param string $hook      The WordPress hook name.
+	 * @param array  $hook_args Optional. Arguments passed by the WordPress hook. Default empty array.
 	 * @return void
 	 */
-	private function execute_rules_for_hook( string $hook ): void {
+	private function execute_rules_for_hook( string $hook, array $hook_args = array() ): void {
 		// Get rules for this hook.
 		$rules = $this->rules_by_hook[ $hook ] ?? array();
 
@@ -363,6 +367,14 @@ class Package extends BasePackage {
 
 			// Build context.
 			$context = $this->build_context();
+
+			// Add hook arguments to context if provided.
+			if ( ! empty( $hook_args ) ) {
+				$context['hook'] = array(
+					'name' => $hook,
+					'args' => $hook_args,
+				);
+			}
 
 			// Create engine and execute.
 			$engine = new RuleEngine();

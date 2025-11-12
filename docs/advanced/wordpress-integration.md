@@ -205,6 +205,185 @@ Rules::create('track_post_creation')
 
 ---
 
+## Accessing Hook Arguments
+
+Many WordPress hooks pass arguments to their callbacks. MilliRules automatically captures these arguments and makes them available in the execution context under `$context['wp']['hook']`.
+
+### Hook Context Structure
+
+When a WordPress hook fires with arguments, they're added to the context:
+
+```php
+$context = [
+    'request' => [...],
+    'wp' => [
+        'post' => [...],
+        'user' => [...],
+        'query' => [...],
+        'constants' => [...],
+        'hook' => [
+            'name' => 'save_post',      // The hook name
+            'args' => [                  // Array of hook arguments
+                0 => 123,                // First argument (post ID)
+                1 => WP_Post{...},       // Second argument (post object)
+                2 => true,               // Third argument (update flag)
+            ],
+        ],
+    ],
+];
+```
+
+### Common Hook Signatures
+
+Different WordPress hooks pass different arguments:
+
+#### save_post Hook
+```php
+// WordPress signature: do_action('save_post', $post_id, $post, $update)
+Rules::create('handle_post_save')
+    ->on('save_post')
+    ->when()->post_type('post')
+    ->then()->custom('process_save', function($context) {
+        $post_id = $context['wp']['hook']['args'][0] ?? null;
+        $post    = $context['wp']['hook']['args'][1] ?? null;
+        $update  = $context['wp']['hook']['args'][2] ?? false;
+
+        if ($update) {
+            error_log("Updated post: {$post->post_title} (ID: {$post_id})");
+        } else {
+            error_log("Created new post: {$post->post_title} (ID: {$post_id})");
+        }
+    })
+    ->register();
+```
+
+#### comment_post Hook
+```php
+// WordPress signature: do_action('comment_post', $comment_id, $approved)
+Rules::create('new_comment_notification')
+    ->on('comment_post')
+    ->then()->custom('notify_admin', function($context) {
+        $comment_id = $context['wp']['hook']['args'][0] ?? null;
+        $approved   = $context['wp']['hook']['args'][1] ?? 0;
+
+        if ($approved === 1) {
+            wp_mail(
+                get_option('admin_email'),
+                'New Comment Approved',
+                "Comment ID: {$comment_id}"
+            );
+        }
+    })
+    ->register();
+```
+
+#### transition_post_status Hook
+```php
+// WordPress signature: do_action('transition_post_status', $new_status, $old_status, $post)
+Rules::create('publish_notification')
+    ->on('transition_post_status')
+    ->when()->custom('status_changed_to_publish', function($context) {
+        $new_status = $context['wp']['hook']['args'][0] ?? '';
+        $old_status = $context['wp']['hook']['args'][1] ?? '';
+
+        return $new_status === 'publish' && $old_status !== 'publish';
+    })
+    ->then()->custom('send_notification', function($context) {
+        $post = $context['wp']['hook']['args'][2] ?? null;
+
+        if ($post) {
+            error_log("Post published: {$post->post_title}");
+        }
+    })
+    ->register();
+```
+
+### Using Hook Arguments in Conditions or Actions
+
+Create reusable conditions or actions that access hook arguments:
+
+```php
+<?php
+// Register a condition that checks post ID range
+Rules::register_condition('post_id_in_range', function($context, $config) {
+    $post_id = $context['wp']['hook']['args'][0] ?? 0;
+    $min = $config['min'] ?? 0;
+    $max = $config['max'] ?? PHP_INT_MAX;
+
+    return $post_id >= $min && $post_id <= $max;
+});
+
+// Use the condition
+Rules::create('process_specific_posts')
+    ->on('save_post')
+    ->when()->custom('post_id_in_range', ['min' => 100, 'max' => 200])
+    ->then()->custom('special_processing')
+    ->register();
+```
+
+### Best Practices for Hook Arguments
+
+#### 1. Always Provide Defaults
+
+```php
+<?php
+// ✅ Good - provides defaults for missing arguments
+$post_id = $context['wp']['hook']['args'][0] ?? null;
+$post    = $context['wp']['hook']['args'][1] ?? null;
+
+if (!$post_id || !$post) {
+    return; // Safely handle missing data
+}
+
+// ❌ Bad - assumes arguments exist
+$post_id = $context['wp']['hook']['args'][0];
+$post    = $context['wp']['hook']['args'][1];
+```
+
+#### 2. Check Hook Name When Arguments Are Context-Specific
+
+```php
+<?php
+Rules::register_condition('is_post_being_published', function($context, $config) {
+    $hook_name = $context['wp']['hook']['name'] ?? '';
+
+    // Different hooks have different argument structures
+    if ($hook_name === 'transition_post_status') {
+        $new_status = $context['wp']['hook']['args'][0] ?? '';
+        return $new_status === 'publish';
+    }
+
+    if ($hook_name === 'save_post') {
+        $post = $context['wp']['hook']['args'][1] ?? null;
+        return $post && $post->post_status === 'publish';
+    }
+
+    return false;
+});
+```
+
+### Hooks Without Arguments
+
+Hooks that don't pass arguments (like `init`, `template_redirect`, `wp_loaded`) will not have a `hook` key in the context:
+
+```php
+<?php
+Rules::create('init_hook')
+    ->on('init')
+    ->then()->custom('check_hook', function($context) {
+        if (isset($context['wp']['hook'])) {
+            // This won't execute for 'init' hook
+            error_log('Hook has arguments');
+        } else {
+            // This will execute
+            error_log('Hook has no arguments');
+        }
+    })
+    ->register();
+```
+
+---
+
 ## WordPress Conditions
 
 The WordPress package provides conditions for WordPress-specific scenarios.
