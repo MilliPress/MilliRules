@@ -373,23 +373,6 @@ class Package extends BasePackage {
 	}
 
 	/**
-	 * Execute rules for this package.
-	 *
-	 * For WordPress package, primary execution happens via WordPress hooks (execute_rules_for_hook).
-	 * This method exists for manual execution (tests, Bootstrap phase) and delegates to BasePackage.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<int, array<string, mixed>> $rules   The rules to execute.
-	 * @param array<string, mixed>             $context The execution context.
-	 * @return array<string, mixed> Execution result with 'stopped', 'trigger_actions', and 'debug' keys.
-	 */
-	public function execute_rules( array $rules, array $context ): array {
-		// Delegate to base implementation for manual execution.
-		return parent::execute_rules( $rules, $context );
-	}
-
-	/**
 	 * Get all rules registered with this package grouped by hook.
 	 *
 	 * Returns rules organized by WordPress hook name, preventing execution via
