@@ -239,7 +239,7 @@ class ConditionBuilder {
 	 * @return self|mixed Returns self for condition methods, or mixed for delegated/special methods.
 	 * @throws \BadMethodCallException If the method doesn't exist on Rules or as a condition.
 	 */
-	public function __call( string $method, array $args ): mixed {
+	public function __call( string $method, array $args ) {
 		// Check if this is a Rules method (auto-delegation).
 		if ( method_exists( $this->rule_builder, $method ) ) {
 			// Transfer collected conditions to Rules.
