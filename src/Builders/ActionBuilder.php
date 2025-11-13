@@ -26,6 +26,9 @@ use MilliRules\Rules;
  * Custom Actions:
  * For actions registered via Rules::register_action() by other plugins, use the custom() method.
  *
+ * Finalization Methods (delegated to Rules):
+ * @method bool register() Register the rule and return success status
+ *
  * Auto-delegation:
  * When a Rules method is called (e.g., ->register()), automatically transfers actions to Rules
  * and delegates the method call, allowing seamless chaining from ActionBuilder to Rules.

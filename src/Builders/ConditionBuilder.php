@@ -36,6 +36,9 @@ use MilliRules\Rules;
  * @method self post_type($value, string $operator = '=') Check the post-type
  * @method self constant(string $name, $value = null, ?string $operator = null) Check a PHP constant (including WordPress constants)
  *
+ * Finalization Methods (delegated to Rules):
+ * @method ActionBuilder then(?array $actions = null) Start building actions or set actions directly
+ *
  * Auto-delegation:
  * When a Rules method is called (e.g., ->then(), ->register()), automatically transfers conditions to Rules
  * and delegates the method call, allowing seamless chaining from ConditionBuilder to Rules/ActionBuilder.
