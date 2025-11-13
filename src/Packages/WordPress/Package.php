@@ -372,7 +372,7 @@ class Package extends BasePackage {
 
 			// Add hook arguments to context if provided.
 			if ( ! empty( $hook_args ) ) {
-				$context['hook'] = array(
+				$context['wp']['hook'] = array(
 					'name' => $hook,
 					'args' => $hook_args,
 				);
