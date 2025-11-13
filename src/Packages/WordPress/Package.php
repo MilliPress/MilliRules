@@ -331,11 +331,9 @@ class Package extends BasePackage {
 			// Register hook using custom callback or add_action.
 			if ( null !== self::$hook_callback ) {
 				call_user_func( self::$hook_callback, $hook, $closure, $priority );
-			} else {
-				if ( function_exists( 'add_action' ) ) {
-					// Accept up to 99 arguments from the hook (e.g., save_post passes 3 args).
-					add_action( $hook, $closure, $priority, 99 );
-				}
+			} elseif ( function_exists( 'add_action' ) ) {
+				// Accept up to 99 arguments from the hook (e.g., save_post passes 3 args).
+				add_action( $hook, $closure, $priority, 99 );
 			}
 		} catch ( \Exception $e ) {
 			error_log( "MilliRules: Error registering hook '{$hook}': " . $e->getMessage() );
