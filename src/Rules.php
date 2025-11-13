@@ -543,6 +543,12 @@ class Rules {
 		// Validate type conflicts and potentially override type.
 		$type = $this->validate_type_conflicts( $type, $required_packages );
 
+		// Auto-add WP package if type is 'wp' and not already included.
+		// This handles cases where hooks are used (->on()) but no WP conditions/actions are present.
+		if ( $type === 'wp' && ! in_array( 'WP', $required_packages, true ) ) {
+			$required_packages[] = 'WP';
+		}
+
 		// Build metadata.
 		$metadata = array(
 			'required_packages' => $required_packages,
