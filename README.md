@@ -30,7 +30,7 @@ use MilliRules\Rules;
 // Simple HTTP rule
 Rules::create('api_check')
     ->when()->request_url('/api/*')
-    ->then()->callback(function($context) {
+    ->then()->custom( 'run_check', function($context) {
         // Your action here
     })
     ->register();
