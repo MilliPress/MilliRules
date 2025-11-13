@@ -68,6 +68,27 @@ class PackageManager {
 	private static array $namespace_cache = array();
 
 	/**
+	 * Queue of rules waiting for their required packages to be loaded.
+	 *
+	 * Rules are added here when registered before their packages are loaded.
+	 * When a package loads, pending rules are checked and registered if all
+	 * their dependencies are now met.
+	 *
+	 * Structure: [
+	 *   [
+	 *     'rule' => [...],
+	 *     'metadata' => [...],
+	 *     'required_packages' => ['WP', 'PHP']
+	 *   ],
+	 *   ...
+	 * ]
+	 *
+	 * @since 1.0.0
+	 * @var array<int, array{rule: array<string, mixed>, metadata: array<string, mixed>, required_packages: array<int, string>}>
+	 */
+	private static array $pending_rules = array();
+
+	/**
 	 * Register a package with the manager.
 	 *
 	 * Stores package instance and maps its namespaces for fast lookup.
@@ -209,6 +230,9 @@ class PackageManager {
 
 		// Mark as loaded.
 		self::$loaded_packages[] = $name;
+
+		// Process pending rules - now that this package is loaded.
+		self::register_pending_rules();
 
 		// Remove from loading stack.
 		array_pop( $loading_stack );
@@ -411,8 +435,9 @@ class PackageManager {
 	 * Extracts package names from metadata['required_packages'] and
 	 * delegates to those packages via their register_rule() method.
 	 *
-	 * Rules are registered with packages even if they are not yet loaded.
-	 * When packages are loaded later, their stored rules will be available.
+	 * If a rule requires packages that are not yet loaded, the rule is
+	 * added to a pending queue and will be registered automatically when
+	 * the packages are loaded.
 	 *
 	 * @since 1.0.0
 	 *
@@ -424,24 +449,98 @@ class PackageManager {
 		$required_packages = $metadata['required_packages'] ?? array();
 		$rule_id           = $rule['id'] ?? 'unknown';
 
-		if ( empty( $required_packages ) ) {
-			error_log( "MilliRules: Rule '{$rule_id}' has no required packages - cannot register" );
+		// Check if all required packages are loaded.
+		$all_packages_loaded = true;
+		foreach ( $required_packages as $package_name ) {
+			if ( ! self::is_package_loaded( $package_name ) ) {
+				$all_packages_loaded = false;
+				break;
+			}
+		}
+
+		// If not all packages are loaded, defer registration.
+		if ( ! $all_packages_loaded ) {
+			self::$pending_rules[] = array(
+				'rule'              => $rule,
+				'metadata'          => $metadata,
+				'required_packages' => $required_packages,
+			);
 			return;
 		}
 
+		// All packages are loaded - register immediately.
 		foreach ( $required_packages as $package_name ) {
 			if ( isset( self::$packages[ $package_name ] ) ) {
-				// Package is registered - delegate rule registration.
 				self::$packages[ $package_name ]->register_rule( $rule, $metadata );
-
-				// Warn if package is not loaded yet (rule won't execute until loaded).
-				if ( ! self::is_package_loaded( $package_name ) ) {
-					error_log( "MilliRules: Rule '{$rule_id}' registered with package '{$package_name}' but package is not loaded yet" );
-				}
 			} else {
 				error_log( "MilliRules: Cannot register rule '{$rule_id}' - package '{$package_name}' not registered" );
 			}
 		}
+	}
+
+	/**
+	 * Process pending rules and register those whose packages are now loaded.
+	 *
+	 * Iterates through the pending rules queue and attempts to register each rule
+	 * whose required packages are all loaded. Successfully registered rules are
+	 * removed from the queue.
+	 *
+	 * This method is called automatically after packages are loaded, but can also
+	 * be called manually if needed.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return int Number of rules successfully registered.
+	 */
+	public static function register_pending_rules(): int {
+		$registered_count = 0;
+		$remaining_rules  = array();
+
+		foreach ( self::$pending_rules as $pending ) {
+			$rule_id    = $pending['rule']['id'] ?? 'unknown';
+			$all_loaded = true;
+
+			// Check if all required packages are now loaded.
+			foreach ( $pending['required_packages'] as $package_name ) {
+				if ( ! self::is_package_loaded( $package_name ) ) {
+					$all_loaded = false;
+					break;
+				}
+			}
+
+			if ( $all_loaded ) {
+				// All packages loaded - register now.
+				foreach ( $pending['required_packages'] as $package_name ) {
+					if ( isset( self::$packages[ $package_name ] ) ) {
+						self::$packages[ $package_name ]->register_rule( $pending['rule'], $pending['metadata'] );
+					} else {
+						error_log( "MilliRules: Cannot register rule '{$rule_id}' - package '{$package_name}' not registered" );
+					}
+				}
+				$registered_count++;
+			} else {
+				// Keep in queue for next time.
+				$remaining_rules[] = $pending;
+			}
+		}
+
+		self::$pending_rules = $remaining_rules;
+		return $registered_count;
+	}
+
+	/**
+	 * Get pending rules waiting for packages to load.
+	 *
+	 * Returns the queue of rules that have been registered but are waiting
+	 * for their required packages to be loaded. Useful for debugging and
+	 * monitoring the rule registration process.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<int, array{rule: array<string, mixed>, metadata: array<string, mixed>, required_packages: array<int, string>}> Array of pending rule data.
+	 */
+	public static function get_pending_rules(): array {
+		return self::$pending_rules;
 	}
 
 	/**
@@ -450,6 +549,7 @@ class PackageManager {
 	 * This method:
 	 * - Calls clear() on all registered packages to remove their rules
 	 * - Clears the loaded packages list
+	 * - Clears the pending rules queue
 	 * - Preserves package registrations ($packages array)
 	 * - Preserves namespace mappings ($namespace_registry)
 	 *
@@ -477,6 +577,9 @@ class PackageManager {
 		// Clear loaded packages list (packages remain registered).
 		self::$loaded_packages = array();
 
+		// Clear pending rules queue.
+		self::$pending_rules = array();
+
 		// Note: We keep $packages and $namespace_registry intact.
 		// This allows packages to be re-loaded without re-registration.
 	}
@@ -490,6 +593,7 @@ class PackageManager {
 	 * - All registered packages
 	 * - All namespace mappings
 	 * - Namespace lookup cache
+	 * - Pending rules queue
 	 *
 	 * After calling reset(), the PackageManager is in a completely fresh state
 	 * as if it was never initialized. You'll need to register and load packages again.
@@ -518,6 +622,7 @@ class PackageManager {
 		self::$loaded_packages    = array();
 		self::$namespace_registry = array();
 		self::$namespace_cache    = array();
+		self::$pending_rules      = array();
 	}
 
 	/**
