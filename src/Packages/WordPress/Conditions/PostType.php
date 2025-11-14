@@ -16,7 +16,7 @@ use MilliRules\Conditions\BaseCondition;
  * Class PostType
  *
  * Checks the WordPress post type (post, page, or custom post type).
- * Extracts post type from the execution context.
+ * Uses WordPress APIs to determine the current post type.
  *
  * Supported operators:
  * - =: Exact post type match (default)
@@ -54,18 +54,38 @@ class PostType extends BaseCondition {
 	}
 
 	/**
-	 * Get the actual value from context.
+	 * Get the actual value from WordPress.
+	 *
+	 * Does not use context - only WordPress APIs.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return string The current post-type.
+	 * @param array<string, mixed> $context The execution context (ignored).
+	 * @return string The current post type.
 	 */
 	protected function get_actual_value( array $context ): string {
-		if ( ! isset( $context['wp']['post'] ) || ! is_array( $context['wp']['post'] ) ) {
-			return '';
+		$post = null;
+
+		// Try to get post from the queried object.
+		if ( function_exists( 'get_queried_object' ) ) {
+			$queried = get_queried_object();
+
+			// If it's a WP_Post object, use it.
+			if ( $queried instanceof \WP_Post ) {
+				$post = $queried;
+			}
 		}
 
-		return $context['wp']['post']['type'] ?? '';
+		// Fallback to global $post if not found yet.
+		if ( null === $post && isset( $GLOBALS['post'] ) && $GLOBALS['post'] instanceof \WP_Post ) {
+			$post = $GLOBALS['post'];
+		}
+
+		// If we have a post, return its type.
+		if ( null !== $post ) {
+			return (string) $post->post_type;
+		}
+
+		return '';
 	}
 }

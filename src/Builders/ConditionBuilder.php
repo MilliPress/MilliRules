@@ -23,17 +23,50 @@ use MilliRules\Rules;
  *
  * Example: ->isUserLoggedIn(true) becomes ['type' => 'is_user_logged_in', 'value' => true, 'operator' => 'IS']
  *
- * Condition Methods (examples - any snake_case condition type can be called):
+ * PHP Condition Methods (examples - any snake_case condition type can be called):
  * @method self request_url($value, string $operator = 'LIKE') Check request URL
  * @method self request_header(string $name, $value = null, ?string $operator = null) Check the request header
  * @method self request_method($value, string $operator = '=') Check request method
  * @method self request_param(string $name, $value = null, ?string $operator = null) Check request parameter
  * @method self cookie(string $name, $value = null, string $operator = 'LIKE') Check cookie exists or value
- * @method self is_user_logged_in(bool $value = true, string $operator = 'IS') Check if the user is logged in
- * @method self is_singular($value = true, string $operator = 'IS') Check if singular page
- * @method self is_home($value = true, string $operator = 'IS') Check if home page
- * @method self is_archive($value = true, string $operator = 'IS') Check if archive page
- * @method self post_type($value, string $operator = '=') Check the post-type
+ *
+ * WordPress Boolean Condition Methods (is_* prefix - boolean checks):
+ * @method self is_archive($value = true, string $operator = 'IS')
+ * @method self is_home($value = true, string $operator = 'IS')
+ * @method self is_front_page($value = true, string $operator = 'IS')
+ * @method self is_single($value = true, string $operator = 'IS')
+ * @method self is_page($value = true, string $operator = 'IS')
+ * @method self is_singular($value = true, string $operator = 'IS')
+ * @method self is_category($value = true, string $operator = 'IS')
+ * @method self is_tag($value = true, string $operator = 'IS')
+ * @method self is_tax($value = true, string $operator = 'IS')
+ * @method self is_date($value = true, string $operator = 'IS')
+ * @method self is_author($value = true, string $operator = 'IS')
+ * @method self is_search($value = true, string $operator = 'IS')
+ * @method self is_404($value = true, string $operator = 'IS')
+ * @method self is_admin($value = true, string $operator = 'IS')
+ * @method self is_customize_preview($value = true, string $operator = 'IS')
+ * @method self is_embed($value = true, string $operator = 'IS')
+ * @method self is_attachment($value = true, string $operator = 'IS')
+ * @method self is_comment_feed($value = true, string $operator = 'IS')
+ * @method self is_post_type_archive($value = true, string $operator = 'IS')
+ * @method self is_paged($value = true, string $operator = 'IS')
+ * @method self is_user_logged_in(bool $value = true, string $operator = 'IS')
+ *
+ * WordPress Value Condition Methods (no is_ prefix - return scalar values):
+ * @method self post($value, string $operator = '=') Check current post by ID or slug
+ * @method self post_type($value, string $operator = '=') Check current post type
+ * @method self post_status($value, string $operator = '=') Check current post status
+ * @method self post_parent($value, string $operator = '=') Check post parent ID
+ * @method self author($value, string $operator = '=') Check post author by ID or username
+ * @method self user_role($value, string $operator = 'IN') Check current user roles
+ * @method self category($value, string $operator = '=') Check queried category (ID, slug, or name)
+ * @method self tag($value, string $operator = '=') Check queried tag (ID, slug, or name)
+ * @method self taxonomy($value, string $operator = '=') Check queried taxonomy name
+ * @method self term($value, string $operator = '=') Check queried term slug
+ * @method self query_var(string $name, $value = null, ?string $operator = null) Check WordPress query variable
+ * @method self template($value, string $operator = '=') Check page template
+ * @method self wp_environment($value, string $operator = '=') Check WordPress environment type
  * @method self constant(string $name, $value = null, ?string $operator = null) Check a PHP constant (including WordPress constants)
  *
  * Finalization Methods (delegated to Rules):
@@ -335,8 +368,8 @@ class ConditionBuilder {
 		// The first argument is always the value or name parameter.
 		$first_arg = $args[0];
 
-		// Special handling for conditions that take a name parameter (header, param, cookie, constant, archive).
-		$name_based_types = array( 'request_header', 'request_param', 'cookie', 'constant', 'is_archive' );
+		// Special handling for conditions that take a name parameter (header, param, cookie, constant, archive, query_var).
+		$name_based_types = array( 'request_header', 'request_param', 'cookie', 'constant', 'is_archive', 'query_var' );
 		if ( in_array( $type, $name_based_types, true ) ) {
 			$config['name'] = $first_arg;
 			// The second argument is value.
