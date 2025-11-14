@@ -51,7 +51,6 @@ class ContextProvider extends PhpContextProvider {
 				'post'      => $this->build_post_context(),
 				'user'      => $this->build_user_context(),
 				'query'     => $this->build_query_context(),
-				'constants' => $this->build_constants_context(),
 			);
 		}
 
@@ -252,47 +251,5 @@ class ContextProvider extends PhpContextProvider {
 		}
 
 		return $query_data;
-	}
-
-	/**
-	 * Build constants context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array<string, mixed> WordPress constants.
-	 */
-	protected function build_constants_context(): array {
-		$constants = array();
-
-		// Common WordPress constants to check.
-		$constant_names = array(
-			'WP_DEBUG',
-			'WP_DEBUG_LOG',
-			'WP_DEBUG_DISPLAY',
-			'WP_CACHE',
-			'DOING_AJAX',
-			'DOING_CRON',
-			'DOING_AUTOSAVE',
-			'WP_ENVIRONMENT_TYPE',
-			'WP_DEVELOPMENT_MODE',
-			'SCRIPT_DEBUG',
-			'CONCATENATE_SCRIPTS',
-			'COMPRESS_SCRIPTS',
-			'COMPRESS_CSS',
-			'WP_LOCAL_DEV',
-			'ABSPATH',
-			'WP_CONTENT_DIR',
-			'WP_PLUGIN_DIR',
-			'WPMU_PLUGIN_DIR',
-			'WP_LANG_DIR',
-		);
-
-		foreach ( $constant_names as $constant_name ) {
-			if ( defined( $constant_name ) ) {
-				$constants[ $constant_name ] = constant( $constant_name );
-			}
-		}
-
-		return $constants;
 	}
 }
