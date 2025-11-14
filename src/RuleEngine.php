@@ -371,6 +371,23 @@ class RuleEngine {
 
 		// Check if the class exists.
 		if ( ! class_exists( $class_name ) ) {
+			// Fallback for generic is_* conditionals.
+			if ( 0 === strpos( $type, 'is_' ) ) {
+				$fallback_class = 'MilliRules\Packages\WordPress\Conditions\IsConditional';
+
+				if ( ! class_exists( $fallback_class ) ) {
+					error_log( 'MilliRules: IsConditional fallback class not found' );
+					return null;
+				}
+
+				try {
+					return new $fallback_class( $config, $this->context );
+				} catch ( \Exception $e ) {
+					error_log( 'MilliRules: Error creating fallback condition: ' . $e->getMessage() );
+					return null;
+				}
+			}
+
 			error_log( 'MilliRules: Unknown condition type: ' . $type );
 			return null;
 		}
