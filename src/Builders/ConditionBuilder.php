@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Condition Builder
  *
@@ -78,367 +79,382 @@ use MilliRules\Rules;
  *
  * @package MilliRules
  * @subpackage Builders
- * @since 1.0.0
+ * @since 0.1.0
  *
  * @see custom() For adding custom conditions from third-party plugins
  * @see Rules::register_condition() For registering custom condition callbacks
  */
-class ConditionBuilder {
-	/**
-	 * Collected conditions.
-	 *
-	 * @since 1.0.0
-	 * @var array<int, array<string, mixed>>
-	 */
-	private array $conditions = array();
+class ConditionBuilder
+{
+    /**
+     * Collected conditions.
+     *
+     * @since 0.1.0
+     * @var array<int, array<string, mixed>>
+     */
+    private array $conditions = array();
 
-	/**
-	 * Match type for conditions (all/any/none).
-	 *
-	 * @since 1.0.0
-	 * @var string
-	 */
-	private string $match_type;
+    /**
+     * Match type for conditions (all/any/none).
+     *
+     * @since 0.1.0
+     * @var string
+     */
+    private string $match_type;
 
-	/**
-	 * Registered namespaces to search for conditions.
-	 *
-	 * @since 1.0.0
-	 * @var array<int, string>
-	 */
-	private array $namespaces;
+    /**
+     * Registered namespaces to search for conditions.
+     *
+     * @since 0.1.0
+     * @var array<int, string>
+     */
+    private array $namespaces;
 
-	/**
-	 * Reference to parent Rules object.
-	 *
-	 * @since 1.0.0
-	 * @var Rules
-	 */
-	private Rules $rule_builder;
+    /**
+     * Reference to parent Rules object.
+     *
+     * @since 0.1.0
+     * @var Rules
+     */
+    private Rules $rule_builder;
 
-	/**
-	 * Constructor.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param Rules $rule_builder The parent Rules object.
-	 * @param string      $match_type   The match type (all/any/none).
-	 */
-	public function __construct( Rules $rule_builder, string $match_type = 'all' ) {
-		$this->rule_builder = $rule_builder;
-		$this->match_type   = $match_type;
+    /**
+     * Constructor.
+     *
+     * @since 0.1.0
+     *
+     * @param Rules $rule_builder The parent Rules object.
+     * @param string      $match_type   The match type (all/any/none).
+     */
+    public function __construct(Rules $rule_builder, string $match_type = 'all')
+    {
+        $this->rule_builder = $rule_builder;
+        $this->match_type   = $match_type;
 
-		// Initialize default namespaces to search for conditions.
-		$this->namespaces = array(
-			'MilliRules\\Conditions\\',
-			'MilliRules\\Packages\\PHP\\Conditions\\',
-			'MilliRules\\Packages\\WordPress\\Conditions\\',
-		);
-	}
+        // Initialize default namespaces to search for conditions.
+        $this->namespaces = array(
+            'MilliRules\\Conditions\\',
+            'MilliRules\\Packages\\PHP\\Conditions\\',
+            'MilliRules\\Packages\\WordPress\\Conditions\\',
+        );
+    }
 
-	/**
-	 * Add a namespace to search for conditions.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $namespace The fully-qualified namespace to add.
-	 * @return self
-	 */
-	public function add_namespace( string $namespace ): self {
-		if ( ! in_array( $namespace, $this->namespaces, true ) ) {
-			$this->namespaces[] = $namespace;
-		}
-		return $this;
-	}
+    /**
+     * Add a namespace to search for conditions.
+     *
+     * @since 0.1.0
+     *
+     * @param string $namespace The fully-qualified namespace to add.
+     * @return self
+     */
+    public function add_namespace(string $namespace): self
+    {
+        if (! in_array($namespace, $this->namespaces, true)) {
+            $this->namespaces[] = $namespace;
+        }
+        return $this;
+    }
 
-	/**
-	 * Get registered namespaces.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array<int, string>
-	 */
-	public function get_namespaces(): array {
-		return $this->namespaces;
-	}
+    /**
+     * Get registered namespaces.
+     *
+     * @since 0.1.0
+     *
+     * @return array<int, string>
+     */
+    public function get_namespaces(): array
+    {
+        return $this->namespaces;
+    }
 
-	/**
-	 * Set match type to 'all'.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return self
-	 */
-	public function match_all(): self {
-		$this->match_type = 'all';
-		return $this;
-	}
+    /**
+     * Set match type to 'all'.
+     *
+     * @since 0.1.0
+     *
+     * @return self
+     */
+    public function match_all(): self
+    {
+        $this->match_type = 'all';
+        return $this;
+    }
 
-	/**
-	 * Set the match type to 'any'.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return self
-	 */
-	public function match_any(): self {
-		$this->match_type = 'any';
-		return $this;
-	}
+    /**
+     * Set the match type to 'any'.
+     *
+     * @since 0.1.0
+     *
+     * @return self
+     */
+    public function match_any(): self
+    {
+        $this->match_type = 'any';
+        return $this;
+    }
 
-	/**
-	 * Set the match type to 'none'.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return self
-	 */
-	public function match_none(): self {
-		$this->match_type = 'none';
-		return $this;
-	}
+    /**
+     * Set the match type to 'none'.
+     *
+     * @since 0.1.0
+     *
+     * @return self
+     */
+    public function match_none(): self
+    {
+        $this->match_type = 'none';
+        return $this;
+    }
 
-	/**
-	 * Add custom condition (for 3rd-party extensions and dynamically registered conditions).
-	 *
-	 * Use this method for conditions registered via Rules::registerCondition() by other plugins.
-	 *
-	 * Example:
-	 *   ->custom('is_premium_user')
-	 *   ->custom('has_role', ['role' => 'editor'])
-	 *   ->custom('my_check', function($context) { return true; })
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string                             $type The condition type identifier.
-	 * @param array<string, mixed>|callable|null $arg  The condition configuration or a callable function.
-	 *                                                  Callback signature: function(array $context): bool.
-	 * @return self
-	 */
-	public function custom( string $type, $arg = array() ): self {
-		// Handle callback passed as the second parameter.
-		if ( is_callable( $arg ) ) {
-			// Register the callback with the provided type name.
-			Rules::register_condition( $type, $arg );
+    /**
+     * Add custom condition (for 3rd-party extensions and dynamically registered conditions).
+     *
+     * Use this method for conditions registered via Rules::registerCondition() by other plugins.
+     *
+     * Example:
+     *   ->custom('is_premium_user')
+     *   ->custom('has_role', ['role' => 'editor'])
+     *   ->custom('my_check', function($context) { return true; })
+     *
+     * @since 0.1.0
+     *
+     * @param string                             $type The condition type identifier.
+     * @param array<string, mixed>|callable|null $arg  The condition configuration or a callable function.
+     *                                                  Callback signature: function(array $context): bool.
+     * @return self
+     */
+    public function custom(string $type, $arg = array()): self
+    {
+        // Handle callback passed as the second parameter.
+        if (is_callable($arg)) {
+            // Register the callback with the provided type name.
+            Rules::register_condition($type, $arg);
 
-			// Use the provided type with empty config.
-			$this->conditions[] = array( 'type' => $type );
+            // Use the provided type with empty config.
+            $this->conditions[] = array( 'type' => $type );
 
-			return $this;
-		}
+            return $this;
+        }
 
-		// Ensure $arg is an array before using it.
-		if ( ! is_array( $arg ) ) {
-			$arg = array();
-		}
-		$arg['type'] = $type;
-		$this->conditions[] = $arg;
-		return $this;
-	}
+        // Ensure $arg is an array before using it.
+        if (! is_array($arg)) {
+            $arg = array();
+        }
+        $arg['type'] = $type;
+        $this->conditions[] = $arg;
+        return $this;
+    }
 
-	/**
-	 * End condition building and return Rules object.
-	 *
-	 * @since 1.0.0
-	 * @deprecated No longer needed - use magic method delegation instead
-	 *
-	 * @return Rules
-	 */
-	public function end(): Rules {
-		return $this->rule_builder->set_conditions( $this->conditions, $this->match_type );
-	}
+    /**
+     * End condition building and return Rules object.
+     *
+     * @since 0.1.0
+     * @deprecated No longer needed - use magic method delegation instead
+     *
+     * @return Rules
+     */
+    public function end(): Rules
+    {
+        return $this->rule_builder->set_conditions($this->conditions, $this->match_type);
+    }
 
-	/**
-	 * Magic method to handle auto-delegation and auto-resolution of condition methods.
-	 *
-	 * Automatically switches context from ConditionBuilder to Rules when a Rules method is called,
-	 * or creates condition configurations from method names.
-	 *
-	 * Method name resolution:
-	 * - Converts camelCase to snake_case (e.g., isUserLoggedIn → is_user_logged_in)
-	 * - Intelligently builds condition config from arguments based on condition type
-	 * - Name-based conditions (header, param, cookie, constant): first arg is name, second is value
-	 * - Value-based conditions: first arg is value, second is operator
-	 * - Auto-infers operator from value type (array → IN, boolean → IS, wildcards → LIKE, etc.)
-	 *
-	 * Auto-delegation:
-	 * - If method exists on Rules object, transfers conditions and delegates the call
-	 * - Allows seamless chaining like ->isHome()->then()->register()
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string            $method The method name.
-	 * @param array<int, mixed> $args The method arguments.
-	 * @return self|mixed Returns self for condition methods, or mixed for delegated/special methods.
-	 * @throws \BadMethodCallException If the method doesn't exist on Rules or as a condition.
-	 */
-	public function __call( string $method, array $args ) {
-		// Check if this is a Rules method (auto-delegation).
-		if ( method_exists( $this->rule_builder, $method ) ) {
-			// Transfer collected conditions to Rules.
-			$this->rule_builder->set_conditions( $this->conditions, $this->match_type );
+    /**
+     * Magic method to handle auto-delegation and auto-resolution of condition methods.
+     *
+     * Automatically switches context from ConditionBuilder to Rules when a Rules method is called,
+     * or creates condition configurations from method names.
+     *
+     * Method name resolution:
+     * - Converts camelCase to snake_case (e.g., isUserLoggedIn → is_user_logged_in)
+     * - Intelligently builds condition config from arguments based on condition type
+     * - Name-based conditions (header, param, cookie, constant): first arg is name, second is value
+     * - Value-based conditions: first arg is value, second is operator
+     * - Auto-infers operator from value type (array → IN, boolean → IS, wildcards → LIKE, etc.)
+     *
+     * Auto-delegation:
+     * - If method exists on Rules object, transfers conditions and delegates the call
+     * - Allows seamless chaining like ->isHome()->then()->register()
+     *
+     * @since 0.1.0
+     *
+     * @param string            $method The method name.
+     * @param array<int, mixed> $args The method arguments.
+     * @return self|mixed Returns self for condition methods, or mixed for delegated/special methods.
+     * @throws \BadMethodCallException If the method doesn't exist on Rules or as a condition.
+     */
+    public function __call(string $method, array $args)
+    {
+        // Check if this is a Rules method (auto-delegation).
+        if (method_exists($this->rule_builder, $method)) {
+            // Transfer collected conditions to Rules.
+            $this->rule_builder->set_conditions($this->conditions, $this->match_type);
 
-			// Delegate the call to Rules.
-			$callable = array( $this->rule_builder, $method );
-			assert( is_callable( $callable ) );
-			return call_user_func_array( $callable, $args );
-		}
+            // Delegate the call to Rules.
+            $callable = array( $this->rule_builder, $method );
+            assert(is_callable($callable));
+            return call_user_func_array($callable, $args);
+        }
 
-		// Check if this is one of the special builder methods.
-		$special_methods = array( 'match_all', 'match_any', 'match_none', 'custom', 'add_namespace', 'get_namespaces' );
-		if ( in_array( $method, $special_methods, true ) && method_exists( $this, $method ) ) {
-			return call_user_func_array( array( $this, $method ), $args );
-		}
+        // Check if this is one of the special builder methods.
+        $special_methods = array( 'match_all', 'match_any', 'match_none', 'custom', 'add_namespace', 'get_namespaces' );
+        if (in_array($method, $special_methods, true) && method_exists($this, $method)) {
+            return call_user_func_array(array( $this, $method ), $args);
+        }
 
-		// Auto-resolve condition type from method name.
-		// Convert: isUserLoggedIn() → is_user_logged_in.
-		$type = $this->method_to_type( $method );
+        // Auto-resolve condition type from method name.
+        // Convert: isUserLoggedIn() → is_user_logged_in.
+        $type = $this->method_to_type($method);
 
-		// Build condition configuration from arguments.
-		$config = $this->build_condition_config( $type, $args );
+        // Build condition configuration from arguments.
+        $config = $this->build_condition_config($type, $args);
 
-		// Add to the condition array.
-		$this->conditions[] = $config;
+        // Add to the condition array.
+        $this->conditions[] = $config;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * Get collected conditions.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	public function get_conditions(): array {
-		return $this->conditions;
-	}
+    /**
+     * Get collected conditions.
+     *
+     * @since 0.1.0
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function get_conditions(): array
+    {
+        return $this->conditions;
+    }
 
-	/**
-	 * Get match type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string
-	 */
-	public function get_match_type(): string {
-		return $this->match_type;
-	}
+    /**
+     * Get match type.
+     *
+     * @since 0.1.0
+     *
+     * @return string
+     */
+    public function get_match_type(): string
+    {
+        return $this->match_type;
+    }
 
-	// ===========================
-	// Helper Methods
-	// ===========================
+    // ===========================
+    // Helper Methods
+    // ===========================
 
-	/**
-	 * Convert the method name to a condition type.
-	 *
-	 * Converts camelCase method name to snake_case type.
-	 * Example: isUserLoggedIn → is_user_logged_in
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $method The method name.
-	 * @return string The condition type.
-	 */
-	private function method_to_type( string $method ): string {
-		// Convert camelCase to snake_case.
-		$replaced = preg_replace( '/(?<!^)[A-Z]/', '_$0', $method );
-		return strtolower( is_string( $replaced ) ? $replaced : $method );
-	}
+    /**
+     * Convert the method name to a condition type.
+     *
+     * Converts camelCase method name to snake_case type.
+     * Example: isUserLoggedIn → is_user_logged_in
+     *
+     * @since 0.1.0
+     *
+     * @param string $method The method name.
+     * @return string The condition type.
+     */
+    private function method_to_type(string $method): string
+    {
+        // Convert camelCase to snake_case.
+        $replaced = preg_replace('/(?<!^)[A-Z]/', '_$0', $method);
+        return strtolower(is_string($replaced) ? $replaced : $method);
+    }
 
-	/**
-	 * Build condition configuration from method arguments.
-	 *
-	 * Intelligently maps method arguments to condition config based on argument count and types.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string            $type The condition type.
-	 * @param array<int, mixed> $args The method arguments.
-	 * @return array<string, mixed> The condition configuration.
-	 */
-	private function build_condition_config( string $type, array $args ): array {
-		$config = array( 'type' => $type );
+    /**
+     * Build condition configuration from method arguments.
+     *
+     * Intelligently maps method arguments to condition config based on argument count and types.
+     *
+     * @since 0.1.0
+     *
+     * @param string            $type The condition type.
+     * @param array<int, mixed> $args The method arguments.
+     * @return array<string, mixed> The condition configuration.
+     */
+    private function build_condition_config(string $type, array $args): array
+    {
+        $config = array( 'type' => $type );
 
-		// No arguments - default condition.
-		if ( empty( $args ) ) {
-			return $config;
-		}
+        // No arguments - default condition.
+        if (empty($args)) {
+            return $config;
+        }
 
-		// The first argument is always the value or name parameter.
-		$first_arg = $args[0];
+        // The first argument is always the value or name parameter.
+        $first_arg = $args[0];
 
-		// Special handling for conditions that take a name parameter (header, param, cookie, constant, archive, query_var).
-		$name_based_types = array( 'request_header', 'request_param', 'cookie', 'constant', 'is_archive', 'query_var' );
-		if ( in_array( $type, $name_based_types, true ) ) {
-			$config['name'] = $first_arg;
-			// The second argument is value.
-			if ( isset( $args[1] ) ) {
-				$config['value'] = $args[1];
-				// Third argument is operator.
-				if ( isset( $args[2] ) ) {
-					$config['operator'] = $args[2];
-				} else {
-					// Auto-infer operator if not provided.
-					$config['operator'] = $this->infer_operator( $args[1], '=' );
-				}
-			}
-		} else {
-			// Standard value-based condition.
-			$config['value'] = $first_arg;
-			// Second argument is operator.
-			if ( isset( $args[1] ) ) {
-				$config['operator'] = $args[1];
-			} else {
-				// Auto-infer operator.
-				$config['operator'] = $this->infer_operator( $first_arg, '=' );
-			}
-		}
+        // Special handling for conditions that take a name parameter (header, param, cookie, constant, archive, query_var).
+        $name_based_types = array( 'request_header', 'request_param', 'cookie', 'constant', 'is_archive', 'query_var' );
+        if (in_array($type, $name_based_types, true)) {
+            $config['name'] = $first_arg;
+            // The second argument is value.
+            if (isset($args[1])) {
+                $config['value'] = $args[1];
+                // Third argument is operator.
+                if (isset($args[2])) {
+                    $config['operator'] = $args[2];
+                } else {
+                    // Auto-infer operator if not provided.
+                    $config['operator'] = $this->infer_operator($args[1], '=');
+                }
+            }
+        } else {
+            // Standard value-based condition.
+            $config['value'] = $first_arg;
+            // Second argument is operator.
+            if (isset($args[1])) {
+                $config['operator'] = $args[1];
+            } else {
+                // Auto-infer operator.
+                $config['operator'] = $this->infer_operator($first_arg, '=');
+            }
+        }
 
-		return $config;
-	}
+        return $config;
+    }
 
-	/**
-	 * Intelligently infer operator based on value type and pattern.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param mixed  $value    The value to check.
-	 * @param string $operator The explicitly provided operator.
-	 * @return string The inferred or provided operator.
-	 */
-	private function infer_operator( $value, string $operator ): string {
-		// If operator explicitly provided, use it.
-		if ( '=' !== $operator && 'LIKE' !== $operator ) {
-			return $operator;
-		}
+    /**
+     * Intelligently infer operator based on value type and pattern.
+     *
+     * @since 0.1.0
+     *
+     * @param mixed  $value    The value to check.
+     * @param string $operator The explicitly provided operator.
+     * @return string The inferred or provided operator.
+     */
+    private function infer_operator($value, string $operator): string
+    {
+        // If operator explicitly provided, use it.
+        if ('=' !== $operator && 'LIKE' !== $operator) {
+            return $operator;
+        }
 
-		// Array value → IN.
-		if ( is_array( $value ) ) {
-			return 'IN';
-		}
+        // Array value → IN.
+        if (is_array($value)) {
+            return 'IN';
+        }
 
-		// Boolean value → IS.
-		if ( is_bool( $value ) ) {
-			return 'IS';
-		}
+        // Boolean value → IS.
+        if (is_bool($value)) {
+            return 'IS';
+        }
 
-		// Null value → EXISTS.
-		if ( null === $value ) {
-			return 'EXISTS';
-		}
+        // Null value → EXISTS.
+        if (null === $value) {
+            return 'EXISTS';
+        }
 
-		// String with wildcards → LIKE.
-		if ( is_string( $value ) && ( strpos( $value, '*' ) !== false || strpos( $value, '?' ) !== false ) ) {
-			return 'LIKE';
-		}
+        // String with wildcards → LIKE.
+        if (is_string($value) && ( strpos($value, '*') !== false || strpos($value, '?') !== false )) {
+            return 'LIKE';
+        }
 
-		// String with regex pattern → REGEXP.
-		if ( is_string( $value ) && preg_match( '/^\/.*\/$/', $value ) ) {
-			return 'REGEXP';
-		}
+        // String with regex pattern → REGEXP.
+        if (is_string($value) && preg_match('/^\/.*\/$/', $value)) {
+            return 'REGEXP';
+        }
 
-		// Default to provided operator.
-		return $operator;
-	}
+        // Default to provided operator.
+        return $operator;
+    }
 }

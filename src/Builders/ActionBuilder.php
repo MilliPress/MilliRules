@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Action Builder
  *
@@ -35,187 +36,195 @@ use MilliRules\Rules;
  *
  * @package MilliRules
  * @subpackage Builders
- * @since 1.0.0
+ * @since 0.1.0
  *
  * @see custom() For adding custom actions from third-party plugins
  * @see Rules::register_action() For registering custom action callbacks
  */
-class ActionBuilder {
-	/**
-	 * Collected actions.
-	 *
-	 * @since 1.0.0
-	 * @var array<int, array<string, mixed>>
-	 */
-	private array $actions = array();
+class ActionBuilder
+{
+    /**
+     * Collected actions.
+     *
+     * @since 0.1.0
+     * @var array<int, array<string, mixed>>
+     */
+    private array $actions = array();
 
-	/**
-	 * Registered namespaces to search for actions.
-	 *
-	 * @since 1.0.0
-	 * @var array<int, string>
-	 */
-	private array $namespaces;
+    /**
+     * Registered namespaces to search for actions.
+     *
+     * @since 0.1.0
+     * @var array<int, string>
+     */
+    private array $namespaces;
 
-	/**
-	 * Reference to parent Rules object.
-	 *
-	 * @since 1.0.0
-	 * @var Rules
-	 */
-	private Rules $rule_builder;
+    /**
+     * Reference to parent Rules object.
+     *
+     * @since 0.1.0
+     * @var Rules
+     */
+    private Rules $rule_builder;
 
-	/**
-	 * Constructor.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param Rules $rule_builder The parent Rules object.
-	 */
-	public function __construct( Rules $rule_builder ) {
-		$this->rule_builder = $rule_builder;
+    /**
+     * Constructor.
+     *
+     * @since 0.1.0
+     *
+     * @param Rules $rule_builder The parent Rules object.
+     */
+    public function __construct(Rules $rule_builder)
+    {
+        $this->rule_builder = $rule_builder;
 
-		// Initialize default namespaces to search for actions.
-		$this->namespaces = array(
-			'MilliRules\Actions\\',
-		);
-	}
+        // Initialize default namespaces to search for actions.
+        $this->namespaces = array(
+            'MilliRules\Actions\\',
+        );
+    }
 
-	/**
-	 * Add a namespace to search for actions.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $namespace The fully-qualified namespace to add.
-	 * @return self
-	 */
-	public function add_namespace( string $namespace ): self {
-		if ( ! in_array( $namespace, $this->namespaces, true ) ) {
-			$this->namespaces[] = $namespace;
-		}
-		return $this;
-	}
+    /**
+     * Add a namespace to search for actions.
+     *
+     * @since 0.1.0
+     *
+     * @param string $namespace The fully-qualified namespace to add.
+     * @return self
+     */
+    public function add_namespace(string $namespace): self
+    {
+        if (! in_array($namespace, $this->namespaces, true)) {
+            $this->namespaces[] = $namespace;
+        }
+        return $this;
+    }
 
-	/**
-	 * Get registered namespaces.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array<int, string>
-	 */
-	public function get_namespaces(): array {
-		return $this->namespaces;
-	}
+    /**
+     * Get registered namespaces.
+     *
+     * @since 0.1.0
+     *
+     * @return array<int, string>
+     */
+    public function get_namespaces(): array
+    {
+        return $this->namespaces;
+    }
 
-	/**
-	 * Add custom action (for 3rd-party extensions and dynamically registered actions).
-	 *
-	 * Use this method for actions registered via Rules::register_action() by other plugins.
-	 *
-	 * Examples:
-	 *   ->custom('send_notification')
-	 *   ->custom('log_event', ['level' => 'info', 'message' => 'Triggered'])
-	 *   ->custom('my_action', function($context, $config) {
-	 *       // Custom action logic
-	 *   })
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string                        $type The action type identifier.
-	 * @param array<string, mixed>|callable $arg The action configuration array or a callable function.
-	 *                             Callback signature: function(array $context, array $config): void.
-	 * @return self
-	 */
-	public function custom( string $type, $arg = array() ): self {
-		// Handle callback passed as the second parameter.
-		if ( is_callable( $arg ) ) {
-			// Register the callback with the provided type name.
-			Rules::register_action( $type, $arg );
+    /**
+     * Add custom action (for 3rd-party extensions and dynamically registered actions).
+     *
+     * Use this method for actions registered via Rules::register_action() by other plugins.
+     *
+     * Examples:
+     *   ->custom('send_notification')
+     *   ->custom('log_event', ['level' => 'info', 'message' => 'Triggered'])
+     *   ->custom('my_action', function($context, $config) {
+     *       // Custom action logic
+     *   })
+     *
+     * @since 0.1.0
+     *
+     * @param string                        $type The action type identifier.
+     * @param array<string, mixed>|callable $arg The action configuration array or a callable function.
+     *                             Callback signature: function(array $context, array $config): void.
+     * @return self
+     */
+    public function custom(string $type, $arg = array()): self
+    {
+        // Handle callback passed as the second parameter.
+        if (is_callable($arg)) {
+            // Register the callback with the provided type name.
+            Rules::register_action($type, $arg);
 
-			// Use the provided type with empty config.
-			$this->actions[] = array( 'type' => $type );
+            // Use the provided type with empty config.
+            $this->actions[] = array( 'type' => $type );
 
-			return $this;
-		}
+            return $this;
+        }
 
-		$arg['type'] = $type;
-		$this->actions[] = $arg;
-		return $this;
-	}
+        $arg['type'] = $type;
+        $this->actions[] = $arg;
+        return $this;
+    }
 
-	/**
-	 * End action building and return Rules object.
-	 *
-	 * @since 1.0.0
-	 * @deprecated No longer needed - use magic method delegation instead
-	 *
-	 * @return Rules
-	 */
-	public function end(): Rules {
-		return $this->rule_builder->set_actions( $this->actions );
-	}
+    /**
+     * End action building and return Rules object.
+     *
+     * @since 0.1.0
+     * @deprecated No longer needed - use magic method delegation instead
+     *
+     * @return Rules
+     */
+    public function end(): Rules
+    {
+        return $this->rule_builder->set_actions($this->actions);
+    }
 
-	/**
-	 * Magic method to handle auto-delegation and auto-resolution of action methods.
-	 *
-	 * Automatically switches context from ActionBuilder to Rules when a Rules method is called,
-	 * or creates action configurations from method names.
-	 *
-	 * Method name resolution:
-	 * - Converts camelCase to snake_case (e.g., sendEmail → send_email)
-	 * - First argument becomes 'value', second becomes 'expire' in action config
-	 *
-	 * Auto-delegation:
-	 * - If method exists on Rules object, transfers actions and delegates the call
-	 * - Allows seamless chaining like ->customAction()->register()
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string            $method The method name.
-	 * @param array<int, mixed> $args The method arguments.
-	 * @return self|Rules|mixed Returns self for action methods, Rules for delegated methods, or mixed for other cases.
-	 * @throws \BadMethodCallException If the method doesn't exist on Rules or as an action.
-	 */
-	public function __call( string $method, array $args ) {
-		// Check if this is a Rules method (auto-delegation).
-		if ( method_exists( $this->rule_builder, $method ) ) {
-			$this->rule_builder->set_actions( $this->actions );
-			$callable = array( $this->rule_builder, $method );
-			assert( is_callable( $callable ) );
-			return call_user_func_array( $callable, $args );
-		}
+    /**
+     * Magic method to handle auto-delegation and auto-resolution of action methods.
+     *
+     * Automatically switches context from ActionBuilder to Rules when a Rules method is called,
+     * or creates action configurations from method names.
+     *
+     * Method name resolution:
+     * - Converts camelCase to snake_case (e.g., sendEmail → send_email)
+     * - First argument becomes 'value', second becomes 'expire' in action config
+     *
+     * Auto-delegation:
+     * - If method exists on Rules object, transfers actions and delegates the call
+     * - Allows seamless chaining like ->customAction()->register()
+     *
+     * @since 0.1.0
+     *
+     * @param string            $method The method name.
+     * @param array<int, mixed> $args The method arguments.
+     * @return self|Rules|mixed Returns self for action methods, Rules for delegated methods, or mixed for other cases.
+     * @throws \BadMethodCallException If the method doesn't exist on Rules or as an action.
+     */
+    public function __call(string $method, array $args)
+    {
+        // Check if this is a Rules method (auto-delegation).
+        if (method_exists($this->rule_builder, $method)) {
+            $this->rule_builder->set_actions($this->actions);
+            $callable = array( $this->rule_builder, $method );
+            assert(is_callable($callable));
+            return call_user_func_array($callable, $args);
+        }
 
-		// Check if this is a special method.
-		$special_methods = array( 'custom', 'add_namespace', 'get_namespaces' );
-		if ( in_array( $method, $special_methods, true ) && method_exists( $this, $method ) ) {
-			return call_user_func_array( array( $this, $method ), $args );
-		}
+        // Check if this is a special method.
+        $special_methods = array( 'custom', 'add_namespace', 'get_namespaces' );
+        if (in_array($method, $special_methods, true) && method_exists($this, $method)) {
+            return call_user_func_array(array( $this, $method ), $args);
+        }
 
-		// Auto-resolve action type and build config inline.
-		// Convert camelCase to snake_case.
-		$replaced = preg_replace( '/(?<!^)[A-Z]/', '_$0', $method );
-		$type = strtolower( is_string( $replaced ) ? $replaced : $method );
+        // Auto-resolve action type and build config inline.
+        // Convert camelCase to snake_case.
+        $replaced = preg_replace('/(?<!^)[A-Z]/', '_$0', $method);
+        $type = strtolower(is_string($replaced) ? $replaced : $method);
 
-		$config = array( 'type' => $type );
-		if ( ! empty( $args ) ) {
-			$config['value'] = $args[0];
-			if ( isset( $args[1] ) ) {
-				$config['expire'] = $args[1];
-			}
-		}
+        $config = array( 'type' => $type );
+        if (! empty($args)) {
+            $config['value'] = $args[0];
+            if (isset($args[1])) {
+                $config['expire'] = $args[1];
+            }
+        }
 
-		$this->actions[] = $config;
-		return $this;
-	}
+        $this->actions[] = $config;
+        return $this;
+    }
 
-	/**
-	 * Get collected actions.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	public function get_actions(): array {
-		return $this->actions;
-	}
+    /**
+     * Get collected actions.
+     *
+     * @since 0.1.0
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function get_actions(): array
+    {
+        return $this->actions;
+    }
 }
