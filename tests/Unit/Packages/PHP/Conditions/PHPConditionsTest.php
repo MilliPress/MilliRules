@@ -3,6 +3,7 @@
 namespace MilliRules\Tests\Unit\Packages\PHP\Conditions;
 
 use MilliRules\Tests\TestCase;
+use MilliRules\Context;
 use MilliRules\Packages\PHP\Conditions\RequestUrl;
 use MilliRules\Packages\PHP\Conditions\Cookie;
 use MilliRules\Packages\PHP\Conditions\RequestMethod;
@@ -17,13 +18,24 @@ use MilliRules\Packages\PHP\Conditions\Constant;
  */
 class PHPConditionsTest extends TestCase
 {
+    /**
+     * Create an ExecutionContext from array data
+     */
+    private function createExecutionContext(array $data = []): Context
+    {
+        $context = new Context();
+        foreach ($data as $key => $value) {
+            $context->set($key, $value);
+        }
+        return $context;
+    }
     // ============================================
     // RequestUrl Tests
     // ============================================
 
     public function testRequestUrlExactMatch(): void
     {
-        $context = ['request' => ['uri' => '/admin/posts']];
+        $context = $this->createExecutionContext(['request' => ['uri' => '/admin/posts']]);
         $condition = new RequestUrl(['value' => '/admin/posts', 'operator' => '='], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -31,7 +43,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestUrlExactMismatch(): void
     {
-        $context = ['request' => ['uri' => '/admin/posts']];
+        $context = $this->createExecutionContext(['request' => ['uri' => '/admin/posts']]);
         $condition = new RequestUrl(['value' => '/admin/users', 'operator' => '='], $context);
 
         $this->assertFalse($condition->matches($context));
@@ -39,7 +51,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestUrlWildcardPattern(): void
     {
-        $context = ['request' => ['uri' => '/admin/posts/edit']];
+        $context = $this->createExecutionContext(['request' => ['uri' => '/admin/posts/edit']]);
         $condition = new RequestUrl(['value' => '/admin/*', 'operator' => 'LIKE'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -47,7 +59,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestUrlWildcardNoMatch(): void
     {
-        $context = ['request' => ['uri' => '/public/page']];
+        $context = $this->createExecutionContext(['request' => ['uri' => '/public/page']]);
         $condition = new RequestUrl(['value' => '/admin/*', 'operator' => 'LIKE'], $context);
 
         $this->assertFalse($condition->matches($context));
@@ -55,7 +67,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestUrlRegexMatch(): void
     {
-        $context = ['request' => ['uri' => '/post-123']];
+        $context = $this->createExecutionContext(['request' => ['uri' => '/post-123']]);
         $condition = new RequestUrl(['value' => '/^\\/post-\\d+$/', 'operator' => 'REGEXP'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -63,7 +75,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestUrlInArray(): void
     {
-        $context = ['request' => ['uri' => '/login']];
+        $context = $this->createExecutionContext(['request' => ['uri' => '/login']]);
         $condition = new RequestUrl([
             'value' => ['/login', '/register', '/forgot-password'],
             'operator' => 'IN'
@@ -74,7 +86,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestUrlMissingContextDefaultsEmpty(): void
     {
-        $context = [];
+        $context = $this->createExecutionContext([]);
         $condition = new RequestUrl(['value' => '', 'operator' => '='], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -82,7 +94,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestUrlGetType(): void
     {
-        $condition = new RequestUrl([], []);
+        $condition = new RequestUrl([], new Context());
         $this->assertEquals('request_url', $condition->get_type());
     }
 
@@ -92,7 +104,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieExistsWithExactName(): void
     {
-        $context = ['request' => ['cookies' => ['session_id' => 'abc123']]];
+        $context = $this->createExecutionContext(['cookie' => ['session_id' => 'abc123']]);
         $condition = new Cookie(['name' => 'session_id'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -100,7 +112,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieNotExists(): void
     {
-        $context = ['request' => ['cookies' => ['other_cookie' => 'value']]];
+        $context = $this->createExecutionContext(['cookie' => ['other_cookie' => 'value']]);
         $condition = new Cookie(['name' => 'session_id'], $context);
 
         $this->assertFalse($condition->matches($context));
@@ -108,7 +120,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieExistsWithWildcard(): void
     {
-        $context = ['request' => ['cookies' => ['session_abc' => 'value', 'other' => 'val']]];
+        $context = $this->createExecutionContext(['cookie' => ['session_abc' => 'value', 'other' => 'val']]);
         $condition = new Cookie(['name' => 'session_*'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -116,7 +128,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieExistsWithRegex(): void
     {
-        $context = ['request' => ['cookies' => ['wp_user_123' => 'value']]];
+        $context = $this->createExecutionContext(['cookie' => ['wp_user_123' => 'value']]);
         $condition = new Cookie(['name' => '/^wp_user_\\d+$/'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -124,7 +136,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieValueExactMatch(): void
     {
-        $context = ['request' => ['cookies' => ['user_role' => 'admin']]];
+        $context = $this->createExecutionContext(['cookie' => ['user_role' => 'admin']]);
         $condition = new Cookie(['name' => 'user_role', 'value' => 'admin', 'operator' => '='], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -132,7 +144,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieValueMismatch(): void
     {
-        $context = ['request' => ['cookies' => ['user_role' => 'editor']]];
+        $context = $this->createExecutionContext(['cookie' => ['user_role' => 'editor']]);
         $condition = new Cookie(['name' => 'user_role', 'value' => 'admin', 'operator' => '='], $context);
 
         $this->assertFalse($condition->matches($context));
@@ -140,7 +152,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieValuePatternMatch(): void
     {
-        $context = ['request' => ['cookies' => ['preferences' => 'dark_mode_enabled']]];
+        $context = $this->createExecutionContext(['cookie' => ['preferences' => 'dark_mode_enabled']]);
         $condition = new Cookie(['name' => 'preferences', 'value' => 'dark_*', 'operator' => 'LIKE'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -148,7 +160,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieValueIn(): void
     {
-        $context = ['request' => ['cookies' => ['lang' => 'de']]];
+        $context = $this->createExecutionContext(['cookie' => ['lang' => 'de']]);
         $condition = new Cookie([
             'name' => 'lang',
             'value' => ['en', 'de', 'fr'],
@@ -160,7 +172,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieNotExistsOperator(): void
     {
-        $context = ['request' => ['cookies' => ['other' => 'value']]];
+        $context = $this->createExecutionContext(['cookie' => ['other' => 'value']]);
         $condition = new Cookie(['name' => 'tracking', 'operator' => 'IS NOT'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -168,7 +180,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieNotExistsWithExisting(): void
     {
-        $context = ['request' => ['cookies' => ['tracking' => 'enabled']]];
+        $context = $this->createExecutionContext(['cookie' => ['tracking' => 'enabled']]);
         $condition = new Cookie(['name' => 'tracking', 'operator' => 'IS NOT'], $context);
 
         $this->assertFalse($condition->matches($context));
@@ -176,7 +188,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieCaseInsensitiveMatch(): void
     {
-        $context = ['request' => ['cookies' => ['Session_ID' => 'abc123']]];
+        $context = $this->createExecutionContext(['cookie' => ['Session_ID' => 'abc123']]);
         $condition = new Cookie(['name' => 'session_id'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -184,7 +196,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieNoCookiesInContext(): void
     {
-        $context = [];
+        $context = $this->createExecutionContext([]);
         $condition = new Cookie(['name' => 'any_cookie'], $context);
 
         $this->assertFalse($condition->matches($context));
@@ -192,7 +204,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieGetType(): void
     {
-        $condition = new Cookie([], []);
+        $condition = new Cookie([], new Context());
         $this->assertEquals('cookie', $condition->get_type());
     }
 
@@ -202,7 +214,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestMethodGet(): void
     {
-        $context = ['request' => ['method' => 'GET']];
+        $context = $this->createExecutionContext(['request' => ['method' => 'GET']]);
         $condition = new RequestMethod(['value' => 'GET', 'operator' => '='], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -210,7 +222,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestMethodPost(): void
     {
-        $context = ['request' => ['method' => 'POST']];
+        $context = $this->createExecutionContext(['request' => ['method' => 'POST']]);
         $condition = new RequestMethod(['value' => 'POST', 'operator' => '='], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -218,7 +230,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestMethodCaseInsensitive(): void
     {
-        $context = ['request' => ['method' => 'get']];
+        $context = $this->createExecutionContext(['request' => ['method' => 'get']]);
         $condition = new RequestMethod(['value' => 'GET', 'operator' => '='], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -226,7 +238,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestMethodNotEqual(): void
     {
-        $context = ['request' => ['method' => 'GET']];
+        $context = $this->createExecutionContext(['request' => ['method' => 'GET']]);
         $condition = new RequestMethod(['value' => 'POST', 'operator' => '!='], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -234,7 +246,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestMethodInArray(): void
     {
-        $context = ['request' => ['method' => 'GET']];
+        $context = $this->createExecutionContext(['request' => ['method' => 'GET']]);
         $condition = new RequestMethod([
             'value' => ['GET', 'HEAD', 'OPTIONS'],
             'operator' => 'IN'
@@ -245,7 +257,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestMethodNotInArray(): void
     {
-        $context = ['request' => ['method' => 'DELETE']];
+        $context = $this->createExecutionContext(['request' => ['method' => 'DELETE']]);
         $condition = new RequestMethod([
             'value' => ['GET', 'POST'],
             'operator' => 'IN'
@@ -256,7 +268,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestMethodMissingContext(): void
     {
-        $context = [];
+        $context = $this->createExecutionContext([]);
         $condition = new RequestMethod(['value' => '', 'operator' => '='], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -264,7 +276,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestMethodGetType(): void
     {
-        $condition = new RequestMethod([], []);
+        $condition = new RequestMethod([], new Context());
         $this->assertEquals('request_method', $condition->get_type());
     }
 
@@ -274,7 +286,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestHeaderExists(): void
     {
-        $context = ['request' => ['headers' => ['user-agent' => 'Mozilla/5.0']]];
+        $context = $this->createExecutionContext(['request' => ['headers' => ['user-agent' => 'Mozilla/5.0']]]);
         $condition = new RequestHeader(['name' => 'user-agent', 'operator' => 'EXISTS'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -282,7 +294,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestHeaderNotExists(): void
     {
-        $context = ['request' => ['headers' => ['accept' => 'text/html']]];
+        $context = $this->createExecutionContext(['request' => ['headers' => ['accept' => 'text/html']]]);
         $condition = new RequestHeader(['name' => 'referer', 'operator' => 'NOT EXISTS'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -290,7 +302,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestHeaderValueMatch(): void
     {
-        $context = ['request' => ['headers' => ['accept' => 'application/json']]];
+        $context = $this->createExecutionContext(['request' => ['headers' => ['accept' => 'application/json']]]);
         $condition = new RequestHeader([
             'name' => 'accept',
             'value' => 'application/json',
@@ -302,7 +314,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestHeaderValuePattern(): void
     {
-        $context = ['request' => ['headers' => ['user-agent' => 'Mozilla/5.0 Chrome']]];
+        $context = $this->createExecutionContext(['request' => ['headers' => ['user-agent' => 'Mozilla/5.0 Chrome']]]);
         $condition = new RequestHeader([
             'name' => 'user-agent',
             'value' => '*Chrome*',
@@ -314,7 +326,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestHeaderCaseInsensitive(): void
     {
-        $context = ['request' => ['headers' => ['Content-Type' => 'text/html']]];
+        $context = $this->createExecutionContext(['request' => ['headers' => ['Content-Type' => 'text/html']]]);
         $condition = new RequestHeader(['name' => 'content-type', 'operator' => 'EXISTS'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -326,7 +338,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestParamExists(): void
     {
-        $context = ['request' => ['params' => ['page' => '1']]];
+        $context = $this->createExecutionContext(['param' => ['page' => '1']]);
         $condition = new RequestParam(['name' => 'page', 'operator' => 'EXISTS'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -334,7 +346,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestParamNotExists(): void
     {
-        $context = ['request' => ['params' => ['other' => 'value']]];
+        $context = $this->createExecutionContext(['param' => ['other' => 'value']]);
         $condition = new RequestParam(['name' => 'page', 'operator' => 'NOT EXISTS'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -342,7 +354,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestParamValueMatch(): void
     {
-        $context = ['request' => ['params' => ['action' => 'edit']]];
+        $context = $this->createExecutionContext(['param' => ['action' => 'edit']]);
         $condition = new RequestParam([
             'name' => 'action',
             'value' => 'edit',
@@ -354,7 +366,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestParamValueMismatch(): void
     {
-        $context = ['request' => ['params' => ['action' => 'delete']]];
+        $context = $this->createExecutionContext(['param' => ['action' => 'delete']]);
         $condition = new RequestParam([
             'name' => 'action',
             'value' => 'edit',
@@ -366,7 +378,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestParamInArray(): void
     {
-        $context = ['request' => ['params' => ['status' => 'published']]];
+        $context = $this->createExecutionContext(['param' => ['status' => 'published']]);
         $condition = new RequestParam([
             'name' => 'status',
             'value' => ['published', 'draft', 'pending'],
@@ -384,7 +396,7 @@ class PHPConditionsTest extends TestCase
     {
         define('TEST_CONSTANT_123', 'test_value');
 
-        $context = [];
+        $context = $this->createExecutionContext([]);
         $condition = new Constant(['name' => 'TEST_CONSTANT_123', 'operator' => 'EXISTS'], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -392,7 +404,7 @@ class PHPConditionsTest extends TestCase
 
     public function testConstantNotDefined(): void
     {
-        $context = [];
+        $context = $this->createExecutionContext([]);
         $condition = new Constant(['name' => 'NONEXISTENT_CONSTANT', 'operator' => 'EXISTS'], $context);
 
         $this->assertFalse($condition->matches($context));
@@ -402,7 +414,7 @@ class PHPConditionsTest extends TestCase
     {
         define('TEST_CONSTANT_456', 'expected_value');
 
-        $context = [];
+        $context = $this->createExecutionContext([]);
         $condition = new Constant([
             'name' => 'TEST_CONSTANT_456',
             'value' => 'expected_value',
@@ -416,7 +428,7 @@ class PHPConditionsTest extends TestCase
     {
         define('TEST_CONSTANT_789', 'actual_value');
 
-        $context = [];
+        $context = $this->createExecutionContext([]);
         $condition = new Constant([
             'name' => 'TEST_CONSTANT_789',
             'value' => 'expected_value',
@@ -430,7 +442,7 @@ class PHPConditionsTest extends TestCase
     {
         define('TEST_BOOL_CONSTANT', true);
 
-        $context = [];
+        $context = $this->createExecutionContext([]);
         $condition = new Constant([
             'name' => 'TEST_BOOL_CONSTANT',
             'value' => true,
@@ -446,7 +458,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieEmptyName(): void
     {
-        $context = ['request' => ['cookies' => ['cookie1' => 'value']]];
+        $context = $this->createExecutionContext(['cookie' => ['cookie1' => 'value']]);
         $condition = new Cookie(['name' => ''], $context);
 
         // Empty name should check if any cookies exist
@@ -455,7 +467,7 @@ class PHPConditionsTest extends TestCase
 
     public function testCookieNonStringValues(): void
     {
-        $context = ['request' => ['cookies' => ['num' => 123, 'bool' => true]]];
+        $context = $this->createExecutionContext(['cookie' => ['num' => 123, 'bool' => true]]);
         $condition = new Cookie(['name' => 'num'], $context);
 
         // Non-string values should be sanitized
@@ -464,7 +476,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestUrlNonStringUri(): void
     {
-        $context = ['request' => ['uri' => 123]];
+        $context = $this->createExecutionContext(['request' => ['uri' => 123]]);
         $condition = new RequestUrl(['value' => '', 'operator' => '='], $context);
 
         // Non-string URIs should be converted to empty string
@@ -473,7 +485,7 @@ class PHPConditionsTest extends TestCase
 
     public function testRequestMethodNonStringMethod(): void
     {
-        $context = ['request' => ['method' => null]];
+        $context = $this->createExecutionContext(['request' => ['method' => null]]);
         $condition = new RequestMethod(['value' => '', 'operator' => '='], $context);
 
         $this->assertTrue($condition->matches($context));
@@ -482,7 +494,7 @@ class PHPConditionsTest extends TestCase
     public function testCookieWithAlternativeConfigKey(): void
     {
         // Test 'cookie' key instead of 'name'
-        $context = ['request' => ['cookies' => ['test' => 'value']]];
+        $context = $this->createExecutionContext(['cookie' => ['test' => 'value']]);
         $condition = new Cookie(['cookie' => 'test'], $context);
 
         $this->assertTrue($condition->matches($context));

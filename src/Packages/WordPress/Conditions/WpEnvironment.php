@@ -1,4 +1,5 @@
 <?php
+
 /**
  * WordPress Environment Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class WpEnvironment
@@ -35,37 +37,40 @@ use MilliRules\Conditions\BaseCondition;
  * - ->wp_environment('production') // exact match
  * - ->wp_environment(['development', 'staging'], 'IN') // dev or staging
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class WpEnvironment extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'wp_environment';
-	}
+class WpEnvironment extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'wp_environment';
+    }
 
-	/**
-	 * Get the actual value from WordPress.
-	 *
-	 * Does not use context - only WordPress APIs.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context (ignored).
-	 * @return string The WordPress environment type.
-	 */
-	protected function get_actual_value( array $context ): string {
-		// Use WordPress function.
-		if ( function_exists( 'wp_get_environment_type' ) ) {
-			return wp_get_environment_type();
-		}
+    /**
+     * Get the actual value from WordPress.
+     *
+     * Does not use context - only WordPress APIs.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context (ignored).
+     * @return string The WordPress environment type.
+     */
+    protected function get_actual_value(Context $context): string
+    {
+        // Use WordPress function.
+        if (function_exists('wp_get_environment_type')) {
+            return wp_get_environment_type();
+        }
 
-		// Default to production.
-		return 'production';
-	}
+        // Default to production.
+        return 'production';
+    }
 }

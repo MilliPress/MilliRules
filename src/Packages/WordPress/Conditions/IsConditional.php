@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Generic Is Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class IsConditional
@@ -34,41 +36,68 @@ use MilliRules\Conditions\BaseCondition;
  * - ->is_home() // check if home page
  * - ->is_search() // check if search page
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class IsConditional extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		$type_value = $this->config['type'] ?? '';
-		return is_string( $type_value ) ? $type_value : '';
-	}
+class IsConditional extends BaseCondition
+{
+    /**
+     * Constructor.
+     *
+     * Sets default value to true and operator to IS for boolean conditionals
+     * when not explicitly specified.
+     *
+     * @since 0.1.0
+     *
+     * @param array<string, mixed> $config  The condition configuration.
+     * @param Context     $context The execution context.
+     */
+    public function __construct(array $config, Context $context)
+    {
+        // Default to true with IS operator for boolean conditionals.
+        if (! isset($config['value'])) {
+            $config['value'] = true;
+        }
+        if (! isset($config['operator'])) {
+            $config['operator'] = 'IS';
+        }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * Dynamically calls the WordPress conditional function corresponding to the type.
-	 * For example, type 'is_home' will call the is_home() function.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return bool The result of the WordPress conditional function, or false if it doesn't exist.
-	 */
-	protected function get_actual_value( array $context ) {
-		$fn = $this->get_type();
+        parent::__construct($config, $context);
+    }
 
-		// Check if the function exists.
-		if ( empty( $fn ) || ! function_exists( $fn ) ) {
-			return false;
-		}
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        $type_value = $this->config['type'] ?? '';
+        return is_string($type_value) ? $type_value : '';
+    }
 
-		// Call the WordPress conditional function with no arguments.
-		return (bool) call_user_func( $fn );
-	}
+    /**
+     * Get the actual value from context.
+     *
+     * Dynamically calls the WordPress conditional function corresponding to the type.
+     * For example, type 'is_home' will call the is_home() function.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return bool The result of the WordPress conditional function, or false if it doesn't exist.
+     */
+    protected function get_actual_value(Context $context)
+    {
+        $fn = $this->get_type();
+
+        // Check if the function exists.
+        if (empty($fn) || ! function_exists($fn)) {
+            return false;
+        }
+
+        // Call the WordPress conditional function with no arguments.
+        return (bool) call_user_func($fn);
+    }
 }

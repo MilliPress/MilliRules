@@ -5,6 +5,7 @@ namespace MilliRules\Tests\Unit\Conditions;
 use MilliRules\Tests\TestCase;
 use MilliRules\Conditions\BaseCondition;
 use MilliRules\Conditions\ConditionInterface;
+use MilliRules\Context;
 
 /**
  * Comprehensive tests for BaseCondition class
@@ -16,18 +17,22 @@ class BaseConditionTest extends TestCase
     /**
      * Create a concrete implementation of BaseCondition for testing
      */
-    private function createTestCondition(array $config, array $context = []): ConditionInterface
+    private function createTestCondition(array $config, Context $context = null): ConditionInterface
     {
-        return new class($config, $context) extends BaseCondition {
+        if ($context === null) {
+            $context = new Context();
+        }
+
+        return new class ($config, $context) extends BaseCondition {
             private $actualValue;
 
-            public function __construct(array $config, array $context)
+            public function __construct(array $config, Context $context)
             {
                 parent::__construct($config, $context);
                 $this->actualValue = $config['_test_actual_value'] ?? '';
             }
 
-            protected function get_actual_value(array $context)
+            protected function get_actual_value(Context $context)
             {
                 return $this->actualValue;
             }
@@ -56,7 +61,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test',
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testEqualityOperatorWithNonMatchingStrings(): void
@@ -67,7 +72,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'other',
         ]);
 
-        $this->assertFalse($condition->matches([]));
+        $this->assertFalse($condition->matches(new Context()));
     }
 
     public function testEqualityOperatorWithNumbers(): void
@@ -78,7 +83,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 123,
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testNotEqualOperatorWithDifferentValues(): void
@@ -89,7 +94,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'other',
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testNotEqualOperatorWithSameValues(): void
@@ -100,7 +105,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test',
         ]);
 
-        $this->assertFalse($condition->matches([]));
+        $this->assertFalse($condition->matches(new Context()));
     }
 
     // ============================================
@@ -118,7 +123,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => $actual,
         ]);
 
-        $this->assertEquals($shouldMatch, $condition->matches([]));
+        $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
     public function greaterThanProvider(): array
@@ -148,7 +153,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => $actual,
         ]);
 
-        $this->assertEquals($shouldMatch, $condition->matches([]));
+        $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
     public function greaterThanOrEqualProvider(): array
@@ -172,7 +177,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => $actual,
         ]);
 
-        $this->assertEquals($shouldMatch, $condition->matches([]));
+        $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
     public function lessThanProvider(): array
@@ -196,7 +201,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => $actual,
         ]);
 
-        $this->assertEquals($shouldMatch, $condition->matches([]));
+        $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
     public function lessThanOrEqualProvider(): array
@@ -223,8 +228,11 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => $actual,
         ]);
 
-        $this->assertEquals($shouldMatch, $condition->matches([]),
-            "Pattern '{$pattern}' should " . ($shouldMatch ? '' : 'not ') . "match '{$actual}'");
+        $this->assertEquals(
+            $shouldMatch,
+            $condition->matches(new Context()),
+            "Pattern '{$pattern}' should " . ($shouldMatch ? '' : 'not ') . "match '{$actual}'"
+        );
     }
 
     public function likePatternProvider(): array
@@ -251,7 +259,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'other',
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
 
         $condition2 = $this->createTestCondition([
             'operator' => 'NOT LIKE',
@@ -259,7 +267,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test123',
         ]);
 
-        $this->assertFalse($condition2->matches([]));
+        $this->assertFalse($condition2->matches(new Context()));
     }
 
     /**
@@ -273,7 +281,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => $actual,
         ]);
 
-        $this->assertEquals($shouldMatch, $condition->matches([]));
+        $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
     public function regexpPatternProvider(): array
@@ -301,7 +309,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => $actual,
         ]);
 
-        $this->assertEquals($shouldMatch, $condition->matches([]));
+        $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
     public function inOperatorProvider(): array
@@ -338,7 +346,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => $value,
         ]);
 
-        $this->assertEquals($shouldExist, $condition->matches([]));
+        $this->assertEquals($shouldExist, $condition->matches(new Context()));
     }
 
     public function existsOperatorProvider(): array
@@ -367,7 +375,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => $value,
         ]);
 
-        $this->assertEquals($shouldNotExist, $condition->matches([]));
+        $this->assertEquals($shouldNotExist, $condition->matches(new Context()));
     }
 
     public function notExistsOperatorProvider(): array
@@ -396,7 +404,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => $actual,
         ]);
 
-        $this->assertEquals($shouldMatch, $condition->matches([]));
+        $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
     public function isOperatorProvider(): array
@@ -420,7 +428,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => false,
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     // ============================================
@@ -446,7 +454,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test123',
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
 
         // Operator with whitespace
         $condition2 = $this->createTestCondition([
@@ -455,7 +463,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 10,
         ]);
 
-        $this->assertTrue($condition2->matches([]));
+        $this->assertTrue($condition2->matches(new Context()));
     }
 
     // ============================================
@@ -471,7 +479,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test',
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testMatchTypeAllWithOneNotMatching(): void
@@ -483,7 +491,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test',
         ]);
 
-        $this->assertFalse($condition->matches([]));
+        $this->assertFalse($condition->matches(new Context()));
     }
 
     public function testMatchTypeAnyWithOneMatching(): void
@@ -495,7 +503,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test',
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testMatchTypeAnyWithNoneMatching(): void
@@ -507,7 +515,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test',
         ]);
 
-        $this->assertFalse($condition->matches([]));
+        $this->assertFalse($condition->matches(new Context()));
     }
 
     public function testMatchTypeNoneWithNoneMatching(): void
@@ -519,7 +527,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test',
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testMatchTypeNoneWithOneMatching(): void
@@ -531,7 +539,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test',
         ]);
 
-        $this->assertFalse($condition->matches([]));
+        $this->assertFalse($condition->matches(new Context()));
     }
 
     public function testDefaultMatchTypeIsAny(): void
@@ -543,7 +551,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => 'test',
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     // ============================================
@@ -582,7 +590,7 @@ class BaseConditionTest extends TestCase
         ]);
 
         // null should be coerced to empty string
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testMissingValueInConfig(): void
@@ -593,7 +601,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => '',
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testNonStringOperatorDefaultsToEquals(): void
@@ -605,7 +613,7 @@ class BaseConditionTest extends TestCase
         ]);
 
         // Should default to '=' operator
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testArrayActualValueWithScalarExpected(): void
@@ -617,7 +625,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => ['array', 'value'],
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testBooleanValueComparison(): void
@@ -628,7 +636,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => true,
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testEmptyStringVsZeroComparison(): void
@@ -640,7 +648,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => '',
         ]);
 
-        $this->assertFalse($condition->matches([]));
+        $this->assertFalse($condition->matches(new Context()));
     }
 
     public function testFloatStringComparison(): void
@@ -651,7 +659,7 @@ class BaseConditionTest extends TestCase
             '_test_actual_value' => '10.2',
         ]);
 
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 
     public function testInvalidMatchTypeDefaultsToAny(): void
@@ -664,6 +672,6 @@ class BaseConditionTest extends TestCase
         ]);
 
         // Should default to 'any' behavior
-        $this->assertTrue($condition->matches([]));
+        $this->assertTrue($condition->matches(new Context()));
     }
 }

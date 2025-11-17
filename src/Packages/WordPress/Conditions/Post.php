@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Post Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class Post
@@ -44,119 +46,123 @@ use MilliRules\Conditions\BaseCondition;
  * - ->post('checkout') // match by slug
  * - ->post([123, 'home', 'about'], 'IN') // match any
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class Post extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'post';
-	}
+class Post extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'post';
+    }
 
-	/**
-	 * Get the actual value from WordPress.
-	 *
-	 * Returns an associative array with post information.
-	 * Does not use context - only WordPress APIs.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context (ignored).
-	 * @return array<string, mixed>|null Post data array or null if no post.
-	 */
-	protected function get_actual_value( array $context ) {
-		$post = null;
+    /**
+     * Get the actual value from WordPress.
+     *
+     * Returns an associative array with post information.
+     * Does not use context - only WordPress APIs.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context (ignored).
+     * @return array<string, mixed>|null Post data array or null if no post.
+     */
+    protected function get_actual_value(Context $context)
+    {
+        $post = null;
 
-		// Try to get post from the queried object.
-		if ( function_exists( 'get_queried_object' ) ) {
-			$queried = get_queried_object();
+        // Try to get post from the queried object.
+        if (function_exists('get_queried_object')) {
+            $queried = get_queried_object();
 
-			// If it's a WP_Post object, use it.
-			if ( $queried instanceof \WP_Post ) {
-				$post = $queried;
-			}
-		}
+            // If it's a WP_Post object, use it.
+            if ($queried instanceof \WP_Post) {
+                $post = $queried;
+            }
+        }
 
-		// Fallback to global $post if not found yet.
-		if ( null === $post && isset( $GLOBALS['post'] ) && $GLOBALS['post'] instanceof \WP_Post ) {
-			$post = $GLOBALS['post'];
-		}
+        // Fallback to global $post if not found yet.
+        if (null === $post && isset($GLOBALS['post']) && $GLOBALS['post'] instanceof \WP_Post) {
+            $post = $GLOBALS['post'];
+        }
 
-		// If we still don't have a post, return null.
-		if ( null === $post ) {
-			return null;
-		}
+        // If we still don't have a post, return null.
+        if (null === $post) {
+            return null;
+        }
 
-		return array(
-			'id'   => (int) $post->ID,
-			'slug' => (string) $post->post_name,
-		);
-	}
+        return array(
+            'id'   => (int) $post->ID,
+            'slug' => (string) $post->post_name,
+        );
+    }
 
-	/**
-	 * Compare actual and expected values.
-	 *
-	 * Overrides parent to handle matching against multiple fields (id, slug).
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param mixed $actual   The actual value from WordPress (array with id/slug or null).
-	 * @param mixed $expected The expected value from config (scalar or array).
-	 * @return bool True if comparison matches, false otherwise.
-	 */
-	protected function compare( $actual, $expected ): bool {
-		// If no post data, handle based on operator.
-		if (! is_array( $actual )) {
-			// For negative operators, not having a post can be considered a match.
-			if ( in_array( $this->operator, array( '!=', 'IS NOT', 'NOT IN', 'NOT EXISTS' ), true ) ) {
-				return true;
-			}
-			return false;
-		}
+    /**
+     * Compare actual and expected values.
+     *
+     * Overrides parent to handle matching against multiple fields (id, slug).
+     *
+     * @since 0.1.0
+     *
+     * @param mixed $actual   The actual value from WordPress (array with id/slug or null).
+     * @param mixed $expected The expected value from config (scalar or array).
+     * @return bool True if comparison matches, false otherwise.
+     */
+    protected function compare($actual, $expected): bool
+    {
+        // If no post data, handle based on operator.
+        if (! is_array($actual)) {
+            // For negative operators, not having a post can be considered a match.
+            if (in_array($this->operator, array( '!=', 'IS NOT', 'NOT IN', 'NOT EXISTS' ), true)) {
+                return true;
+            }
+            return false;
+        }
 
-		$actual_id   = $actual['id'] ?? 0;
-		$actual_slug = $actual['slug'] ?? '';
+        $actual_id   = $actual['id'] ?? 0;
+        $actual_slug = $actual['slug'] ?? '';
 
-		// Convert expected to array for unified handling.
-		$expected_values = is_array( $expected ) ? $expected : array( $expected );
+        // Convert expected to array for unified handling.
+        $expected_values = is_array($expected) ? $expected : array( $expected );
 
-		// Check if any expected value matches any actual field.
-		$has_match = false;
+        // Check if any expected value matches any actual field.
+        $has_match = false;
 
-		foreach ( $expected_values as $expected_value ) {
-			// Resolve placeholders if needed.
-			$resolved_value = is_string( $expected_value ) ? $this->resolver->resolve( $expected_value ) : $expected_value;
+        foreach ($expected_values as $expected_value) {
+            // Resolve placeholders if needed.
+            $resolved_value = is_string($expected_value) ? $this->resolver->resolve($expected_value) : $expected_value;
 
-			// Try matching against ID (if expected value is numeric).
-			if ( is_numeric( $resolved_value ) ) {
-				if ( parent::compare( $actual_id, (int) $resolved_value ) ) {
-					$has_match = true;
-					break;
-				}
-			}
+            // Try matching against ID (if expected value is numeric).
+            if (is_numeric($resolved_value)) {
+                if (parent::compare($actual_id, (int) $resolved_value)) {
+                    $has_match = true;
+                    break;
+                }
+            }
 
-			// Try matching against slug (for all operators).
-			if ( parent::compare( $actual_slug, $resolved_value ) ) {
-				$has_match = true;
-				break;
-			}
-		}
+            // Try matching against slug (for all operators).
+            if (parent::compare($actual_slug, $resolved_value)) {
+                $has_match = true;
+                break;
+            }
+        }
 
-		// Apply operator logic.
-		switch ( $this->operator ) {
-			case '!=':
-			case 'IS NOT':
-			case 'NOT IN':
-			case 'NOT LIKE':
-				return ! $has_match;
+        // Apply operator logic.
+        switch ($this->operator) {
+            case '!=':
+            case 'IS NOT':
+            case 'NOT IN':
+            case 'NOT LIKE':
+                return ! $has_match;
 
-			default:
-				return $has_match;
-		}
-	}
+            default:
+                return $has_match;
+        }
+    }
 }

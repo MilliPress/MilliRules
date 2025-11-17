@@ -1,4 +1,5 @@
 <?php
+
 /**
  * PHP Constant Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class Constant
@@ -31,39 +33,44 @@ use MilliRules\Conditions\BaseCondition;
  * - Check PHP_VERSION_ID: ['type' => 'constant', 'name' => 'PHP_VERSION_ID', 'operator' => '>=', 'value' => 80000]
  * - Using builder: ->constant('DOING_CRON', true) // checks if DOING_CRON is true
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class Constant extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'constant';
-	}
+class Constant extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'constant';
+    }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return mixed The constant value, or null if not defined.
-	 */
-	protected function get_actual_value( array $context ) {
-		$constant_name = $this->config['name'] ?? $this->config['constant'] ?? '';
+    /**
+     * Get the actual value from context.
+     *
+     * Note: This condition doesn't use context as PHP constants are globally available.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context (unused).
+     * @return mixed The constant value, or null if not defined.
+     */
+    protected function get_actual_value(Context $context)
+    {
+        $constant_name = $this->config['name'] ?? $this->config['constant'] ?? '';
 
-		if ( ! is_string( $constant_name ) || empty( $constant_name ) ) {
-			return null;
-		}
+        if (! is_string($constant_name) || empty($constant_name)) {
+            return null;
+        }
 
-		if ( ! defined( $constant_name ) ) {
-			return null;
-		}
+        if (! defined($constant_name)) {
+            return null;
+        }
 
-		return constant( $constant_name );
-	}
+        return constant($constant_name);
+    }
 }

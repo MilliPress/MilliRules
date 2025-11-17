@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Query Var Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class QueryVar
@@ -37,72 +39,84 @@ use MilliRules\Conditions\BaseCondition;
  * - ->query_var('paged', 2) // exact match
  * - ->query_var('s', null, 'EXISTS') // search exists
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class QueryVar extends BaseCondition {
-	/**
-	 * Query variable name.
-	 *
-	 * @since 1.0.0
-	 * @var string
-	 */
-	private string $query_var_name;
+class QueryVar extends BaseCondition
+{
+    /**
+     * Query variable name.
+     *
+     * @since 0.1.0
+     * @var string
+     */
+    private string $query_var_name;
 
-	/**
-	 * Constructor.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $config  The condition configuration.
-	 * @param array<string, mixed> $context The execution context.
-	 */
-	public function __construct( array $config, array $context ) {
-		parent::__construct( $config, $context );
+    /**
+     * Constructor.
+     *
+     * @since 0.1.0
+     *
+     * @param array<string, mixed> $config  The condition configuration.
+     * @param Context $context The execution context.
+     */
+    public function __construct(array $config, Context $context)
+    {
+        // Default to EXISTS operator when no value specified.
+        if (! isset($config['value']) && ! isset($config['operator'])) {
+            $config['operator'] = 'EXISTS';
+        }
 
-		$name_value = $config['name'] ?? '';
-		$this->query_var_name = is_string( $name_value ) ? $name_value : '';
-	}
+        parent::__construct($config, $context);
 
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'query_var';
-	}
+        $name_value = $config['name'] ?? '';
+        $this->query_var_name = is_string($name_value) ? $name_value : '';
+    }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return mixed The query var value, or null if not set.
-	 */
-	protected function get_actual_value( array $context ) {
-		if ( empty( $this->query_var_name ) ) {
-			return null;
-		}
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'query_var';
+    }
 
-		// Try to get from context first.
-		if ( isset( $context['wp']['query_vars'][ $this->query_var_name ] ) ) {
-			return $context['wp']['query_vars'][ $this->query_var_name ];
-		}
+    /**
+     * Get the actual value from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return mixed The query var value, or null if not set.
+     */
+    protected function get_actual_value(Context $context)
+    {
+        if (empty($this->query_var_name)) {
+            return null;
+        }
 
-		// Fall back to WordPress function.
-		if ( function_exists( 'get_query_var' ) ) {
-			$value = get_query_var( $this->query_var_name );
-			// get_query_var returns false or empty string for non-existent vars.
-			// Return null to make EXISTS/NOT EXISTS operators work correctly.
-			if ( false === $value || '' === $value ) {
-				return null;
-			}
-			return $value;
-		}
+        // Try to get from context first.
+        $context->load('query_vars');
+        $query_vars = $context->get('query_vars');
 
-		return null;
-	}
+        if (is_array($query_vars) && isset($query_vars[ $this->query_var_name ])) {
+            return $query_vars[ $this->query_var_name ];
+        }
+
+        // Fall back to WordPress function.
+        if (function_exists('get_query_var')) {
+            $value = get_query_var($this->query_var_name);
+            // get_query_var returns false or empty string for non-existent vars.
+            // Return null to make EXISTS/NOT EXISTS operators work correctly.
+            if (false === $value || '' === $value) {
+                return null;
+            }
+            return $value;
+        }
+
+        return null;
+    }
 }

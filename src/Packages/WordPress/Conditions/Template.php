@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class Template
@@ -36,34 +38,37 @@ use MilliRules\Conditions\BaseCondition;
  * - ->template('page-full-width.php') // exact match
  * - ->template(['template-a.php', 'template-b.php'], 'IN') // multiple templates
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class Template extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'template';
-	}
+class Template extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'template';
+    }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return string The current template slug/filename.
-	 */
-	protected function get_actual_value( array $context ): string {
-		if ( function_exists( 'get_page_template_slug' ) ) {
-			$template = get_page_template_slug();
-			return is_string( $template ) ? $template : '';
-		}
+    /**
+     * Get the actual value from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return string The current template slug/filename.
+     */
+    protected function get_actual_value(Context $context): string
+    {
+        if (function_exists('get_page_template_slug')) {
+            $template = get_page_template_slug();
+            return is_string($template) ? $template : '';
+        }
 
-		return '';
-	}
+        return '';
+    }
 }

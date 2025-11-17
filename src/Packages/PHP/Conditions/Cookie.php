@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Cookie Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class Cookie
@@ -49,236 +51,247 @@ use MilliRules\Conditions\BaseCondition;
  * - ->cookie('user_role', 'admin') // exact match
  * - ->cookie('preferences', 'dark_*', 'LIKE') // pattern match
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class Cookie extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'cookie';
-	}
+class Cookie extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'cookie';
+    }
 
-	/**
-	 * Check if the condition matches.
-	 *
-	 * Override matches() for special cookie logic including existence checks.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return bool True if the condition matches, false otherwise.
-	 */
-	public function matches( array $context ): bool {
-		$cookie_name = $this->get_cookie_name();
-		$cookies = $this->get_cookies_from_context( $context );
+    /**
+     * Check if the condition matches.
+     *
+     * Override matches() for special cookie logic including existence checks.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return bool True if the condition matches, false otherwise.
+     */
+    public function matches(Context $context): bool
+    {
+        $cookie_name = $this->get_cookie_name();
+        $cookies = $this->get_cookies_from_context($context);
 
-		// If no cookie name specified, check if any cookies exist.
-		if ( empty( $cookie_name ) ) {
-			return ! empty( $cookies );
-		}
+        // If no cookie name specified, check if any cookies exist.
+        if (empty($cookie_name)) {
+            return ! empty($cookies);
+        }
 
-		// Check if value comparison is requested.
-		$check_value = array_key_exists( 'value', $this->config );
+        // Check if value comparison is requested.
+        $check_value = array_key_exists('value', $this->config);
 
-		if ( ! $check_value ) {
-			// Existence checks only.
-			$cookie_exists = $this->cookie_exists( $cookie_name, $cookies );
+        if (! $check_value) {
+            // Existence checks only.
+            $cookie_exists = $this->cookie_exists($cookie_name, $cookies);
 
-			// Handle operators for existence check.
-			if ( 'IS' === $this->operator || '=' === $this->operator || 'EXISTS' === $this->operator ) {
-				return $cookie_exists;
-			} elseif ( 'IS NOT' === $this->operator || '!=' === $this->operator ) {
-				return ! $cookie_exists;
-			}
+            // Handle operators for existence check.
+            if ('IS' === $this->operator || '=' === $this->operator || 'EXISTS' === $this->operator) {
+                return $cookie_exists;
+            } elseif ('IS NOT' === $this->operator || '!=' === $this->operator) {
+                return ! $cookie_exists;
+            }
 
-			return $cookie_exists;
-		}
+            return $cookie_exists;
+        }
 
-		// Value comparison - use standard BaseCondition logic.
-		return parent::matches( $context );
-	}
+        // Value comparison - use standard BaseCondition logic.
+        return parent::matches($context);
+    }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return string The cookie value or empty string if not found.
-	 */
-	protected function get_actual_value( array $context ): string {
-		$cookie_name = $this->get_cookie_name();
+    /**
+     * Get the actual value from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return string The cookie value or empty string if not found.
+     */
+    protected function get_actual_value(Context $context): string
+    {
+        $cookie_name = $this->get_cookie_name();
 
-		if ( empty( $cookie_name ) ) {
-			return '';
-		}
+        if (empty($cookie_name)) {
+            return '';
+        }
 
-		$cookies = $this->get_cookies_from_context( $context );
-		$value = $this->find_cookie_value( $cookie_name, $cookies );
+        $cookies = $this->get_cookies_from_context($context);
+        $value = $this->find_cookie_value($cookie_name, $cookies);
 
-		return is_string( $value ) ? $value : '';
-	}
+        return is_string($value) ? $value : '';
+    }
 
-	/**
-	 * Get the cookie name from config.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The cookie name or empty string.
-	 */
-	private function get_cookie_name(): string {
-		$cookie_name_raw = $this->config['name'] ?? $this->config['cookie'] ?? '';
-		return is_string( $cookie_name_raw ) ? $cookie_name_raw : '';
-	}
+    /**
+     * Get the cookie name from config.
+     *
+     * @since 0.1.0
+     *
+     * @return string The cookie name or empty string.
+     */
+    private function get_cookie_name(): string
+    {
+        $cookie_name_raw = $this->config['name'] ?? $this->config['cookie'] ?? '';
+        return is_string($cookie_name_raw) ? $cookie_name_raw : '';
+    }
 
-	/**
-	 * Get the cookie array from context.
-	 *
-	 * Primarily uses $context['request']['cookies'], with backwards compatibility fallback.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return array<string, string> The cookie array with cookie names as keys and values.
-	 */
-	private function get_cookies_from_context( array $context ): array {
-		if ( isset( $context['request'] ) && is_array( $context['request'] ) ) {
-			if ( isset( $context['request']['cookies'] ) && is_array( $context['request']['cookies'] ) ) {
-				return $this->sanitize_cookies( $context['request']['cookies'] );
-			}
-		}
+    /**
+     * Get the cookie array from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return array<string, string> The cookie array with cookie names as keys and values.
+     */
+    private function get_cookies_from_context(Context $context): array
+    {
+        // Ensure cookie data is loaded.
+        $context->load('cookie');
 
-		return array();
-	}
+        // Get cookie data from context.
+        $cookies = $context->get('cookie', array());
 
-	/**
-	 * Sanitize the cookie array to ensure all values are strings.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $cookies Raw cookies array.
-	 * @return array<string, string> Sanitized cookies with string values only.
-	 */
-	private function sanitize_cookies( array $cookies ): array {
-		$sanitized = array();
+        if (! is_array($cookies)) {
+            return array();
+        }
 
-		foreach ( $cookies as $key => $value ) {
-			if ( is_string( $key ) && ( is_string( $value ) || is_numeric( $value ) ) ) {
-				$sanitized[ $key ] = (string) $value;
-			}
-		}
+        return $this->sanitize_cookies($cookies);
+    }
 
-		return $sanitized;
-	}
+    /**
+     * Sanitize the cookie array to ensure all values are strings.
+     *
+     * @since 0.1.0
+     *
+     * @param array<string, mixed> $cookies Raw cookies array.
+     * @return array<string, string> Sanitized cookies with string values only.
+     */
+    private function sanitize_cookies(array $cookies): array
+    {
+        $sanitized = array();
 
-	/**
-	 * Check if a cookie exists in the cookie array.
-	 *
-	 * Supports three matching modes:
-	 * - Regex patterns (enclosed in forward slashes): /^session_[a-z]+$/
-	 * - Wildcard patterns (* and ?): session_*, user_?
-	 * - Exact match (case-insensitive): session_id
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string               $cookie_name The cookie name or pattern to search for.
-	 * @param array<string,string> $cookies     The cookie array.
-	 * @return bool True if a cookie exists, false otherwise.
-	 */
-	private function cookie_exists( string $cookie_name, array $cookies ): bool {
-		// Check if the pattern is a regex (enclosed in /).
-		if ( preg_match( '/^\/.*\/$/', $cookie_name ) ) {
-			foreach ( $cookies as $key => $value ) {
-				if ( @preg_match( $cookie_name, $key ) === 1 ) {
-					return true;
-				}
-			}
-			return false;
-		}
+        foreach ($cookies as $key => $value) {
+            if (is_string($key) && ( is_string($value) || is_numeric($value) )) {
+                $sanitized[ $key ] = (string) $value;
+            }
+        }
 
-		// Check if the pattern contains wildcards (* or ?).
-		if ( strpos( $cookie_name, '*' ) !== false || strpos( $cookie_name, '?' ) !== false ) {
-			$regex = '/^' . str_replace(
-				array( '\\*', '\\?' ),
-				array( '.*', '.' ),
-				preg_quote( $cookie_name, '/' )
-			) . '$/i';
+        return $sanitized;
+    }
 
-			foreach ( $cookies as $key => $value ) {
-				if ( preg_match( $regex, $key ) === 1 ) {
-					return true;
-				}
-			}
-			return false;
-		}
+    /**
+     * Check if a cookie exists in the cookie array.
+     *
+     * Supports three matching modes:
+     * - Regex patterns (enclosed in forward slashes): /^session_[a-z]+$/
+     * - Wildcard patterns (* and ?): session_*, user_?
+     * - Exact match (case-insensitive): session_id
+     *
+     * @since 0.1.0
+     *
+     * @param string               $cookie_name The cookie name or pattern to search for.
+     * @param array<string,string> $cookies     The cookie array.
+     * @return bool True if a cookie exists, false otherwise.
+     */
+    private function cookie_exists(string $cookie_name, array $cookies): bool
+    {
+        // Check if the pattern is a regex (enclosed in /).
+        if (preg_match('/^\/.*\/$/', $cookie_name)) {
+            foreach ($cookies as $key => $value) {
+                if (@preg_match($cookie_name, $key) === 1) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-		// Fall back to exact case-insensitive match.
-		$cookie_name_lower = strtolower( $cookie_name );
-		foreach ( $cookies as $key => $value ) {
-			if ( strtolower( $key ) === $cookie_name_lower ) {
-				return true;
-			}
-		}
+        // Check if the pattern contains wildcards (* or ?).
+        if (strpos($cookie_name, '*') !== false || strpos($cookie_name, '?') !== false) {
+            $regex = '/^' . str_replace(
+                array( '\\*', '\\?' ),
+                array( '.*', '.' ),
+                preg_quote($cookie_name, '/')
+            ) . '$/i';
 
-		return false;
-	}
+            foreach ($cookies as $key => $value) {
+                if (preg_match($regex, $key) === 1) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-	/**
-	 * Find cookie value by name or pattern.
-	 *
-	 * Supports three matching modes:
-	 * - Regex patterns (enclosed in forward slashes): /^session_[a-z]+$/
-	 * - Wildcard patterns (* and ?): session_*, user_?
-	 * - Exact match (case-insensitive): session_id
-	 *
-	 * Returns the first matching cookie value.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string               $cookie_name The cookie name or pattern to search for.
-	 * @param array<string,string> $cookies     The cookie array.
-	 * @return string|null The cookie value if found, null otherwise.
-	 */
-	private function find_cookie_value( string $cookie_name, array $cookies ): ?string {
-		// Check if the pattern is a regex (enclosed in /).
-		if ( preg_match( '/^\/.*\/$/', $cookie_name ) ) {
-			foreach ( $cookies as $key => $value ) {
-				if ( @preg_match( $cookie_name, $key ) === 1 ) {
-					return $value;
-				}
-			}
-			return null;
-		}
+        // Fall back to exact case-insensitive match.
+        $cookie_name_lower = strtolower($cookie_name);
+        foreach ($cookies as $key => $value) {
+            if (strtolower($key) === $cookie_name_lower) {
+                return true;
+            }
+        }
 
-		// Check if the pattern contains wildcards (* or ?).
-		if ( strpos( $cookie_name, '*' ) !== false || strpos( $cookie_name, '?' ) !== false ) {
-			$regex = '/^' . str_replace(
-				array( '\\*', '\\?' ),
-				array( '.*', '.' ),
-				preg_quote( $cookie_name, '/' )
-			) . '$/i';
+        return false;
+    }
 
-			foreach ( $cookies as $key => $value ) {
-				if ( preg_match( $regex, $key ) === 1 ) {
-					return $value;
-				}
-			}
-			return null;
-		}
+    /**
+     * Find cookie value by name or pattern.
+     *
+     * Supports three matching modes:
+     * - Regex patterns (enclosed in forward slashes): /^session_[a-z]+$/
+     * - Wildcard patterns (* and ?): session_*, user_?
+     * - Exact match (case-insensitive): session_id
+     *
+     * Returns the first matching cookie value.
+     *
+     * @since 0.1.0
+     *
+     * @param string               $cookie_name The cookie name or pattern to search for.
+     * @param array<string,string> $cookies     The cookie array.
+     * @return string|null The cookie value if found, null otherwise.
+     */
+    private function find_cookie_value(string $cookie_name, array $cookies): ?string
+    {
+        // Check if the pattern is a regex (enclosed in /).
+        if (preg_match('/^\/.*\/$/', $cookie_name)) {
+            foreach ($cookies as $key => $value) {
+                if (@preg_match($cookie_name, $key) === 1) {
+                    return $value;
+                }
+            }
+            return null;
+        }
 
-		// Fall back to exact case-insensitive match.
-		$cookie_name_lower = strtolower( $cookie_name );
-		foreach ( $cookies as $key => $value ) {
-			if ( strtolower( $key ) === $cookie_name_lower ) {
-				return $value;
-			}
-		}
+        // Check if the pattern contains wildcards (* or ?).
+        if (strpos($cookie_name, '*') !== false || strpos($cookie_name, '?') !== false) {
+            $regex = '/^' . str_replace(
+                array( '\\*', '\\?' ),
+                array( '.*', '.' ),
+                preg_quote($cookie_name, '/')
+            ) . '$/i';
 
-		return null;
-	}
+            foreach ($cookies as $key => $value) {
+                if (preg_match($regex, $key) === 1) {
+                    return $value;
+                }
+            }
+            return null;
+        }
+
+        // Fall back to exact case-insensitive match.
+        $cookie_name_lower = strtolower($cookie_name);
+        foreach ($cookies as $key => $value) {
+            if (strtolower($key) === $cookie_name_lower) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
 }

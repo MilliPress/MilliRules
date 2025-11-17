@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Post Status Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class PostStatus
@@ -34,53 +36,56 @@ use MilliRules\Conditions\BaseCondition;
  * - ->post_status('publish') // exact match
  * - ->post_status(['publish', 'private'], 'IN') // multiple statuses
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class PostStatus extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'post_status';
-	}
+class PostStatus extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'post_status';
+    }
 
-	/**
-	 * Get the actual value from WordPress.
-	 *
-	 * Does not use context - only WordPress APIs.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context (ignored).
-	 * @return string The current post status.
-	 */
-	protected function get_actual_value( array $context ): string {
-		$post = null;
+    /**
+     * Get the actual value from WordPress.
+     *
+     * Does not use context - only WordPress APIs.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context (ignored).
+     * @return string The current post status.
+     */
+    protected function get_actual_value(Context $context): string
+    {
+        $post = null;
 
-		// Try to get post from the queried object.
-		if ( function_exists( 'get_queried_object' ) ) {
-			$queried = get_queried_object();
+        // Try to get post from the queried object.
+        if (function_exists('get_queried_object')) {
+            $queried = get_queried_object();
 
-			// If it's a WP_Post object, use it.
-			if ( $queried instanceof \WP_Post ) {
-				$post = $queried;
-			}
-		}
+            // If it's a WP_Post object, use it.
+            if ($queried instanceof \WP_Post) {
+                $post = $queried;
+            }
+        }
 
-		// Fallback to global $post if not found yet.
-		if ( null === $post && isset( $GLOBALS['post'] ) && $GLOBALS['post'] instanceof \WP_Post ) {
-			$post = $GLOBALS['post'];
-		}
+        // Fallback to global $post if not found yet.
+        if (null === $post && isset($GLOBALS['post']) && $GLOBALS['post'] instanceof \WP_Post) {
+            $post = $GLOBALS['post'];
+        }
 
-		// If we have a post, return its status.
-		if ( null !== $post ) {
-			return (string) $post->post_status;
-		}
+        // If we have a post, return its status.
+        if (null !== $post) {
+            return (string) $post->post_status;
+        }
 
-		return '';
-	}
+        return '';
+    }
 }

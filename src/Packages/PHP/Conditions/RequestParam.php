@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Request Parameter Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class RequestParam
@@ -41,39 +43,49 @@ use MilliRules\Conditions\BaseCondition;
  * - ->request_param('action', 'edit') // exact match
  * - ->request_param('ref', 'google*', 'LIKE') // pattern match
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class RequestParam extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'request_param';
-	}
+class RequestParam extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'request_param';
+    }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return string The parameter value or empty string if not found.
-	 */
-	protected function get_actual_value( array $context ): string {
-		if ( ! isset( $context['request'] ) || ! is_array( $context['request'] ) ) {
-			return '';
-		}
+    /**
+     * Get the actual value from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return string The parameter value or empty string if not found.
+     */
+    protected function get_actual_value(Context $context): string
+    {
+        // Ensure request parameters are loaded.
+        $context->load('param');
 
-		$param_name = $this->config['name'] ?? $this->config['param'] ?? '';
+        $param_name = $this->config['name'] ?? $this->config['param'] ?? '';
 
-		if ( empty( $param_name ) ) {
-			return '';
-		}
+        if (empty($param_name)) {
+            return '';
+        }
 
-		return $context['request']['params'][ $param_name ] ?? '';
-	}
+        // Get parameter value from context.
+        $params = $context->get('param', array());
+
+        if (! is_array($params)) {
+            return '';
+        }
+
+        $value = $params[ $param_name ] ?? '';
+        return is_string($value) ? $value : '';
+    }
 }

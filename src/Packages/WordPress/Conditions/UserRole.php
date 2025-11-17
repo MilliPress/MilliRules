@@ -1,4 +1,5 @@
 <?php
+
 /**
  * User Role Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class UserRole
@@ -32,72 +34,79 @@ use MilliRules\Conditions\BaseCondition;
  * - ->user_role('administrator') // has admin role
  * - ->user_role(['editor', 'administrator'], 'IN') // has any of these roles
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class UserRole extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'user_role';
-	}
+class UserRole extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'user_role';
+    }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return array<int, string> Array of user roles.
-	 */
-	protected function get_actual_value( array $context ): array {
-		if ( ! isset( $context['wp']['user'] ) || ! is_array( $context['wp']['user'] ) ) {
-			return array();
-		}
+    /**
+     * Get the actual value from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return array<int, string> Array of user roles.
+     */
+    protected function get_actual_value(Context $context): array
+    {
+        $context->load('user');
+        $user = $context->get('user');
 
-		$roles = $context['wp']['user']['roles'] ?? array();
-		return is_array( $roles ) ? $roles : array();
-	}
+        if (! is_array($user)) {
+            return array();
+        }
 
-	/**
-	 * Compare actual and expected values.
-	 *
-	 * Overrides parent to handle array-to-string/array comparisons for role matching.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param mixed $actual   The actual value from context (array of roles).
-	 * @param mixed $expected The expected value from config (string or array).
-	 * @return bool True if comparison matches, false otherwise.
-	 */
-	protected function compare( $actual, $expected ): bool {
-		// Ensure actual is an array.
-		$actual_roles = is_array( $actual ) ? $actual : array();
+        $roles = $user['roles'] ?? array();
+        return is_array($roles) ? $roles : array();
+    }
 
-		// Convert expected to array if it's a string.
-		$expected_roles = is_array( $expected ) ? $expected : array( $expected );
+    /**
+     * Compare actual and expected values.
+     *
+     * Overrides parent to handle array-to-string/array comparisons for role matching.
+     *
+     * @since 0.1.0
+     *
+     * @param mixed $actual   The actual value from context (array of roles).
+     * @param mixed $expected The expected value from config (string or array).
+     * @return bool True if comparison matches, false otherwise.
+     */
+    protected function compare($actual, $expected): bool
+    {
+        // Ensure actual is an array.
+        $actual_roles = is_array($actual) ? $actual : array();
 
-		// Check for intersection based on operator.
-		$intersection = array_intersect( $actual_roles, $expected_roles );
-		$has_intersection = ! empty( $intersection );
+        // Convert expected to array if it's a string.
+        $expected_roles = is_array($expected) ? $expected : array( $expected );
 
-		switch ( $this->operator ) {
-			case 'IN':
-			case '=':
-			case 'EQUALS':
-				return $has_intersection;
+        // Check for intersection based on operator.
+        $intersection = array_intersect($actual_roles, $expected_roles);
+        $has_intersection = ! empty($intersection);
 
-			case 'NOT IN':
-			case '!=':
-				return ! $has_intersection;
+        switch ($this->operator) {
+            case 'IN':
+            case '=':
+            case 'EQUALS':
+                return $has_intersection;
 
-			default:
-				// Fall back to parent comparison for other operators.
-				return parent::compare( $actual, $expected );
-		}
-	}
+            case 'NOT IN':
+            case '!=':
+                return ! $has_intersection;
+
+            default:
+                // Fall back to parent comparison for other operators.
+                return parent::compare($actual, $expected);
+        }
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Taxonomy Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class Taxonomy
@@ -37,55 +39,60 @@ use MilliRules\Conditions\BaseCondition;
  * - ->taxonomy('category') // exact match
  * - ->taxonomy(['category', 'post_tag'], 'IN') // multiple taxonomies
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class Taxonomy extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'taxonomy';
-	}
+class Taxonomy extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'taxonomy';
+    }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return string The current taxonomy name.
-	 */
-	protected function get_actual_value( array $context ): string {
-		// Try to get from context first.
-		if ( isset( $context['wp']['term']['taxonomy'] ) && is_string( $context['wp']['term']['taxonomy'] ) ) {
-			return $context['wp']['term']['taxonomy'];
-		}
+    /**
+     * Get the actual value from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return string The current taxonomy name.
+     */
+    protected function get_actual_value(Context $context): string
+    {
+        // Try to get from context first.
+        $context->load('term');
+        $taxonomy = $context->get('term.taxonomy');
+        if (is_string($taxonomy)) {
+            return $taxonomy;
+        }
 
-		// Fall back to WordPress functions.
-		if ( function_exists( 'get_queried_object' ) ) {
-			// Check if we're on any taxonomy archive.
-			if ( function_exists( 'is_tax' ) && is_tax() ) {
-				$term = get_queried_object();
-				if ( $term && isset( $term->taxonomy ) ) {
-					return (string) $term->taxonomy;
-				}
-			}
+        // Fall back to WordPress functions.
+        if (function_exists('get_queried_object')) {
+            // Check if we're on any taxonomy archive.
+            if (function_exists('is_tax') && is_tax()) {
+                $term = get_queried_object();
+                if ($term && isset($term->taxonomy)) {
+                    return (string) $term->taxonomy;
+                }
+            }
 
-			// Category archives.
-			if ( function_exists( 'is_category' ) && is_category() ) {
-				return 'category';
-			}
+            // Category archives.
+            if (function_exists('is_category') && is_category()) {
+                return 'category';
+            }
 
-			// Tag archives.
-			if ( function_exists( 'is_tag' ) && is_tag() ) {
-				return 'post_tag';
-			}
-		}
+            // Tag archives.
+            if (function_exists('is_tag') && is_tag()) {
+                return 'post_tag';
+            }
+        }
 
-		return '';
-	}
+        return '';
+    }
 }

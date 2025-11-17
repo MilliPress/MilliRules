@@ -12,6 +12,7 @@
 
 use MilliRules\RuleEngine;
 use MilliRules\Rules;
+use MilliRules\Context;
 
 /**
  * Basic Rule Execution Tests
@@ -44,7 +45,7 @@ test('rule engine executes simple rule with matching condition', function () {
         ]
     ];
 
-    $result = $engine->execute($rules);
+    $result = $engine->execute($rules, new Context());
 
     expect($result['rules_processed'])->toBe(1)
         ->and($result['rules_matched'])->toBe(1)
@@ -71,7 +72,7 @@ test('rule engine skips rule with non-matching condition', function () {
         ]
     ];
 
-    $result = $engine->execute($rules);
+    $result = $engine->execute($rules, new Context());
 
     expect($result['rules_processed'])->toBe(1)
         ->and($result['rules_matched'])->toBe(0);
@@ -101,7 +102,7 @@ test('rule engine respects "all" match type', function () {
         ]
     ];
 
-    $result = $engine->execute($rules);
+    $result = $engine->execute($rules, new Context());
 
     // Should not match because one condition is false
     expect($result['rules_matched'])->toBe(0);
@@ -131,7 +132,7 @@ test('rule engine respects "any" match type', function () {
         ]
     ];
 
-    $result = $engine->execute($rules);
+    $result = $engine->execute($rules, new Context());
 
     // Should match because at least one condition is true
     expect($result['rules_matched'])->toBe(1);
@@ -156,7 +157,7 @@ test('rule engine respects "none" match type', function () {
         ]
     ];
 
-    $result = $engine->execute($rules);
+    $result = $engine->execute($rules, new Context());
 
     // Should match because no conditions are true
     expect($result['rules_matched'])->toBe(1);
@@ -183,7 +184,8 @@ test('rule engine passes context to conditions', function () {
         ]
     ];
 
-    $context = ['user_id' => 123];
+    $context = new Context();
+    $context->set('user_id', 123);
     $result = $engine->execute($rules, $context);
 
     expect($result['rules_matched'])->toBe(1)
@@ -215,7 +217,8 @@ test('rule engine allows actions to access context', function () {
         ]
     ];
 
-    $context = ['user_id' => 456];
+    $context = new Context();
+    $context->set('user_id', 456);
     $result = $engine->execute($rules, $context);
 
     expect($capturedUserId)->toBe(456);
@@ -242,7 +245,7 @@ test('rule engine skips disabled rules', function () {
         ]
     ];
 
-    $result = $engine->execute($rules);
+    $result = $engine->execute($rules, new Context());
 
     // Rule is processed but not matched because it's disabled
     expect($result['rules_processed'])->toBe(1)
@@ -297,7 +300,7 @@ test('rule engine executes multiple rules in sequence', function () {
         ]
     ];
 
-    $result = $engine->execute($rules);
+    $result = $engine->execute($rules, new Context());
 
     expect($result['rules_matched'])->toBe(3)
         ->and($executionOrder)->toBe(['first', 'second', 'third']);
@@ -318,7 +321,7 @@ test('rule engine matches rules with empty conditions', function () {
         ]
     ];
 
-    $result = $engine->execute($rules);
+    $result = $engine->execute($rules, new Context());
 
     // Rules with no conditions should match
     expect($result['rules_matched'])->toBe(1);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Request URL Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class RequestUrl
@@ -39,30 +41,37 @@ use MilliRules\Conditions\BaseCondition;
  * - ->request_url('/api/*', 'LIKE') // explicit pattern match
  * - ->request_url('/login', '=') // exact match
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class RequestUrl extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'request_url';
-	}
+class RequestUrl extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'request_url';
+    }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, array<string, mixed>> $context The execution context.
-	 * @return string The request URI.
-	 */
-	protected function get_actual_value( array $context ): string {
-		$uri = $context['request']['uri'] ?? '';
-		return is_string( $uri ) ? $uri : '';
-	}
+    /**
+     * Get the actual value from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return string The request URI.
+     */
+    protected function get_actual_value(Context $context): string
+    {
+        // Ensure HTTP request data is loaded.
+        $context->load('request');
+
+        // Get the URI from context.
+        $uri = $context->get('request.uri', '');
+        return is_string($uri) ? $uri : '';
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Term Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class Term
@@ -36,37 +38,40 @@ use MilliRules\Conditions\BaseCondition;
  * - ->term('featured') // exact match
  * - ->term(['news', 'featured'], 'IN') // multiple terms
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class Term extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'term';
-	}
+class Term extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'term';
+    }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context.
-	 * @return string The current term slug.
-	 */
-	protected function get_actual_value( array $context ): string {
-		// Fall back to WordPress functions.
-		if ( function_exists( 'get_queried_object' ) ) {
-			$term = get_queried_object();
-			if ( $term && isset( $term->slug ) ) {
-				return (string) $term->slug;
-			}
-		}
+    /**
+     * Get the actual value from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return string The current term slug.
+     */
+    protected function get_actual_value(Context $context): string
+    {
+        // Fall back to WordPress functions.
+        if (function_exists('get_queried_object')) {
+            $term = get_queried_object();
+            if ($term && isset($term->slug)) {
+                return (string) $term->slug;
+            }
+        }
 
-		return '';
-	}
+        return '';
+    }
 }

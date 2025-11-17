@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Request Method Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class RequestMethod
@@ -38,30 +40,34 @@ use MilliRules\Conditions\BaseCondition;
  * - ->request_method('POST') // exact match
  * - ->request_method(['GET', 'HEAD'], 'IN') // multiple methods
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class RequestMethod extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'request_method';
-	}
+class RequestMethod extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'request_method';
+    }
 
-	/**
-	 * Get the actual value from context.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, array<string, mixed>> $context The execution context.
-	 * @return string The HTTP request method (uppercase).
-	 */
-	protected function get_actual_value( array $context ): string {
-		$method = $context['request']['method'] ?? '';
-		return is_string( $method ) ? strtoupper( $method ) : '';
-	}
+    /**
+     * Get the actual value from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return string The HTTP request method (uppercase).
+     */
+    protected function get_actual_value(Context $context): string
+    {
+        $context->load('request');
+        $method = $context->get('request.method', '');
+        return is_string($method) ? strtoupper($method) : '';
+    }
 }

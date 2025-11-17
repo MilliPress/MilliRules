@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Post Type Condition
  *
@@ -11,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 /**
  * Class PostType
@@ -39,53 +41,37 @@ use MilliRules\Conditions\BaseCondition;
  * - ->post_type('page') // exact match
  * - ->post_type(['post', 'page'], 'IN') // multiple types
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
-class PostType extends BaseCondition {
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string The condition type identifier.
-	 */
-	public function get_type(): string {
-		return 'post_type';
-	}
+class PostType extends BaseCondition
+{
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
+    public function get_type(): string
+    {
+        return 'post_type';
+    }
 
-	/**
-	 * Get the actual value from WordPress.
-	 *
-	 * Does not use context - only WordPress APIs.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array<string, mixed> $context The execution context (ignored).
-	 * @return string The current post type.
-	 */
-	protected function get_actual_value( array $context ): string {
-		$post = null;
+    /**
+     * Get the actual value from context.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return string The current post type.
+     */
+    protected function get_actual_value(Context $context): string
+    {
+        // Ensure WordPress post data is loaded.
+        $context->load('post');
 
-		// Try to get post from the queried object.
-		if ( function_exists( 'get_queried_object' ) ) {
-			$queried = get_queried_object();
-
-			// If it's a WP_Post object, use it.
-			if ( $queried instanceof \WP_Post ) {
-				$post = $queried;
-			}
-		}
-
-		// Fallback to global $post if not found yet.
-		if ( null === $post && isset( $GLOBALS['post'] ) && $GLOBALS['post'] instanceof \WP_Post ) {
-			$post = $GLOBALS['post'];
-		}
-
-		// If we have a post, return its type.
-		if ( null !== $post ) {
-			return (string) $post->post_type;
-		}
-
-		return '';
-	}
+        // Get post type from context.
+        $post_type = $context->get('post.type', '');
+        return is_string($post_type) ? $post_type : '';
+    }
 }
