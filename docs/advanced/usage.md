@@ -24,6 +24,7 @@ require_once WPMU_PLUGIN_DIR . '/millirules-vendor/autoload.php';
 
 use MilliRules\MilliRules;
 use MilliRules\Rules;
+use MilliRules\Context;
 
 // Initialize with PHP package only (WordPress not loaded yet)
 MilliRules::init(['PHP']);
@@ -46,8 +47,8 @@ $result = MilliRules::execute_rules(['PHP']);
 
 ```php
 <?php
-Rules::register_action('check_cache', function($context, $config) {
-    $cache_key = 'page_' . md5($context['request']['uri'] ?? '');
+Rules::register_action('check_cache', function(Context $context, $config) {
+    $cache_key = 'page_' . md5($context->get('request.uri', '') ?? '');
     $cached = get_transient($cache_key);
 
     if ($cached !== false) {
@@ -59,8 +60,8 @@ Rules::register_action('check_cache', function($context, $config) {
     }
 });
 
-Rules::register_action('save_to_cache', function($context, $config) {
-    $cache_key = 'page_' . md5($context['request']['uri'] ?? '');
+Rules::register_action('save_to_cache', function(Context $context, $config) {
+    $cache_key = 'page_' . md5($context->get('request.uri', '') ?? '');
     $duration = $config['duration'] ?? 3600;
 
     ob_start(function($buffer) use ($cache_key, $duration) {
@@ -139,7 +140,7 @@ add_action('init', function() {
 // Enable comprehensive debugging
 define('MILLIRULES_DEBUG', true);
 
-Rules::register_action('debug_log', function($context, $config) {
+Rules::register_action('debug_log', function(Context $context, $config) {
     if (!defined('MILLIRULES_DEBUG') || !MILLIRULES_DEBUG) {
         return;
     }
@@ -200,7 +201,7 @@ error_log("Memory used: " . size_format($memory_used));
 
 ```php
 <?php
-Rules::register_condition('debug_context', function($context, $config) {
+Rules::register_condition('debug_context', function(Context $context, $config) {
     error_log('=== Context Debug ===');
     error_log('Full context: ' . print_r($context, true));
     error_log('===================');
@@ -337,7 +338,7 @@ add_action('init', function() {
 ```php
 <?php
 // Add custom data to context before execution
-add_filter('millirules_context', function($context) {
+add_filter('millirules_context', function(Context $context) {
     $context['custom'] = [
         'api_key' => get_option('my_api_key'),
         'feature_flags' => get_option('feature_flags', []),
@@ -353,7 +354,7 @@ add_filter('millirules_context', function($context) {
 ```php
 <?php
 // Transform context for specific rules
-Rules::register_action('with_transformed_context', function($context, $config) {
+Rules::register_action('with_transformed_context', function(Context $context, $config) {
     // Add computed values
     $context['computed'] = [
         'is_business_hours' => check_business_hours(),
@@ -377,7 +378,7 @@ Rules::register_action('with_transformed_context', function($context, $config) {
 
 ```php
 <?php
-Rules::register_action('safe_api_call', function($context, $config) {
+Rules::register_action('safe_api_call', function(Context $context, $config) {
     try {
         $response = wp_remote_post($config['url'], [
             'body' => json_encode($config['data']),
@@ -415,7 +416,7 @@ Rules::register_action('safe_api_call', function($context, $config) {
 
 ```php
 <?php
-Rules::register_action('notify_on_error', function($context, $config) {
+Rules::register_action('notify_on_error', function(Context $context, $config) {
     try {
         // Risky operation
         perform_critical_operation($config);
@@ -457,7 +458,7 @@ class MilliRulesTest extends WP_UnitTestCase {
 
     public function test_api_cache_rule() {
         // Register test action
-        Rules::register_action('test_cache', function($context, $config) {
+        Rules::register_action('test_cache', function(Context $context, $config) {
             update_option('test_cache_called', true);
         });
 
@@ -494,7 +495,7 @@ function test_complete_workflow() {
 
     $executed_actions = [];
 
-    Rules::register_action('track_execution', function($context, $config) use (&$executed_actions) {
+    Rules::register_action('track_execution', function(Context $context, $config) use (&$executed_actions) {
         $executed_actions[] = $config['step'];
     });
 

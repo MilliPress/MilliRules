@@ -29,6 +29,16 @@
       "MilliRules\\Tests\\": "tests/"
     }
   },
+  "scripts": {
+    "test": [
+      "@test:unit",
+      "@test:phpstan"
+    ],
+    "test:unit": "pest",
+    "test:phpstan": "phpstan",
+    "lint": "phpcs --standard=PSR12 src tests",
+    "fix": "phpcbf --standard=PSR12 src tests"
+  },
   "minimum-stability": "dev",
   "prefer-stable": true,
   "config": {

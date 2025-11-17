@@ -36,7 +36,7 @@ Check the request URL or URI path against a pattern or value.
 
 **Supported Operators**: All operators (=, !=, LIKE, REGEXP, IN, NOT IN, EXISTS, etc.)
 
-**Context Data Used**: `$context['request']['uri']`
+**Context Data Used**: `$context->get('request.uri', '')`
 
 #### Examples
 
@@ -125,7 +125,7 @@ Check the HTTP request method (GET, POST, PUT, DELETE, etc.).
 
 **Supported Operators**: =, !=, IN, NOT IN, EXISTS
 
-**Context Data Used**: `$context['request']['method']`
+**Context Data Used**: `$context->get('request.method', '')`
 
 #### Examples
 
@@ -521,7 +521,7 @@ Check if a user is logged in to WordPress.
 
 **Supported Operators**: =, !=, IS, IS NOT
 
-**Context Data Used**: `$context['wp']['user']['id']` (0 = not logged in)
+**Context Data Used**: `$context->get('user.id', 0)` (0 = not logged in)
 
 #### Examples
 
@@ -866,7 +866,7 @@ When built-in conditions aren't sufficient, create custom conditions:
 ```php
 <?php
 // Register custom condition
-Rules::register_condition('is_weekend', function($context) {
+Rules::register_condition('is_weekend', function(Context $context) {
     return date('N') >= 6; // Saturday or Sunday
 });
 

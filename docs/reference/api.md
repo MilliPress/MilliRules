@@ -350,14 +350,14 @@ Register custom condition callback.
 
 **Parameters**:
 - `$type` (string): Condition type identifier
-- `$callback` (callable): Callback function `function($context, $config): bool`
+- `$callback` (callable): Callback function `function(Context $context, $config): bool`
 
 **Returns**: `void`
 
 **Example**:
 ```php
 <?php
-Rules::register_condition('is_weekend', function($context) {
+Rules::register_condition('is_weekend', function(Context $context) {
     return date('N') >= 6;
 });
 ```
@@ -370,14 +370,14 @@ Register custom action callback.
 
 **Parameters**:
 - `$type` (string): Action type identifier
-- `$callback` (callable): Callback function `function($context, $config): void`
+- `$callback` (callable): Callback function `function(Context $context, $config): void`
 
 **Returns**: `void`
 
 **Example**:
 ```php
 <?php
-Rules::register_action('log', function($context, $config) {
+Rules::register_action('log', function(Context $context, $config) {
     error_log($config['value'] ?? '');
 });
 ```
@@ -644,7 +644,7 @@ Interface for all actions.
 
 #### Methods
 
-##### `execute(array $context): void`
+##### `execute(Context $context): void`
 
 Execute action.
 
@@ -695,7 +695,7 @@ Provides operator support and comparison logic.
 
 #### Methods
 
-##### `__construct(array $config, array $context)`
+##### `__construct(array $config, Context $context)`
 
 Constructor.
 
@@ -716,7 +716,7 @@ Check if condition matches (implemented).
 
 ---
 
-##### `abstract protected function get_actual_value(array $context)`
+##### `abstract protected function get_actual_value(Context $context)`
 
 Get actual value to compare (must implement).
 
@@ -750,7 +750,7 @@ Provides placeholder resolution.
 
 #### Methods
 
-##### `__construct(array $config, array $context)`
+##### `__construct(array $config, Context $context)`
 
 Constructor.
 
@@ -771,7 +771,7 @@ Resolve placeholders in value.
 
 ---
 
-##### `abstract public function execute(array $context): void`
+##### `abstract public function execute(Context $context): void`
 
 Execute action (must implement).
 

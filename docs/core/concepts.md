@@ -272,18 +272,19 @@ Create reusable action classes:
 
 ```php
 <?php
-use MilliRules\Interfaces\ActionInterface;
+use MilliRules\Actions\ActionInterface;
+use MilliRules\Context;
 
 class SendEmailAction implements ActionInterface {
     private $config;
     private $context;
 
-    public function __construct(array $config, array $context) {
+    public function __construct(array $config, Context $context) {
         $this->config = $config;
         $this->context = $context;
     }
 
-    public function execute(array $context): void {
+    public function execute(Context $context): void {
         $to = $this->config['value'] ?? '';
         wp_mail($to, 'Subject', 'Message');
     }
@@ -310,12 +311,17 @@ Trigger WordPress actions or filters:
 
 ## Context: Shared Data Pool
 
-The **context** is a shared associative array that contains all the data available to conditions and actions.
+The **context** is an object that provides lazy-loaded access to all the data available to conditions and actions. Context sections are loaded on-demand, meaning only the data you actually need is retrieved.
 
 ### Context Structure
 
+Context provides a flat, organized structure:
+
 ```php
 <?php
+use MilliRules\Context;
+
+// Context sections (loaded on-demand):
 [
     'request' => [
         'method' => 'GET',
@@ -328,52 +334,93 @@ The **context** is a shared associative array that contains all the data availab
         'user_agent' => 'Mozilla/5.0...',
         'headers' => [...],
         'ip' => '192.168.1.1',
-        'cookies' => [...],
-        'params' => [...],
     ],
-    'wp' => [
-        'post' => [...],
-        'user' => [...],
-        'query' => [...],
-        'constants' => [...],
-    ],
+    'cookie' => [...],       // Cookies (separate from request)
+    'param' => [...],        // Request parameters (GET/POST)
+    'post' => [...],         // WordPress post data
+    'user' => [...],         // WordPress user data
+    'query' => [...],        // WordPress query conditionals
+    'query_vars' => [...],   // WordPress query variables
+    'term' => [...],         // WordPress taxonomy terms
     // Custom package data...
 ]
 ```
 
-### Context Building
+### Lazy Loading
 
-Context is automatically built from loaded packages:
+Context data is loaded **only when needed**. This provides significant performance benefits by avoiding unnecessary data retrieval:
 
 ```php
 <?php
 use MilliRules\MilliRules;
+use MilliRules\Context;
 
-// Initialize packages (builds context automatically)
+// Initialize MilliRules
 MilliRules::init();
 
-// Get current context
-$context = MilliRules::build_context();
-print_r($context);
+// Context is created but data isn't loaded yet
+$context = new Context();
+
+// Data loads automatically when accessed
+$uri = $context->get('request.uri');  // Triggers 'request' provider loading
+
+// Access nested values using dot notation
+$userId = $context->get('user.id', 0);  // Triggers 'user' provider loading
 ```
+
+**Key features:**
+- **On-demand loading**: Context sections load only when accessed
+- **Memoization**: Each section loads at most once per request
+- **Granular providers**: Separate providers for request, cookie, and param data
+- **Automatic dependencies**: Dependencies load automatically when needed
 
 ### Accessing Context in Custom Code
 
+Use the Context object methods to access data:
+
 ```php
 <?php
-Rules::register_action('log_context', function($context, $config) {
-    // Access request data
-    $method = $context['request']['method'] ?? 'UNKNOWN';
+use MilliRules\Context;
 
-    // Access WordPress data (if available)
-    $user_id = $context['wp']['user']['id'] ?? 0;
+Rules::register_action('log_context', function(Context $context, $config) {
+    // Load and access request data
+    $context->load('request');
+    $method = $context->get('request.method', 'UNKNOWN');
+
+    // Load and access WordPress user data (if available)
+    $context->load('user');
+    $user_id = $context->get('user.id', 0);
 
     error_log("Request: $method, User: $user_id");
 });
 ```
 
+### Context Methods
+
+The Context class provides several useful methods:
+
+```php
+<?php
+// Get a value using dot notation
+$value = $context->get('post.type', 'post');
+
+// Set a value using dot notation
+$context->set('custom.data', 'value');
+
+// Check if a path exists
+if ($context->has('user.id')) {
+    // User data is loaded
+}
+
+// Explicitly load a context section
+$context->load('request');
+
+// Export context as array (for debugging)
+$array = $context->to_array();
+```
+
 > [!IMPORTANT]
-> Context is built once at the beginning of rule execution. It's a snapshot of the current state and won't reflect changes made during execution unless you explicitly modify it.
+> Context sections are loaded lazily. Only the data actually needed by your rules will be retrieved, improving performance significantly.
 
 ## Packages: Modular Functionality
 
@@ -592,10 +639,15 @@ Rules::create('disable_cache_dev')->order(30)  // Development override last
 
 ```php
 <?php
+use MilliRules\Context;
+
 // ✅ Good - uses context effectively
-Rules::register_action('log_user_action', function($context, $config) {
-    $user = $context['wp']['user']['login'] ?? 'guest';
-    $url = $context['request']['uri'] ?? 'unknown';
+Rules::register_action('log_user_action', function(Context $context, $config) {
+    $context->load('user');
+    $context->load('request');
+
+    $user = $context->get('user.login', 'guest');
+    $url = $context->get('request.uri', 'unknown');
     error_log("User $user accessed $url");
 });
 ```

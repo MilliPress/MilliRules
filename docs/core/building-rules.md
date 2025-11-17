@@ -314,7 +314,9 @@ For simple operations, define actions inline:
 
 ```php
 <?php
-Rules::register_action('inline_log', function($context, $config) {
+use MilliRules\Context;
+
+Rules::register_action('inline_log', function(Context $context, $config) {
     $message = $config['value'] ?? 'No message';
     error_log('MilliRules: ' . $message);
 });
@@ -406,7 +408,9 @@ When built-in conditions aren't enough, use custom conditions.
 
 ```php
 <?php
-Rules::register_condition('is_weekend', function($context) {
+use MilliRules\Context;
+
+Rules::register_condition('is_weekend', function(Context $context) {
     $day = date('N'); // 1 (Monday) to 7 (Sunday)
     return $day >= 6; // Saturday or Sunday
 });
@@ -424,7 +428,9 @@ Rules::create('weekend_special')
 
 ```php
 <?php
-Rules::register_condition('time_range', function($context, $config) {
+use MilliRules\Context;
+
+Rules::register_condition('time_range', function(Context $context, $config) {
     $current_hour = (int) date('H');
     $start = $config['start'] ?? 0;
     $end = $config['end'] ?? 23;
@@ -811,8 +817,11 @@ Add debugging to your conditions:
 
 ```php
 <?php
-Rules::register_condition('debug_condition', function($context) {
-    error_log('Context: ' . print_r($context, true));
+use MilliRules\Context;
+
+Rules::register_condition('debug_condition', function(Context $context) {
+    $array = $context->to_array();
+    error_log('Context: ' . print_r($array, true));
     return true;
 });
 

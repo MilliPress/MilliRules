@@ -19,7 +19,7 @@ Placeholders are special tokens enclosed in curly braces that get replaced with 
 // Dynamic placeholder
 'value' => '{request:uri}'         // Current URL
 'value' => '{request:method}'      // HTTP method
-'value' => '{wp:user:login}'       // Current user's login
+'value' => '{user:login}'          // Current user's login
 'value' => '{cookie:session_id}'   // Session cookie value
 ```
 
@@ -31,7 +31,7 @@ The placeholder syntax uses colon-separated parts to navigate the context hierar
 {category:subcategory:key}
 ```
 
-- `category` - Top-level context category (request, wp, cookie, etc.)
+- `category` - Top-level context category (request, user, post, cookie, etc.)
 - `subcategory` - Nested category (optional, can have multiple levels)
 - `key` - Specific value to retrieve
 
@@ -42,9 +42,9 @@ The placeholder syntax uses colon-separated parts to navigate the context hierar
 '{request:uri}'              // $context['request']['uri']
 '{request:method}'           // $context['request']['method']
 '{request:headers:host}'     // $context['request']['headers']['host']
-'{wp:user:id}'              // $context['wp']['user']['id']
-'{wp:post:post_title}'      // $context['wp']['post']['post_title']
-'{cookie:session_id}'        // $context['request']['cookies']['session_id']
+'{user:id}'                  // $context['user']['id']
+'{post:title}'               // $context['post']['title']
+'{cookie:session_id}'        // $context['cookie']['session_id']
 ```
 
 ## Built-in Placeholder Categories
@@ -55,17 +55,17 @@ Access HTTP request data from the PHP package context.
 
 #### Available Request Placeholders
 
-| Placeholder | Description | Example Value |
-|------------|-------------|---------------|
-| `{request:method}` | HTTP method | `GET`, `POST` |
-| `{request:uri}` | Full request URI | `/wp-admin/edit.php` |
-| `{request:scheme}` | URL scheme | `https` |
-| `{request:host}` | Host name | `example.com` |
-| `{request:path}` | URL path | `/wp-admin/edit.php` |
-| `{request:query}` | Query string | `post_type=page` |
-| `{request:referer}` | HTTP referer | `https://example.com/previous` |
-| `{request:user_agent}` | User agent string | `Mozilla/5.0...` |
-| `{request:ip}` | Client IP address | `192.168.1.1` |
+| Placeholder            | Description       | Example Value                  |
+|------------------------|-------------------|--------------------------------|
+| `{request:method}`     | HTTP method       | `GET`, `POST`                  |
+| `{request:uri}`        | Full request URI  | `/wp-admin/edit.php`           |
+| `{request:scheme}`     | URL scheme        | `https`                        |
+| `{request:host}`       | Host name         | `example.com`                  |
+| `{request:path}`       | URL path          | `/wp-admin/edit.php`           |
+| `{request:query}`      | Query string      | `post_type=page`               |
+| `{request:referer}`    | HTTP referer      | `https://example.com/previous` |
+| `{request:user_agent}` | User agent string | `Mozilla/5.0...`               |
+| `{request:ip}`         | Client IP address | `192.168.1.1`                  |
 
 #### Request Headers
 
@@ -174,38 +174,40 @@ Access WordPress-specific data (available only when WordPress package is loaded)
 
 #### User Placeholders
 
-| Placeholder | Description | Example Value |
-|------------|-------------|---------------|
-| `{wp:user:id}` | User ID | `123` |
-| `{wp:user:login}` | User login name | `john_doe` |
-| `{wp:user:email}` | User email | `john@example.com` |
-| `{wp:user:display_name}` | Display name | `John Doe` |
-| `{wp:user:roles}` | User roles (array) | `administrator` |
+| Placeholder           | Description        | Example Value     |
+|-----------------------|--------------------|-------------------|
+| `{user:id}`           | User ID            | `123`             |
+| `{user:login}`        | User login name    | `john_doe`        |
+| `{user:email}`        | User email         | `john@example.com`|
+| `{user:display_name}` | Display name       | `John Doe`        |
+| `{user:roles}`        | User roles (array) | `administrator`   |
 
 #### Post Placeholders
 
-| Placeholder | Description | Example Value |
-|------------|-------------|---------------|
-| `{wp:post:id}` | Post ID | `456` |
-| `{wp:post:post_title}` | Post title | `My Blog Post` |
-| `{wp:post:post_type}` | Post type | `post`, `page` |
-| `{wp:post:post_status}` | Post status | `publish`, `draft` |
-| `{wp:post:post_author}` | Author ID | `123` |
+| Placeholder     | Description  | Example Value      |
+|-----------------|--------------|--------------------|
+| `{post:id}`     | Post ID      | `456`              |
+| `{post:title}`  | Post title   | `My Blog Post`     |
+| `{post:type}`   | Post type    | `post`, `page`     |
+| `{post:status}` | Post status  | `publish`, `draft` |
+| `{post:author}` | Author ID    | `123`              |
 
 #### Query Placeholders
 
-| Placeholder | Description | Example Value |
-|------------|-------------|---------------|
-| `{wp:query:is_singular}` | Is singular post | `true`, `false` |
-| `{wp:query:is_home}` | Is home page | `true`, `false` |
-| `{wp:query:is_archive}` | Is archive page | `true`, `false` |
-| `{wp:query:is_admin}` | Is admin area | `true`, `false` |
+| Placeholder           | Description      | Example Value   |
+|-----------------------|------------------|-----------------|
+| `{query:is_singular}` | Is singular post | `true`, `false` |
+| `{query:is_home}`     | Is home page     | `true`, `false` |
+| `{query:is_archive}`  | Is archive page  | `true`, `false` |
+| `{query:is_admin}`    | Is admin area    | `true`, `false` |
 
 #### Examples
 
 ```php
 <?php
-Rules::register_action('log_user_action', function($context, $config) {
+use MilliRules\Context;
+
+Rules::register_action('log_user_action', function(Context $context, $config) {
     error_log($config['message'] ?? '');
 });
 
@@ -215,7 +217,7 @@ Rules::create('log_post_edit')
         ->is_user_logged_in()
     ->then()
         ->custom('log_user_action', [
-            'message' => 'User {wp:user:login} (ID: {wp:user:id}) editing post {wp:post:id}'
+            'message' => 'User {user:login} (ID: {user:id}) editing post {post:id}'
         ])
     ->register();
 
@@ -249,7 +251,7 @@ Rules::create('notify_on_login')
         ->custom('send_notification', [
             'to' => 'admin@example.com',
             'subject' => 'User Login Alert',
-            'message' => 'User {wp:user:login} logged in from {request:ip}'
+            'message' => 'User {user:login} logged in from {request:ip}'
         ])
     ->register();
 ```
@@ -267,7 +269,7 @@ Rules::create('detailed_logging')
     ->then()
         ->custom('log_detailed', [
             'message' => '{request:method} request to {request:uri} from {request:ip} '
-                       . 'at {request:timestamp} by user {wp:user:login}'
+                       . 'at {request:timestamp} by user {user:login}'
         ])
     ->register();
 ```
@@ -472,7 +474,7 @@ Rules::create('log_with_defaults')
     ->when()->request_url('*')
     ->then()
         ->custom('log_with_fallback', [
-            'user' => '{wp:user:login}'  // Falls back to 'guest' if empty
+            'user' => '{user:login}'  // Falls back to 'guest' if empty
         ])
     ->register();
 ```
@@ -502,7 +504,7 @@ Access array values:
 ```php
 <?php
 // Access first role
-'{wp:user:roles:0}'        // First role
+'{user:roles:0}'        // First role
 
 // Access header values
 '{request:headers:accept}' // Accept header
@@ -541,7 +543,7 @@ Understanding how placeholders are resolved:
 ```php
 <?php
 // ✅ Good - clear what data is being used
-'message' => 'User {wp:user:login} accessed {request:uri}'
+'message' => 'User {user:login} accessed {request:uri}'
 
 // ❌ Bad - unclear placeholders
 'message' => 'User {u} accessed {r}'
@@ -612,7 +614,7 @@ Rules::create('php_rule', 'php')
     ->when()->request_url('/api/*')
     ->then()
         ->custom('action', [
-            'value' => '{wp:user:login}'  // Empty! WordPress not available
+            'value' => '{user:login}'  // Empty! WordPress not available
         ])
     ->register();
 
@@ -624,7 +626,7 @@ Rules::register_action('safe_wp_action', function($context, $config) {
     }
 
     $resolver = new PlaceholderResolver($context);
-    $user = $resolver->resolve('{wp:user:login}');
+    $user = $resolver->resolve('{user:login}');
     // ...
 });
 ```

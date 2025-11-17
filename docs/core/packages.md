@@ -53,17 +53,19 @@ All packages implement `PackageInterface`:
 
 ```php
 <?php
-namespace MilliRules\Interfaces;
+namespace MilliRules\Packages;
+
+use MilliRules\Context;
 
 interface PackageInterface {
     public function get_name(): string;
     public function get_namespaces(): array;
     public function is_available(): bool;
     public function get_required_packages(): array;
-    public function build_context(): array;
-    public function get_placeholder_resolver(array $context);
+    public function register_providers(Context $context): void;
+    public function get_placeholder_resolver(Context $context);
     public function register_rule(array $rule, array $metadata);
-    public function execute_rules(array $rules, array $context): array;
+    public function execute_rules(array $rules, Context $context): array;
 }
 ```
 
@@ -91,25 +93,31 @@ The **PHP Package** provides framework-agnostic HTTP and request handling.
 - `cookie` - Cookie existence/value checking
 - `constant` - PHP constant checking
 
-**Context Built**:
+**Context Providers Registered**:
 ```php
 <?php
-[
-    'request' => [
-        'method' => 'GET',
-        'uri' => '/path',
-        'scheme' => 'https',
-        'host' => 'example.com',
-        'path' => '/path',
-        'query' => 'key=value',
-        'referer' => 'https://example.com/ref',
-        'user_agent' => 'Mozilla/5.0...',
-        'headers' => [...],
-        'ip' => '192.168.1.1',
-        'cookies' => $_COOKIE,
-        'params' => array_merge($_GET, $_POST),
-    ]
-]
+// PHP package registers these context providers (loaded on-demand):
+
+'request' => [
+    'method' => 'GET',
+    'uri' => '/path',
+    'scheme' => 'https',
+    'host' => 'example.com',
+    'path' => '/path',
+    'query' => 'key=value',
+    'referer' => 'https://example.com/ref',
+    'user_agent' => 'Mozilla/5.0...',
+    'headers' => [...],
+    'ip' => '192.168.1.1',
+],
+
+'cookie' => [
+    // $_COOKIE data (loaded separately from request)
+],
+
+'param' => [
+    // array_merge($_GET, $_POST) (loaded separately from request)
+],
 ```
 
 **Availability Check**:
@@ -142,41 +150,47 @@ The **WordPress Package** provides WordPress-specific functionality.
 - `is_archive` - Archive page check
 - `post_type` - Post type validation
 
-**Context Built**:
+**Context Providers Registered**:
 ```php
 <?php
-[
-    'request' => [...], // From PHP package
-    'wp' => [
-        'post' => [
-            'id' => 123,
-            'post_title' => 'My Post',
-            'post_type' => 'post',
-            'post_status' => 'publish',
-            'post_author' => 1,
-            // ... all post fields
-        ],
-        'user' => [
-            'id' => 1,
-            'login' => 'admin',
-            'email' => 'admin@example.com',
-            'display_name' => 'Administrator',
-            'roles' => ['administrator'],
-        ],
-        'query' => [
-            'is_singular' => true,
-            'is_home' => false,
-            'is_archive' => false,
-            'is_admin' => false,
-            // ... WordPress query flags
-        ],
-        'constants' => [
-            'WP_DEBUG' => true,
-            'WP_ENVIRONMENT_TYPE' => 'local',
-            // ... WordPress constants
-        ],
-    ]
-]
+// WordPress package registers these context providers (loaded on-demand):
+// Note: Uses flat structure, no 'wp' namespace
+
+'post' => [
+    'id' => 123,
+    'title' => 'My Post',
+    'type' => 'post',
+    'status' => 'publish',
+    'author' => 1,
+    'parent' => 0,
+    'name' => 'my-post',
+    // ... normalized post fields
+],
+
+'user' => [
+    'id' => 1,
+    'login' => 'admin',
+    'email' => 'admin@example.com',
+    'display_name' => 'Administrator',
+    'roles' => ['administrator'],
+    'logged_in' => true,
+],
+
+'query' => [
+    'is_singular' => true,
+    'is_home' => false,
+    'is_archive' => false,
+    'is_admin' => false,
+    // ... WordPress conditional query flags
+],
+
+'query_vars' => [
+    // WordPress query variables
+],
+
+'term' => [
+    // Taxonomy term data (when applicable)
+],
 ```
 
 **Availability Check**:
@@ -239,22 +253,38 @@ MilliRules::init(['PHP', 'WP']);
 4. Load the requested package
 5. Detect circular dependencies
 
-### 3. Context Building
+### 3. Context Provider Registration
 
-Context is built from all loaded packages:
+Packages register context providers that load data on-demand:
 
 ```php
 <?php
-// Each package contributes to the context
-$context = MilliRules::build_context();
+use MilliRules\Context;
 
-/*
-[
-    'request' => [...],  // From PHP package
-    'wp' => [...],       // From WordPress package (if loaded)
-    'custom' => [...],   // From custom packages
-]
-*/
+// During initialization, packages register their providers
+class PHPPackage extends BasePackage {
+    public function register_providers(Context $context): void {
+        // Register request provider (loads only when needed)
+        $context->register_provider('request', function() {
+            return [/* request data */];
+        });
+
+        // Register cookie provider (loads only when needed)
+        $context->register_provider('cookie', function() {
+            return $_COOKIE;
+        });
+
+        // Register param provider (loads only when needed)
+        $context->register_provider('param', function() {
+            return array_merge($_GET, $_POST);
+        });
+    }
+}
+
+// Context sections load lazily when accessed:
+// - 'request' loads when $context->get('request.uri') is called
+// - 'cookie' loads when $context->get('cookie.session_id') is called
+// - 'param' loads when $context->get('param.action') is called
 ```
 
 ### 4. Rule Execution
@@ -438,19 +468,23 @@ $wp_result = MilliRules::execute_rules(['WP']);
 
 ```php
 <?php
-Rules::register_action('context_aware', function($context, $config) {
-    // Check which packages are loaded
-    $has_request = isset($context['request']);
-    $has_wp = isset($context['wp']);
+use MilliRules\Context;
 
-    if ($has_wp) {
-        $user_id = $context['wp']['user']['id'] ?? 0;
-        error_log("WordPress user: {$user_id}");
+Rules::register_action('context_aware', function(Context $context, $config) {
+    // Check which providers are available
+    // Note: Providers are loaded on-demand, not preloaded
+
+    // Access request data (triggers lazy loading if not already loaded)
+    if ($context->has('request.uri')) {
+        $url = $context->get('request.uri', '');
+        error_log("Request URL: {$url}");
     }
 
-    if ($has_request) {
-        $url = $context['request']['uri'] ?? '';
-        error_log("Request URL: {$url}");
+    // Access WordPress user data (triggers lazy loading if not already loaded)
+    $context->load('user');
+    if ($context->has('user.id')) {
+        $user_id = $context->get('user.id', 0);
+        error_log("WordPress user: {$user_id}");
     }
 });
 ```
@@ -479,20 +513,25 @@ Rules::create('flexible_rule')
 
 ```php
 <?php
+use MilliRules\Context;
+
 // ✅ Good - check before using package-specific features
-Rules::register_action('safe_wp_action', function($context, $config) {
-    if (!isset($context['wp'])) {
-        error_log('WordPress not available');
+Rules::register_action('safe_wp_action', function(Context $context, $config) {
+    $context->load('user');
+
+    if (!$context->has('user.id')) {
+        error_log('WordPress user context not available');
         return;
     }
 
-    $user_id = $context['wp']['user']['id'] ?? 0;
+    $user_id = $context->get('user.id', 0);
     // Use WordPress features
 });
 
-// ❌ Bad - assumes WordPress is always available
-Rules::register_action('unsafe_action', function($context, $config) {
-    $user_id = $context['wp']['user']['id']; // May not exist!
+// ❌ Bad - assumes WordPress context is always available
+Rules::register_action('unsafe_action', function(Context $context, $config) {
+    $context->load('user');
+    $user_id = $context->get('user.id'); // May return null if not available!
 });
 ```
 
@@ -509,9 +548,11 @@ class MyPackage extends BasePackage {
 
 // ❌ Bad - undeclared dependencies
 class MyPackage extends BasePackage {
-    public function build_context(): array {
+    public function register_providers(Context $context): void {
         // Uses WordPress functions without declaring dependency!
-        return ['data' => get_option('my_option')];
+        $context->register_provider('data', function() {
+            return ['option' => get_option('my_option')];
+        });
     }
 }
 ```
@@ -711,16 +752,23 @@ foreach ($required as $dep) {
 
 ### Context Missing Data
 
-**Verify package is loaded**:
+**Verify providers are registered**:
 ```php
 <?php
-$context = MilliRules::build_context();
+use MilliRules\Context;
 
-if (!isset($context['wp'])) {
-    error_log('WordPress package not loaded or unavailable');
+$context = new Context();
+MilliRules::init(); // Registers all providers
+
+// Check if a specific provider is available
+$context->load('user');
+if (!$context->has('user.id')) {
+    error_log('WordPress user context not available');
 }
 
-error_log('Available context keys: ' . implode(', ', array_keys($context)));
+// Export context to see all loaded sections
+$array = $context->to_array();
+error_log('Available context keys: ' . implode(', ', array_keys($array)));
 ```
 
 ---

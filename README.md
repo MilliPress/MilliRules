@@ -10,6 +10,7 @@ MilliRules is a powerful rule engine that allows you to define complex condition
 
 - **Fluent API**: Build complex rules with an intuitive, chainable syntax
 - **Framework Agnostic**: Core engine works with any PHP application
+- **Lazy-Loaded Context**: On-demand loading of context data for optimal performance
 - **HTTP Support**: Built-in conditions for request handling
 - **WordPress Integration**: Native support for WordPress queries and context
 - **Extensible**: Easy to add custom conditions and actions

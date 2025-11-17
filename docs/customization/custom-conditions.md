@@ -26,9 +26,10 @@ The simplest way to create custom conditions is using callback functions.
 ```php
 <?php
 use MilliRules\Rules;
+use MilliRules\Context;
 
 // Register custom condition
-Rules::register_condition('is_weekend', function($context) {
+Rules::register_condition('is_weekend', function(Context $context) {
     $day = date('N'); // 1 (Monday) to 7 (Sunday)
     return $day >= 6; // Saturday or Sunday
 });
@@ -47,8 +48,10 @@ Rules::create('weekend_special')
 
 ```php
 <?php
+use MilliRules\Context;
+
 // Register parameterized condition
-Rules::register_condition('time_range', function($context, $config) {
+Rules::register_condition('time_range', function(Context $context, $config) {
     $current_hour = (int) date('H');
     $start = $config['start'] ?? 0;
     $end = $config['end'] ?? 23;
@@ -69,9 +72,14 @@ Rules::create('business_hours')
 
 ```php
 <?php
-Rules::register_condition('user_has_spent_minimum', function($context, $config) {
+use MilliRules\Context;
+
+Rules::register_condition('user_has_spent_minimum', function(Context $context, $config) {
     $minimum = $config['minimum'] ?? 100;
-    $user_id = $context['wp']['user']['id'] ?? 0;
+
+    // Load and access user context
+    $context->load('user');
+    $user_id = $context->get('user.id', 0);
 
     if (!$user_id) {
         return false;
@@ -111,13 +119,15 @@ For complex or reusable conditions, create classes extending `BaseCondition`.
 <?php
 namespace MilliRules\Conditions;
 
+use MilliRules\Context;
+
 abstract class BaseCondition implements ConditionInterface {
     protected $config;
     protected $context;
 
-    public function __construct(array $config, array $context);
-    abstract protected function get_actual_value(array $context);
-    public function matches(array $context): bool;
+    public function __construct(array $config, Context $context);
+    abstract protected function get_actual_value(Context $context);
+    public function matches(Context $context): bool;
     public static function compare_values($actual, $expected, string $operator = '='): bool;
 }
 ```
@@ -129,9 +139,10 @@ abstract class BaseCondition implements ConditionInterface {
 namespace MyPlugin\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 class TimeRangeCondition extends BaseCondition {
-    protected function get_actual_value(array $context) {
+    protected function get_actual_value(Context $context) {
         return (int) date('H'); // Current hour (0-23)
     }
 
@@ -164,10 +175,12 @@ Rules::create('business_hours')
 namespace MyPlugin\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 class UserPurchaseCountCondition extends BaseCondition {
-    protected function get_actual_value(array $context) {
-        $user_id = $context['wp']['user']['id'] ?? 0;
+    protected function get_actual_value(Context $context) {
+        $context->load('user');
+        $user_id = $context->get('user.id', 0);
 
         if (!$user_id) {
             return 0;
@@ -202,10 +215,12 @@ Rules::create('frequent_buyer')
 namespace MyPlugin\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 class UserRoleCondition extends BaseCondition {
-    protected function get_actual_value(array $context) {
-        $user_id = $context['wp']['user']['id'] ?? 0;
+    protected function get_actual_value(Context $context) {
+        $context->load('user');
+        $user_id = $context->get('user.id', 0);
 
         if (!$user_id) {
             return [];
@@ -252,7 +267,9 @@ Rules::create('staff_members')
 
 ```php
 <?php
-Rules::register_condition('api_status_check', function($context, $config) {
+use MilliRules\Context;
+
+Rules::register_condition('api_status_check', function(Context $context, $config) {
     $api_url = $config['url'] ?? '';
     $expected_status = $config['status'] ?? 200;
 
@@ -425,19 +442,24 @@ Rules::register_condition('is_valid', function($context, $config) {
 
 ```php
 <?php
+use MilliRules\Context;
+
 // ✅ Good - checks context availability
-Rules::register_condition('wp_condition', function($context, $config) {
-    if (!isset($context['wp'])) {
-        return false; // WordPress not available
+Rules::register_condition('wp_condition', function(Context $context, $config) {
+    $context->load('user');
+
+    if (!$context->has('user.id')) {
+        return false; // User context not available
     }
 
-    $user_id = $context['wp']['user']['id'] ?? 0;
+    $user_id = $context->get('user.id', 0);
     return $user_id > 0;
 });
 
 // ❌ Bad - assumes context exists
-Rules::register_condition('wp_condition', function($context, $config) {
-    $user_id = $context['wp']['user']['id']; // May not exist!
+Rules::register_condition('wp_condition', function(Context $context, $config) {
+    $context->load('user');
+    $user_id = $context->get('user.id'); // May return null!
     return $user_id > 0;
 });
 ```

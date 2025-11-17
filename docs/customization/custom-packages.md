@@ -42,17 +42,19 @@ All packages must implement `PackageInterface`:
 
 ```php
 <?php
-namespace MilliRules\Interfaces;
+namespace MilliRules\Packages;
+
+use MilliRules\Context;
 
 interface PackageInterface {
     public function get_name(): string;
     public function get_namespaces(): array;
     public function is_available(): bool;
     public function get_required_packages(): array;
-    public function build_context(): array;
-    public function get_placeholder_resolver(array $context);
+    public function register_providers(Context $context): void;
+    public function get_placeholder_resolver(Context $context);
     public function register_rule(array $rule, array $metadata);
-    public function execute_rules(array $rules, array $context): array;
+    public function execute_rules(array $rules, Context $context): array;
 }
 ```
 
@@ -113,55 +115,67 @@ MilliRules::init();
 
 ---
 
-## Building Context
+## Registering Context Providers
 
-Context provides data to all conditions and actions.
+Packages register context providers that load data lazily when needed. This improves performance by only loading data that rules actually use.
 
-### Simple Context
+### Simple Context Provider
 
 ```php
 <?php
-public function build_context(): array {
-    return [
-        'my_custom' => [
-            'value1' => get_option('my_option_1'),
-            'value2' => get_option('my_option_2'),
-            'timestamp' => time(),
-        ],
-    ];
+use MilliRules\Context;
+
+public function register_providers(Context $context): void {
+    // Register a simple provider that loads on-demand
+    $context->register_provider('my_custom', function() {
+        return [
+            'my_custom' => [
+                'value1' => get_option('my_option_1'),
+                'value2' => get_option('my_option_2'),
+                'timestamp' => time(),
+            ],
+        ];
+    });
 }
 ```
 
-### Dynamic Context
+**Benefit**: Data is only retrieved when `$context->get('my_custom.value1')` is called.
+
+### Dynamic Context Provider
 
 ```php
 <?php
-public function build_context(): array {
-    global $wpdb;
+use MilliRules\Context;
 
-    $user_data = [];
-    if (is_user_logged_in()) {
-        $user_id = get_current_user_id();
-        $user_data = [
-            'id' => $user_id,
-            'meta' => get_user_meta($user_id),
-            'purchases' => $this->get_user_purchases($user_id),
+public function register_providers(Context $context): void {
+    // Register provider that loads complex data on-demand
+    $context->register_provider('my_custom', function() {
+        global $wpdb;
+
+        $user_data = [];
+        if (is_user_logged_in()) {
+            $user_id = get_current_user_id();
+            $user_data = [
+                'id' => $user_id,
+                'meta' => get_user_meta($user_id),
+                'purchases' => $this->get_user_purchases($user_id),
+            ];
+        }
+
+        return [
+            'my_custom' => [
+                'user' => $user_data,
+                'site' => [
+                    'name' => get_bloginfo('name'),
+                    'url' => home_url(),
+                ],
+                'stats' => [
+                    'total_posts' => wp_count_posts()->publish,
+                    'total_users' => count_users()['total_users'],
+                ],
+            ],
         ];
-    }
-
-    return [
-        'my_custom' => [
-            'user' => $user_data,
-            'site' => [
-                'name' => get_bloginfo('name'),
-                'url' => home_url(),
-            ],
-            'stats' => [
-                'total_posts' => wp_count_posts()->publish,
-                'total_users' => count_users()['total_users'],
-            ],
-        ],
-    ];
+    });
 }
 
 private function get_user_purchases($user_id) {
@@ -173,36 +187,45 @@ private function get_user_purchases($user_id) {
 }
 ```
 
-### Context with External API
+**Benefit**: Expensive database queries and WordPress functions only execute when needed.
+
+### Context Provider with External API
 
 ```php
 <?php
-public function build_context(): array {
-    // Cache expensive API calls
-    $api_data = get_transient('my_custom_api_data');
+use MilliRules\Context;
 
-    if ($api_data === false) {
-        $response = wp_remote_get('https://api.example.com/data', [
-            'timeout' => 10,
-            'headers' => ['Authorization' => 'Bearer ' . $this->get_api_key()],
-        ]);
+public function register_providers(Context $context): void {
+    // Register provider that loads API data on-demand
+    $context->register_provider('my_custom', function() {
+        // Cache expensive API calls
+        $api_data = get_transient('my_custom_api_data');
 
-        if (!is_wp_error($response)) {
-            $api_data = json_decode(wp_remote_retrieve_body($response), true);
-            set_transient('my_custom_api_data', $api_data, 300); // Cache 5 minutes
-        } else {
-            $api_data = [];
+        if ($api_data === false) {
+            $response = wp_remote_get('https://api.example.com/data', [
+                'timeout' => 10,
+                'headers' => ['Authorization' => 'Bearer ' . $this->get_api_key()],
+            ]);
+
+            if (!is_wp_error($response)) {
+                $api_data = json_decode(wp_remote_retrieve_body($response), true);
+                set_transient('my_custom_api_data', $api_data, 300); // Cache 5 minutes
+            } else {
+                $api_data = [];
+            }
         }
-    }
 
-    return [
-        'my_custom' => [
-            'api' => $api_data,
-            'cached_at' => get_transient('my_custom_api_data_time') ?: time(),
-        ],
-    ];
+        return [
+            'my_custom' => [
+                'api' => $api_data,
+                'cached_at' => get_transient('my_custom_api_data_time') ?: time(),
+            ],
+        ];
+    });
 }
 ```
+
+**Benefit**: API calls only execute if a rule actually needs the API data.
 
 ---
 
@@ -217,10 +240,12 @@ Package conditions extend the available condition types.
 namespace MyPlugin\Packages\MyCustom\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 class UserLevelCondition extends BaseCondition {
-    protected function get_actual_value(array $context) {
-        $user_id = $context['wp']['user']['id'] ?? 0;
+    protected function get_actual_value(Context $context) {
+        $context->load('user');
+        $user_id = $context->get('user.id', 0);
 
         if (!$user_id) {
             return 0;
@@ -254,11 +279,15 @@ Rules::create('premium_users')
 namespace MyPlugin\Packages\MyCustom\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 class PurchaseCountCondition extends BaseCondition {
-    protected function get_actual_value(array $context) {
+    protected function get_actual_value(Context $context) {
+        // Load package context data
+        $context->load('my_custom');
+
         // Use data from package context
-        $purchases = $context['my_custom']['user']['purchases'] ?? [];
+        $purchases = $context->get('my_custom.user.purchases', []);
         return count($purchases);
     }
 
@@ -281,10 +310,12 @@ Package actions provide functionality specific to your package's domain.
 namespace MyPlugin\Packages\MyCustom\Actions;
 
 use MilliRules\Actions\BaseAction;
+use MilliRules\Context;
 
 class UpdateUserLevelAction extends BaseAction {
-    public function execute(array $context): void {
-        $user_id = $context['wp']['user']['id'] ?? 0;
+    public function execute(Context $context): void {
+        $context->load('user');
+        $user_id = $context->get('user.id', 0);
         $level = $this->config['level'] ?? 1;
 
         if (!$user_id) {
@@ -309,9 +340,10 @@ class UpdateUserLevelAction extends BaseAction {
 namespace MyPlugin\Packages\MyCustom\Actions;
 
 use MilliRules\Actions\BaseAction;
+use MilliRules\Context;
 
 class SendNotificationAction extends BaseAction {
-    public function execute(array $context): void {
+    public function execute(Context $context): void {
         // Resolve placeholders
         $message = $this->resolve_value($this->config['message'] ?? '');
         $recipient = $this->resolve_value($this->config['to'] ?? '');
@@ -341,7 +373,9 @@ Placeholder resolvers enable dynamic values in rules.
 
 ```php
 <?php
-public function get_placeholder_resolver(array $context) {
+use MilliRules\Context;
+
+public function get_placeholder_resolver(Context $context) {
     return function($placeholder_parts) use ($context) {
         // $placeholder_parts = ['my_custom', 'category', 'key']
         // From placeholder: {my_custom:category:key}
@@ -350,17 +384,14 @@ public function get_placeholder_resolver(array $context) {
             return null; // Not for this package
         }
 
-        // Remove package name
-        array_shift($placeholder_parts);
+        // Load context data if not already loaded
+        $context->load('my_custom');
 
-        // Navigate context
-        $value = $context['my_custom'] ?? [];
-        foreach ($placeholder_parts as $part) {
-            if (!isset($value[$part])) {
-                return '';
-            }
-            $value = $value[$part];
-        }
+        // Convert parts to dot notation path
+        $path = implode('.', $placeholder_parts);
+
+        // Get value from context
+        $value = $context->get($path, '');
 
         return is_scalar($value) ? (string) $value : '';
     };
@@ -383,7 +414,9 @@ Rules::create('use_custom_placeholder')
 
 ```php
 <?php
-public function get_placeholder_resolver(array $context) {
+use MilliRules\Context;
+
+public function get_placeholder_resolver(Context $context) {
     return function($placeholder_parts) use ($context) {
         if ($placeholder_parts[0] !== 'my_custom') {
             return null;
@@ -391,6 +424,9 @@ public function get_placeholder_resolver(array $context) {
 
         $category = $placeholder_parts[1] ?? '';
         $key = $placeholder_parts[2] ?? '';
+
+        // Load context data once
+        $context->load('my_custom');
 
         switch ($category) {
             case 'user':
@@ -408,16 +444,14 @@ public function get_placeholder_resolver(array $context) {
     };
 }
 
-private function resolve_user_placeholder($context, $key) {
-    $user_data = $context['my_custom']['user'] ?? [];
-
+private function resolve_user_placeholder(Context $context, $key) {
     switch ($key) {
         case 'level':
-            return $user_data['level'] ?? '0';
+            return $context->get('my_custom.user.level', '0');
         case 'points':
-            return $user_data['points'] ?? '0';
+            return $context->get('my_custom.user.points', '0');
         default:
-            return $user_data[$key] ?? '';
+            return $context->get("my_custom.user.{$key}", '');
     }
 }
 ```
@@ -482,40 +516,45 @@ class MembershipPackage extends BasePackage {
         return ['PHP', 'WP']; // Requires both PHP and WordPress
     }
 
-    public function build_context(): array {
-        $user_id = get_current_user_id();
+    public function register_providers(Context $context): void {
+        // Register membership provider (loads on-demand)
+        $context->register_provider('membership', function() {
+            $user_id = get_current_user_id();
 
-        $membership_data = [];
-        if ($user_id) {
-            $membership_data = [
-                'level' => get_user_meta($user_id, 'membership_level', true) ?: 'free',
-                'status' => get_user_meta($user_id, 'membership_status', true) ?: 'inactive',
-                'expiry' => get_user_meta($user_id, 'membership_expiry', true) ?: 0,
-                'features' => $this->get_user_features($user_id),
+            $membership_data = [];
+            if ($user_id) {
+                $membership_data = [
+                    'level' => get_user_meta($user_id, 'membership_level', true) ?: 'free',
+                    'status' => get_user_meta($user_id, 'membership_status', true) ?: 'inactive',
+                    'expiry' => get_user_meta($user_id, 'membership_expiry', true) ?: 0,
+                    'features' => $this->get_user_features($user_id),
+                ];
+            }
+
+            return [
+                'membership' => [
+                    'user' => $membership_data,
+                    'levels' => $this->get_available_levels(),
+                    'features' => $this->get_all_features(),
+                ],
             ];
-        }
-
-        return [
-            'membership' => [
-                'user' => $membership_data,
-                'levels' => $this->get_available_levels(),
-                'features' => $this->get_all_features(),
-            ],
-        ];
+        });
     }
 
-    public function get_placeholder_resolver(array $context) {
+    public function get_placeholder_resolver(Context $context) {
         return function($parts) use ($context) {
             if ($parts[0] !== 'membership') {
                 return null;
             }
 
+            // Load membership context if not already loaded
+            $context->load('membership');
+
             $category = $parts[1] ?? '';
             $key = $parts[2] ?? '';
 
             if ($category === 'user') {
-                $user_data = $context['membership']['user'] ?? [];
-                return $user_data[$key] ?? '';
+                return $context->get("membership.user.{$key}", '');
             }
 
             return '';
@@ -544,10 +583,12 @@ class MembershipPackage extends BasePackage {
 namespace MyPlugin\Packages\Membership\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Context;
 
 class MembershipLevelCondition extends BaseCondition {
-    protected function get_actual_value(array $context) {
-        return $context['membership']['user']['level'] ?? 'free';
+    protected function get_actual_value(Context $context) {
+        $context->load('membership');
+        return $context->get('membership.user.level', 'free');
     }
 
     public function get_type(): string {
@@ -563,10 +604,12 @@ class MembershipLevelCondition extends BaseCondition {
 namespace MyPlugin\Packages\Membership\Actions;
 
 use MilliRules\Actions\BaseAction;
+use MilliRules\Context;
 
 class UpgradeMembershipAction extends BaseAction {
-    public function execute(array $context): void {
-        $user_id = $context['wp']['user']['id'] ?? 0;
+    public function execute(Context $context): void {
+        $context->load('user');
+        $user_id = $context->get('user.id', 0);
         $new_level = $this->config['level'] ?? 'basic';
 
         if (!$user_id) {
@@ -655,18 +698,24 @@ public function is_available(): bool {
 
 ```php
 <?php
-// ✅ Good - caches API calls
-public function build_context(): array {
-    $data = get_transient('my_package_context');
+use MilliRules\Context;
 
-    if ($data === false) {
-        $data = $this->fetch_expensive_data();
-        set_transient('my_package_context', $data, 300);
-    }
+// ✅ Good - caches API calls in lazy provider
+public function register_providers(Context $context): void {
+    $context->register_provider('my_package', function() {
+        $data = get_transient('my_package_context');
 
-    return ['my_package' => $data];
+        if ($data === false) {
+            $data = $this->fetch_expensive_data();
+            set_transient('my_package_context', $data, 300);
+        }
+
+        return ['my_package' => $data];
+    });
 }
 ```
+
+**Note**: With lazy loading, this expensive data is only fetched when a rule actually needs it!
 
 ### 4. Document Your Package
 
@@ -727,37 +776,47 @@ class PackageB extends BasePackage {
 
 ```php
 <?php
+use MilliRules\Context;
+
 // ❌ Wrong - doesn't check availability
-protected function get_actual_value(array $context) {
-    return $context['wp']['user']['id']; // May not exist!
+protected function get_actual_value(Context $context) {
+    $context->load('user');
+    return $context->get('user.id'); // May return null if not available!
 }
 
-// ✅ Correct - checks before accessing
-protected function get_actual_value(array $context) {
-    return $context['wp']['user']['id'] ?? 0;
+// ✅ Correct - provides default value
+protected function get_actual_value(Context $context) {
+    $context->load('user');
+    return $context->get('user.id', 0);
 }
 ```
 
-### 3. Expensive Context Building
+### 3. Expensive Provider Registration
 
 ```php
 <?php
-// ❌ Wrong - expensive operation on every request
-public function build_context(): array {
-    $data = expensive_api_call(); // Slows down every request!
-    return ['my_package' => $data];
+use MilliRules\Context;
+
+// ❌ Wrong - executes expensive operation during registration
+public function register_providers(Context $context): void {
+    $data = expensive_api_call(); // Runs on every request!
+    $context->register_provider('my_package', function() use ($data) {
+        return ['my_package' => $data];
+    });
 }
 
-// ✅ Correct - caches expensive operations
-public function build_context(): array {
-    $data = wp_cache_get('my_package_data', 'my_group');
+// ✅ Correct - expensive operation runs only when provider loads
+public function register_providers(Context $context): void {
+    $context->register_provider('my_package', function() {
+        $data = wp_cache_get('my_package_data', 'my_group');
 
-    if ($data === false) {
-        $data = expensive_api_call();
-        wp_cache_set('my_package_data', $data, 'my_group', 300);
-    }
+        if ($data === false) {
+            $data = expensive_api_call(); // Only runs when needed!
+            wp_cache_set('my_package_data', $data, 'my_group', 300);
+        }
 
-    return ['my_package' => $data];
+        return ['my_package' => $data];
+    });
 }
 ```
 

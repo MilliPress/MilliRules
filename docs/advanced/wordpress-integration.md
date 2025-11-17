@@ -31,6 +31,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use MilliRules\MilliRules;
 use MilliRules\Rules;
+use MilliRules\Context;
 
 add_action('init', function() {
     // Initialize MilliRules (auto-loads WordPress package)
@@ -51,6 +52,7 @@ require_once get_template_directory() . '/vendor/autoload.php';
 
 use MilliRules\MilliRules;
 use MilliRules\Rules;
+use MilliRules\Context;
 
 add_action('after_setup_theme', function() {
     MilliRules::init();
@@ -243,7 +245,7 @@ Different WordPress hooks pass different arguments:
 Rules::create('handle_post_save')
     ->on('save_post')
     ->when()->post_type('post')
-    ->then()->custom('process_save', function($context) {
+    ->then()->custom('process_save', function(Context $context) {
         $post_id = $context['wp']['hook']['args'][0] ?? null;
         $post    = $context['wp']['hook']['args'][1] ?? null;
         $update  = $context['wp']['hook']['args'][2] ?? false;
@@ -262,7 +264,7 @@ Rules::create('handle_post_save')
 // WordPress signature: do_action('comment_post', $comment_id, $approved)
 Rules::create('new_comment_notification')
     ->on('comment_post')
-    ->then()->custom('notify_admin', function($context) {
+    ->then()->custom('notify_admin', function(Context $context) {
         $comment_id = $context['wp']['hook']['args'][0] ?? null;
         $approved   = $context['wp']['hook']['args'][1] ?? 0;
 
@@ -282,13 +284,13 @@ Rules::create('new_comment_notification')
 // WordPress signature: do_action('transition_post_status', $new_status, $old_status, $post)
 Rules::create('publish_notification')
     ->on('transition_post_status')
-    ->when()->custom('status_changed_to_publish', function($context) {
+    ->when()->custom('status_changed_to_publish', function(Context $context) {
         $new_status = $context['wp']['hook']['args'][0] ?? '';
         $old_status = $context['wp']['hook']['args'][1] ?? '';
 
         return $new_status === 'publish' && $old_status !== 'publish';
     })
-    ->then()->custom('send_notification', function($context) {
+    ->then()->custom('send_notification', function(Context $context) {
         $post = $context['wp']['hook']['args'][2] ?? null;
 
         if ($post) {
@@ -305,7 +307,7 @@ Create reusable conditions or actions that access hook arguments:
 ```php
 <?php
 // Register a condition that checks post ID range
-Rules::register_condition('post_id_in_range', function($context, $config) {
+Rules::register_condition('post_id_in_range', function(Context $context, $config) {
     $post_id = $context['wp']['hook']['args'][0] ?? 0;
     $min = $config['min'] ?? 0;
     $max = $config['max'] ?? PHP_INT_MAX;
@@ -344,7 +346,7 @@ $post    = $context['wp']['hook']['args'][1];
 
 ```php
 <?php
-Rules::register_condition('is_post_being_published', function($context, $config) {
+Rules::register_condition('is_post_being_published', function(Context $context, $config) {
     $hook_name = $context['wp']['hook']['name'] ?? '';
 
     // Different hooks have different argument structures
@@ -370,7 +372,7 @@ Hooks that don't pass arguments (like `init`, `template_redirect`, `wp_loaded`) 
 <?php
 Rules::create('init_hook')
     ->on('init')
-    ->then()->custom('check_hook', function($context) {
+    ->then()->custom('check_hook', function(Context $context) {
         if (isset($context['wp']['hook'])) {
             // This won't execute for 'init' hook
             error_log('Hook has arguments');
@@ -399,7 +401,7 @@ Rules::create('authenticated_only')
     ->register();
 
 // Check user roles (custom condition)
-Rules::register_condition('user_has_role', function($context, $config) {
+Rules::register_condition('user_has_role', function(Context $context, $config) {
     $required_role = $config['role'] ?? '';
     $user_roles = $context['wp']['user']['roles'] ?? [];
 
@@ -455,7 +457,7 @@ Rules::create('product_features')
     ->register();
 
 // Custom post status check
-Rules::register_condition('post_status', function($context, $config) {
+Rules::register_condition('post_status', function(Context $context, $config) {
     $expected = $config['value'] ?? '';
     $actual = $context['wp']['post']['post_status'] ?? '';
 
@@ -481,7 +483,7 @@ Create WordPress-specific actions for common operations.
 
 ```php
 <?php
-Rules::register_action('prepend_to_content', function($context, $config) {
+Rules::register_action('prepend_to_content', function(Context $context, $config) {
     $text = $config['text'] ?? '';
     $priority = $config['priority'] ?? 10;
 
@@ -504,7 +506,7 @@ Rules::create('add_reading_time')
 
 ```php
 <?php
-Rules::register_action('add_menu_item', function($context, $config) {
+Rules::register_action('add_menu_item', function(Context $context, $config) {
     $menu_slug = $config['menu_slug'] ?? '';
     $title = $config['title'] ?? '';
     $capability = $config['capability'] ?? 'read';
@@ -533,7 +535,7 @@ Rules::create('add_tools_menu')
 
 ```php
 <?php
-Rules::register_action('register_sidebar', function($context, $config) {
+Rules::register_action('register_sidebar', function(Context $context, $config) {
     $sidebar_config = wp_parse_args($config, [
         'name' => 'Custom Sidebar',
         'id' => 'custom-sidebar',
@@ -562,8 +564,8 @@ Rules::create('conditional_sidebar')
 
 ```php
 <?php
-Rules::register_action('update_user_meta', function($context, $config) {
-    $user_id = $context['wp']['user']['id'] ?? 0;
+Rules::register_action('update_user_meta', function(Context $context, $config) {
+    $user_id = $context->get('user.id', 0) ?? 0;
     $meta_key = $config['key'] ?? '';
     $meta_value = $config['value'] ?? '';
 
@@ -593,7 +595,7 @@ Rules::create('track_login_time')
 
 ```php
 <?php
-Rules::register_condition('cart_total', function($context, $config) {
+Rules::register_condition('cart_total', function(Context $context, $config) {
     if (!function_exists('WC')) {
         return false;
     }
@@ -604,7 +606,7 @@ Rules::register_condition('cart_total', function($context, $config) {
     return $cart_total >= $minimum;
 });
 
-Rules::register_condition('has_product_in_cart', function($context, $config) {
+Rules::register_condition('has_product_in_cart', function(Context $context, $config) {
     if (!function_exists('WC')) {
         return false;
     }
@@ -625,7 +627,7 @@ Rules::register_condition('has_product_in_cart', function($context, $config) {
 
 ```php
 <?php
-Rules::register_action('apply_coupon', function($context, $config) {
+Rules::register_action('apply_coupon', function(Context $context, $config) {
     if (!function_exists('WC')) {
         return;
     }
@@ -655,7 +657,7 @@ Rules::create('auto_apply_coupon')
 ```php
 <?php
 // Enable/disable features based on rules
-Rules::register_action('enable_feature', function($context, $config) {
+Rules::register_action('enable_feature', function(Context $context, $config) {
     $feature = $config['feature'] ?? '';
 
     if ($feature) {
@@ -678,7 +680,7 @@ Rules::create('enable_beta_features')
 
 ```php
 <?php
-Rules::register_action('restrict_access', function($context, $config) {
+Rules::register_action('restrict_access', function(Context $context, $config) {
     $message = $config['message'] ?? 'Access denied';
     $redirect = $config['redirect'] ?? home_url();
 
@@ -710,7 +712,7 @@ Rules::create('protect_admin_pages')
 add_action('plugins_loaded', function() {
     MilliRules::init();
 
-    Rules::register_action('load_plugin_module', function($context, $config) {
+    Rules::register_action('load_plugin_module', function(Context $context, $config) {
         $module = $config['module'] ?? '';
         $file = plugin_dir_path(__FILE__) . "modules/{$module}.php";
 
@@ -757,7 +759,7 @@ add_action('wp_footer', function() {
 ```php
 <?php
 // ✅ Good - checks function availability
-Rules::register_condition('wp_safe_condition', function($context, $config) {
+Rules::register_condition('wp_safe_condition', function(Context $context, $config) {
     if (!function_exists('get_current_user_id')) {
         return false;
     }
@@ -767,7 +769,7 @@ Rules::register_condition('wp_safe_condition', function($context, $config) {
 });
 
 // ❌ Bad - assumes WordPress is loaded
-Rules::register_condition('unsafe_condition', function($context, $config) {
+Rules::register_condition('unsafe_condition', function(Context $context, $config) {
     $user_id = get_current_user_id(); // May not exist!
     return $user_id > 0;
 });
@@ -777,7 +779,7 @@ Rules::register_condition('unsafe_condition', function($context, $config) {
 
 ```php
 <?php
-Rules::register_condition('is_main_site', function($context, $config) {
+Rules::register_condition('is_main_site', function(Context $context, $config) {
     if (!is_multisite()) {
         return true; // Not multisite, always main site
     }
@@ -795,7 +797,7 @@ Rules::create('main_site_only_feature')
 
 ```php
 <?php
-Rules::register_action('show_message', function($context, $config) {
+Rules::register_action('show_message', function(Context $context, $config) {
     $message = $config['message'] ?? '';
 
     // Make translatable

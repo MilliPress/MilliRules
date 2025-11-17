@@ -28,9 +28,10 @@ The quickest way to create actions is using callback functions.
 ```php
 <?php
 use MilliRules\Rules;
+use MilliRules\Context;
 
 // Register simple action
-Rules::register_action('log_message', function($context, $config) {
+Rules::register_action('log_message', function(Context $context, $config) {
     $message = $config['value'] ?? 'No message';
     error_log('MilliRules: ' . $message);
 });
@@ -46,10 +47,16 @@ Rules::create('log_admin_access')
 
 ```php
 <?php
-Rules::register_action('log_user_action', function($context, $config) {
-    $user = $context['wp']['user']['login'] ?? 'guest';
-    $url = $context['request']['uri'] ?? 'unknown';
-    $ip = $context['request']['ip'] ?? '0.0.0.0';
+use MilliRules\Context;
+
+Rules::register_action('log_user_action', function(Context $context, $config) {
+    // Load context data
+    $context->load('user');
+    $context->load('request');
+
+    $user = $context->get('user.login', 'guest');
+    $url = $context->get('request.uri', 'unknown');
+    $ip = $context->get('request.ip', '0.0.0.0');
 
     error_log("User {$user} accessed {$url} from {$ip}");
 });
@@ -65,7 +72,7 @@ Rules::create('track_user_activity')
 
 ```php
 <?php
-Rules::register_action('send_email', function($context, $config) {
+Rules::register_action('send_email', function(Context $context, $config) {
     $to = $config['to'] ?? '';
     $subject = $config['subject'] ?? 'Notification';
     $message = $config['message'] ?? '';
@@ -100,10 +107,12 @@ For complex operations or reusable actions, create classes implementing `ActionI
 
 ```php
 <?php
-namespace MilliRules\Interfaces;
+namespace MilliRules\Actions;
+
+use MilliRules\Context;
 
 interface ActionInterface {
-    public function execute(array $context): void;
+    public function execute(Context $context): void;
     public function get_type(): string;
 }
 ```
@@ -114,18 +123,19 @@ interface ActionInterface {
 <?php
 namespace MyPlugin\Actions;
 
-use MilliRules\Interfaces\ActionInterface;
+use MilliRules\Actions\ActionInterface;
+use MilliRules\Context;
 
 class SendEmailAction implements ActionInterface {
     private $config;
     private $context;
 
-    public function __construct(array $config, array $context) {
+    public function __construct(array $config, Context $context) {
         $this->config = $config;
         $this->context = $context;
     }
 
-    public function execute(array $context): void {
+    public function execute(Context $context): void {
         $to = $this->config['to'] ?? '';
         $subject = $this->config['subject'] ?? 'Notification';
         $message = $this->config['message'] ?? '';
@@ -136,7 +146,8 @@ class SendEmailAction implements ActionInterface {
         }
 
         // Use context for dynamic data
-        $user_email = $context['wp']['user']['email'] ?? $to;
+        $context->load('user');
+        $user_email = $context->get('user.email', $to);
 
         wp_mail($user_email, $subject, $message);
     }
@@ -185,9 +196,9 @@ abstract class BaseAction implements ActionInterface {
     protected $config;
     protected $context;
 
-    public function __construct(array $config, array $context);
+    public function __construct(array $config, Context $context);
     protected function resolve_value(string $value): string;
-    abstract public function execute(array $context): void;
+    abstract public function execute(Context $context): void;
     abstract public function get_type(): string;
 }
 ```
@@ -201,7 +212,7 @@ namespace MyPlugin\Actions;
 use MilliRules\Actions\BaseAction;
 
 class LogDetailedAction extends BaseAction {
-    public function execute(array $context): void {
+    public function execute(Context $context): void {
         // Resolve placeholders in message
         $message = $this->resolve_value($this->config['message'] ?? '');
 
@@ -221,7 +232,7 @@ Rules::create('detailed_logging')
     ->when()->request_url('/api/*')
     ->then()
         ->custom('log_detailed', [
-            'message' => '{request:method} request to {request:uri} from {request:ip} by user {wp:user:login}'
+            'message' => '{request:method} request to {request:uri} from {request:ip} by user {user:login}'
         ])
     ->register();
 
@@ -241,7 +252,7 @@ namespace MyPlugin\Actions;
 use MilliRules\Actions\BaseAction;
 
 class LogToDatabaseAction extends BaseAction {
-    public function execute(array $context): void {
+    public function execute(Context $context): void {
         global $wpdb;
 
         $table = $wpdb->prefix . 'access_log';
@@ -267,7 +278,7 @@ class LogToDatabaseAction extends BaseAction {
 
 ```php
 <?php
-Rules::register_action('send_to_api', function($context, $config) {
+Rules::register_action('send_to_api', function(Context $context, $config) {
     $api_url = $config['url'] ?? '';
     $data = $config['data'] ?? [];
 
@@ -311,7 +322,7 @@ Rules::create('sync_to_external_system')
 
 ```php
 <?php
-Rules::register_action('set_cache', function($context, $config) {
+Rules::register_action('set_cache', function(Context $context, $config) {
     $key = $config['key'] ?? '';
     $value = $config['value'] ?? '';
     $duration = $config['duration'] ?? 3600;
@@ -349,7 +360,7 @@ Rules::create('cache_api_response')
 
 ```php
 <?php
-Rules::register_action('trigger_wp_action', function($context, $config) {
+Rules::register_action('trigger_wp_action', function(Context $context, $config) {
     $hook_name = $config['hook'] ?? '';
     $args = $config['args'] ?? [];
 
@@ -379,7 +390,7 @@ Rules::create('trigger_custom_hook')
 
 ```php
 <?php
-Rules::register_action('modify_content', function($context, $config) {
+Rules::register_action('modify_content', function(Context $context, $config) {
     $prepend = $config['prepend'] ?? '';
     $append = $config['append'] ?? '';
     $priority = $config['priority'] ?? 10;
@@ -410,7 +421,7 @@ Rules::create('add_disclaimer_to_posts')
 
 ```php
 <?php
-Rules::register_action('validated_action', function($context, $config) {
+Rules::register_action('validated_action', function(Context $context, $config) {
     // Validate required fields
     if (!isset($config['required_field'])) {
         error_log('validated_action: missing required_field');
@@ -436,7 +447,7 @@ Rules::register_action('validated_action', function($context, $config) {
 
 ```php
 <?php
-Rules::register_action('configurable_action', function($context, $config) {
+Rules::register_action('configurable_action', function(Context $context, $config) {
     // Define defaults
     $defaults = [
         'enabled' => true,
@@ -461,7 +472,7 @@ Rules::register_action('configurable_action', function($context, $config) {
 
 ```php
 <?php
-Rules::register_action('conditional_action', function($context, $config) {
+Rules::register_action('conditional_action', function(Context $context, $config) {
     $mode = $config['mode'] ?? 'default';
 
     switch ($mode) {
@@ -495,7 +506,7 @@ Rules::register_action('conditional_action', function($context, $config) {
 
 ```php
 <?php
-Rules::register_action('safe_action', function($context, $config) {
+Rules::register_action('safe_action', function(Context $context, $config) {
     try {
         // Risky operation
         $result = risky_operation($config);
@@ -521,7 +532,7 @@ Rules::register_action('safe_action', function($context, $config) {
 
 ```php
 <?php
-Rules::register_action('validated_execution', function($context, $config) {
+Rules::register_action('validated_execution', function(Context $context, $config) {
     // Pre-execution validation
     if (!validate_context($context)) {
         error_log('Invalid context for action');
@@ -547,7 +558,7 @@ Rules::register_action('validated_execution', function($context, $config) {
 ```php
 <?php
 // ✅ Good - validates all input
-Rules::register_action('safe_email', function($context, $config) {
+Rules::register_action('safe_email', function(Context $context, $config) {
     $to = sanitize_email($config['to'] ?? '');
     $subject = sanitize_text_field($config['subject'] ?? '');
     $message = wp_kses_post($config['message'] ?? '');
@@ -561,7 +572,7 @@ Rules::register_action('safe_email', function($context, $config) {
 });
 
 // ❌ Bad - no validation
-Rules::register_action('unsafe_email', function($context, $config) {
+Rules::register_action('unsafe_email', function(Context $context, $config) {
     wp_mail($config['to'], $config['subject'], $config['message']);
 });
 ```
@@ -586,7 +597,7 @@ Rules::register_action('update', ...);
 ```php
 <?php
 // ✅ Good - checks context availability
-Rules::register_action('wp_aware_action', function($context, $config) {
+Rules::register_action('wp_aware_action', function(Context $context, $config) {
     if (!isset($context['wp'])) {
         error_log('WordPress context not available');
         return;
@@ -602,7 +613,7 @@ Rules::register_action('wp_aware_action', function($context, $config) {
 ```php
 <?php
 // ✅ Good - respects dry-run mode
-Rules::register_action('careful_action', function($context, $config) {
+Rules::register_action('careful_action', function(Context $context, $config) {
     $dry_run = $config['dry_run'] ?? false;
 
     if ($dry_run) {
@@ -620,7 +631,7 @@ Rules::register_action('careful_action', function($context, $config) {
 ```php
 <?php
 // ✅ Good - logs important operations
-Rules::register_action('critical_operation', function($context, $config) {
+Rules::register_action('critical_operation', function(Context $context, $config) {
     error_log('Starting critical operation');
 
     try {
@@ -646,7 +657,7 @@ Rules::register_action('critical_operation', function($context, $config) {
 class CustomActionTest extends WP_UnitTestCase {
     public function test_send_email_action() {
         // Register action
-        Rules::register_action('test_email', function($context, $config) {
+        Rules::register_action('test_email', function(Context $context, $config) {
             // Mock email sending
             update_option('test_email_sent', $config);
             return true;
@@ -676,7 +687,7 @@ class CustomActionTest extends WP_UnitTestCase {
 
 ```php
 <?php
-Rules::register_action('debug_action', function($context, $config) {
+Rules::register_action('debug_action', function(Context $context, $config) {
     error_log('=== ACTION DEBUG ===');
     error_log('Config: ' . print_r($config, true));
     error_log('Context keys: ' . implode(', ', array_keys($context)));
@@ -695,7 +706,7 @@ Rules::register_action('debug_action', function($context, $config) {
 ```php
 <?php
 // ❌ Wrong - continues after error
-Rules::register_action('bad_action', function($context, $config) {
+Rules::register_action('bad_action', function(Context $context, $config) {
     if (!isset($config['required'])) {
         error_log('Missing required config');
         // Should return here!
@@ -706,7 +717,7 @@ Rules::register_action('bad_action', function($context, $config) {
 });
 
 // ✅ Correct - returns early
-Rules::register_action('good_action', function($context, $config) {
+Rules::register_action('good_action', function(Context $context, $config) {
     if (!isset($config['required'])) {
         error_log('Missing required config');
         return; // Early return
@@ -721,12 +732,12 @@ Rules::register_action('good_action', function($context, $config) {
 ```php
 <?php
 // ❌ Wrong - unhandled exception stops execution
-Rules::register_action('risky_action', function($context, $config) {
+Rules::register_action('risky_action', function(Context $context, $config) {
     risky_operation(); // May throw exception
 });
 
 // ✅ Correct - handles exceptions
-Rules::register_action('safe_action', function($context, $config) {
+Rules::register_action('safe_action', function(Context $context, $config) {
     try {
         risky_operation();
     } catch (Exception $e) {
@@ -740,13 +751,13 @@ Rules::register_action('safe_action', function($context, $config) {
 ```php
 <?php
 // ❌ Wrong - context changes don't persist
-Rules::register_action('bad_context_modification', function($context, $config) {
+Rules::register_action('bad_context_modification', function(Context $context, $config) {
     $context['custom_value'] = 'modified';
     // This change is lost after action completes!
 });
 
 // ✅ Correct - use external state
-Rules::register_action('good_state_management', function($context, $config) {
+Rules::register_action('good_state_management', function(Context $context, $config) {
     update_option('custom_value', 'modified');
     // Or use global variable, cache, etc.
 });
