@@ -5,6 +5,7 @@ namespace MilliRules\Tests\Unit\Packages;
 use MilliRules\Tests\TestCase;
 use MilliRules\Packages\PackageManager;
 use MilliRules\Packages\PackageInterface;
+use MilliRules\Context;
 
 /**
  * Comprehensive tests for PackageManager class
@@ -23,7 +24,7 @@ class PackageManagerTest extends TestCase
         array $requiredPackages = [],
         bool $isAvailable = true
     ): PackageInterface {
-        return new class($name, $namespaces, $requiredPackages, $isAvailable) implements PackageInterface {
+        return new class ($name, $namespaces, $requiredPackages, $isAvailable) implements PackageInterface {
             private string $name;
             private array $namespaces;
             private array $requiredPackages;
@@ -69,7 +70,15 @@ class PackageManagerTest extends TestCase
                 return [$this->name => 'context_' . $this->name];
             }
 
-            public function get_placeholder_resolver(array $context)
+            public function register_context_providers(Context $context): void
+            {
+                $name = $this->name;
+                $context->register_provider($name, function () use ($name) {
+                    return [$name => 'context_' . $name];
+                });
+            }
+
+            public function get_placeholder_resolver(Context $context)
             {
                 return null;
             }
@@ -79,7 +88,7 @@ class PackageManagerTest extends TestCase
                 $this->rules[] = array_merge($rule, ['_metadata' => $metadata]);
             }
 
-            public function execute_rules(array $rules, array $context): array
+            public function execute_rules(array $rules, Context $context): array
             {
                 return ['executed' => count($rules)];
             }
@@ -93,6 +102,11 @@ class PackageManagerTest extends TestCase
             {
                 $this->rules = [];
                 $this->namespacesRegistered = false;
+            }
+
+            public function resolve_class_name(string $type, string $category): ?string
+            {
+                return null;
             }
 
             public function wasNamespacesRegisteredCalled(): bool
@@ -436,7 +450,8 @@ class PackageManagerTest extends TestCase
 
         $context = PackageManager::build_context();
 
-        $this->assertEquals(['Pkg1' => 'context_Pkg1'], $context);
+        $this->assertInstanceOf(Context::class, $context);
+        $this->assertEquals('context_Pkg1', $context->get('Pkg1'));
     }
 
     public function testBuildContextFromMultiplePackages(): void
@@ -450,44 +465,125 @@ class PackageManagerTest extends TestCase
 
         $context = PackageManager::build_context();
 
-        $this->assertEquals([
-            'Pkg1' => 'context_Pkg1',
-            'Pkg2' => 'context_Pkg2',
-        ], $context);
+        $this->assertInstanceOf(Context::class, $context);
+        $this->assertEquals('context_Pkg1', $context->get('Pkg1'));
+        $this->assertEquals('context_Pkg2', $context->get('Pkg2'));
     }
 
     public function testBuildContextMergesLaterPackagesOverEarlier(): void
     {
-        $pkg1 = new class('Pkg1') implements PackageInterface {
+        $pkg1 = new class ('Pkg1') implements PackageInterface {
             private string $name;
-            public function __construct(string $name) { $this->name = $name; }
-            public function get_name(): string { return $this->name; }
-            public function get_namespaces(): array { return []; }
-            public function is_available(): bool { return true; }
-            public function get_required_packages(): array { return []; }
-            public function register_namespaces(): void {}
-            public function build_context(): array { return ['shared' => 'from_pkg1']; }
-            public function get_placeholder_resolver(array $context) { return null; }
-            public function register_rule(array $rule, array $metadata): void {}
-            public function execute_rules(array $rules, array $context): array { return []; }
-            public function get_rules(): array { return []; }
-            public function clear(): void {}
+            public function __construct(string $name)
+            {
+                $this->name = $name;
+            }
+            public function get_name(): string
+            {
+                return $this->name;
+            }
+            public function get_namespaces(): array
+            {
+                return [];
+            }
+            public function is_available(): bool
+            {
+                return true;
+            }
+            public function get_required_packages(): array
+            {
+                return [];
+            }
+            public function register_namespaces(): void
+            {
+            }
+            public function build_context(): array
+            {
+                return ['shared' => 'from_pkg1'];
+            }
+            public function register_context_providers(Context $context): void
+            {
+                $context->register_provider('shared', fn() => ['shared' => 'from_pkg1']);
+            }
+            public function get_placeholder_resolver(Context $context)
+            {
+                return null;
+            }
+            public function register_rule(array $rule, array $metadata): void
+            {
+            }
+            public function execute_rules(array $rules, Context $context): array
+            {
+                return [];
+            }
+            public function get_rules(): array
+            {
+                return [];
+            }
+            public function clear(): void
+            {
+            }
+            public function resolve_class_name(string $type, string $category): ?string
+            {
+                return null;
+            }
         };
 
-        $pkg2 = new class('Pkg2') implements PackageInterface {
+        $pkg2 = new class ('Pkg2') implements PackageInterface {
             private string $name;
-            public function __construct(string $name) { $this->name = $name; }
-            public function get_name(): string { return $this->name; }
-            public function get_namespaces(): array { return []; }
-            public function is_available(): bool { return true; }
-            public function get_required_packages(): array { return []; }
-            public function register_namespaces(): void {}
-            public function build_context(): array { return ['shared' => 'from_pkg2']; }
-            public function get_placeholder_resolver(array $context) { return null; }
-            public function register_rule(array $rule, array $metadata): void {}
-            public function execute_rules(array $rules, array $context): array { return []; }
-            public function get_rules(): array { return []; }
-            public function clear(): void {}
+            public function __construct(string $name)
+            {
+                $this->name = $name;
+            }
+            public function get_name(): string
+            {
+                return $this->name;
+            }
+            public function get_namespaces(): array
+            {
+                return [];
+            }
+            public function is_available(): bool
+            {
+                return true;
+            }
+            public function get_required_packages(): array
+            {
+                return [];
+            }
+            public function register_namespaces(): void
+            {
+            }
+            public function build_context(): array
+            {
+                return ['shared' => 'from_pkg2'];
+            }
+            public function register_context_providers(Context $context): void
+            {
+                $context->register_provider('shared', fn() => ['shared' => 'from_pkg2']);
+            }
+            public function get_placeholder_resolver(Context $context)
+            {
+                return null;
+            }
+            public function register_rule(array $rule, array $metadata): void
+            {
+            }
+            public function execute_rules(array $rules, Context $context): array
+            {
+                return [];
+            }
+            public function get_rules(): array
+            {
+                return [];
+            }
+            public function clear(): void
+            {
+            }
+            public function resolve_class_name(string $type, string $category): ?string
+            {
+                return null;
+            }
         };
 
         PackageManager::register_package($pkg1);
@@ -497,7 +593,8 @@ class PackageManagerTest extends TestCase
         $context = PackageManager::build_context();
 
         // Pkg2's value should override Pkg1's
-        $this->assertEquals(['shared' => 'from_pkg2'], $context);
+        $this->assertInstanceOf(Context::class, $context);
+        $this->assertEquals('from_pkg2', $context->get('shared'));
     }
 
     // ============================================
@@ -643,51 +740,127 @@ class PackageManagerTest extends TestCase
         $wpResolver = new \stdClass();
         $phpResolver = new \stdClass();
 
-        $wpPackage = new class('WP', $wpResolver) implements PackageInterface {
+        $wpPackage = new class ('WP', $wpResolver) implements PackageInterface {
             private string $name;
             private $resolver;
-            public function __construct(string $name, $resolver) {
+            public function __construct(string $name, $resolver)
+            {
                 $this->name = $name;
                 $this->resolver = $resolver;
             }
-            public function get_name(): string { return $this->name; }
-            public function get_namespaces(): array { return []; }
-            public function is_available(): bool { return true; }
-            public function get_required_packages(): array { return []; }
-            public function register_namespaces(): void {}
-            public function build_context(): array { return []; }
-            public function get_placeholder_resolver(array $context) { return $this->resolver; }
-            public function register_rule(array $rule, array $metadata): void {}
-            public function execute_rules(array $rules, array $context): array { return []; }
-            public function get_rules(): array { return []; }
-            public function clear(): void {}
+            public function get_name(): string
+            {
+                return $this->name;
+            }
+            public function get_namespaces(): array
+            {
+                return [];
+            }
+            public function is_available(): bool
+            {
+                return true;
+            }
+            public function get_required_packages(): array
+            {
+                return [];
+            }
+            public function register_namespaces(): void
+            {
+            }
+            public function build_context(): array
+            {
+                return [];
+            }
+            public function register_context_providers(Context $context): void
+            {
+            }
+            public function get_placeholder_resolver(Context $context)
+            {
+                return $this->resolver;
+            }
+            public function register_rule(array $rule, array $metadata): void
+            {
+            }
+            public function execute_rules(array $rules, Context $context): array
+            {
+                return [];
+            }
+            public function get_rules(): array
+            {
+                return [];
+            }
+            public function clear(): void
+            {
+            }
+            public function resolve_class_name(string $type, string $category): ?string
+            {
+                return null;
+            }
         };
 
-        $phpPackage = new class('PHP', $phpResolver) implements PackageInterface {
+        $phpPackage = new class ('PHP', $phpResolver) implements PackageInterface {
             private string $name;
             private $resolver;
-            public function __construct(string $name, $resolver) {
+            public function __construct(string $name, $resolver)
+            {
                 $this->name = $name;
                 $this->resolver = $resolver;
             }
-            public function get_name(): string { return $this->name; }
-            public function get_namespaces(): array { return []; }
-            public function is_available(): bool { return true; }
-            public function get_required_packages(): array { return []; }
-            public function register_namespaces(): void {}
-            public function build_context(): array { return []; }
-            public function get_placeholder_resolver(array $context) { return $this->resolver; }
-            public function register_rule(array $rule, array $metadata): void {}
-            public function execute_rules(array $rules, array $context): array { return []; }
-            public function get_rules(): array { return []; }
-            public function clear(): void {}
+            public function get_name(): string
+            {
+                return $this->name;
+            }
+            public function get_namespaces(): array
+            {
+                return [];
+            }
+            public function is_available(): bool
+            {
+                return true;
+            }
+            public function get_required_packages(): array
+            {
+                return [];
+            }
+            public function register_namespaces(): void
+            {
+            }
+            public function build_context(): array
+            {
+                return [];
+            }
+            public function register_context_providers(Context $context): void
+            {
+            }
+            public function get_placeholder_resolver(Context $context)
+            {
+                return $this->resolver;
+            }
+            public function register_rule(array $rule, array $metadata): void
+            {
+            }
+            public function execute_rules(array $rules, Context $context): array
+            {
+                return [];
+            }
+            public function get_rules(): array
+            {
+                return [];
+            }
+            public function clear(): void
+            {
+            }
+            public function resolve_class_name(string $type, string $category): ?string
+            {
+                return null;
+            }
         };
 
         PackageManager::register_package($phpPackage);
         PackageManager::register_package($wpPackage);
         PackageManager::load_packages(['PHP', 'WP']);
 
-        $resolver = PackageManager::get_placeholder_resolver([]);
+        $resolver = PackageManager::get_placeholder_resolver(new Context());
 
         // Should return WP resolver (higher priority)
         $this->assertSame($wpResolver, $resolver);
