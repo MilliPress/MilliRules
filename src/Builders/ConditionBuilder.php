@@ -373,7 +373,10 @@ class ConditionBuilder
      */
     private function build_condition_config(string $type, array $args): array
     {
-        $config = array( 'type' => $type );
+        $config = array(
+            'type'  => $type,
+            '_args' => $args,
+        );
 
         // No arguments - default condition.
         if (empty($args)) {

@@ -21,20 +21,25 @@ use MilliRules\Context;
  * This class dynamically calls the corresponding WordPress function when no specific
  * condition class exists.
  *
- * This condition only handles simple boolean conditionals that take no arguments.
- * For conditionals that require arguments (like is_singular('post')), a dedicated
- * condition class should be used instead.
+ * Modes:
+ * - Boolean mode (no args): calls the is_* function with no arguments and compares
+ *   the boolean result to the configured value (default TRUE) using the configured
+ *   operator (default 'IS').
+ *   Examples:
+ *     ->is_404()                    // is_404() IS TRUE
+ *     ['type' => 'is_404']          // is_404() IS TRUE
+ *     ['type' => 'is_404','value'=>false,'operator'=>'IS']
  *
- * Examples:
- * Array syntax:
- * - Check if 404: ['type' => 'is_404', 'value' => true, 'operator' => 'IS']
- * - Check if not 404: ['type' => 'is_404', 'value' => false, 'operator' => 'IS']
- * - Check if home: ['type' => 'is_home', 'value' => true, 'operator' => 'IS']
+ * - Function-call mode (with args): uses the raw method arguments to call the
+ *   is_* function, and compares the resulting boolean value to TRUE using an
+ *   optional operator taken from the last argument if it looks like an operator.
+ *   Examples:
+ *     ->is_singular('page')                 // is_singular('page') IS TRUE
+ *     ->is_tax('genre', 'sci-fi')          // is_tax('genre','sci-fi') IS TRUE
+ *     ->is_tax('genre', 'sci-fi', '!=')    // is_tax('genre','sci-fi') != TRUE
  *
- * Builder syntax:
- * - ->is_404() // check if 404 page
- * - ->is_home() // check if home page
- * - ->is_search() // check if search page
+ * Raw arguments are provided by ConditionBuilder via the generic '_args' key.
+ * Other packages can reuse this convention for their own condition types.
  *
  * @since 0.1.0
  */
@@ -43,22 +48,64 @@ class IsConditional extends BaseCondition
     /**
      * Constructor.
      *
-     * Sets default value to true and operator to IS for boolean conditionals
-     * when not explicitly specified.
+     * Sets up comparison defaults and interprets builder arguments
+     * for WordPress is_* conditionals.
      *
      * @since 0.1.0
      *
      * @param array<string, mixed> $config  The condition configuration.
-     * @param Context     $context The execution context.
+     * @param Context              $context The execution context.
      */
     public function __construct(array $config, Context $context)
     {
-        // Default to true with IS operator for boolean conditionals.
+        // Default operator/value fallbacks (will be refined below).
+        if (! isset($config['operator'])) {
+            $config['operator'] = 'IS';
+        }
+
+        // If no explicit value provided, start from TRUE (boolean conditionals).
         if (! isset($config['value'])) {
             $config['value'] = true;
         }
-        if (! isset($config['operator'])) {
-            $config['operator'] = 'IS';
+
+        // If we have raw arguments from the builder, interpret them.
+        if (isset($config['_args']) && is_array($config['_args']) && ! empty($config['_args'])) {
+            $raw_args = $config['_args'];
+            $first    = $raw_args[0];
+
+            // Mode A: boolean mode when first arg is boolean (->is_404(false), ->is_404(true, 'IS NOT')).
+            if (is_bool($first)) {
+                $config['value'] = $first;
+
+                // Optional operator as second arg if it's a string.
+                if (isset($raw_args[1]) && is_string($raw_args[1])) {
+                    $config['operator'] = $raw_args[1];
+                } else {
+                    // Infer operator for boolean values (IS / IS NOT).
+                    $config['operator'] = self::normalize_operator($config['operator'], $first);
+                }
+            } else {
+                // Mode B: function-call mode (arguments for the is_* function).
+                $args = $raw_args;
+
+                // Inspect last raw arg as potential operator.
+                $maybe_op = end($args);
+                $operator = null;
+
+                if (is_string($maybe_op) && self::looks_like_operator($maybe_op)) {
+                    $operator = $maybe_op;
+                    array_pop($args);
+                }
+
+                // Store remaining arguments as function args.
+                $config['fn_args'] = $args;
+
+                // We always compare the result of the is_* function to TRUE.
+                $config['value'] = true;
+
+                // Operator for comparison: explicit operator from args or default to 'IS'.
+                $config['operator'] = $operator !== null ? $operator : 'IS';
+            }
         }
 
         parent::__construct($config, $context);
@@ -83,13 +130,17 @@ class IsConditional extends BaseCondition
      * Dynamically calls the WordPress conditional function corresponding to the type.
      * For example, type 'is_home' will call the is_home() function.
      *
+     * If 'fn_args' is present in config, calls the function with those arguments:
+     *   is_tax('genre','sci-fi')
+     * Otherwise, calls the function with no arguments.
+     *
      * @since 0.1.0
      *
      * @param Context $context The execution context.
      * @return bool The result of the WordPress conditional function, or false if it doesn't exist.
      */
-    protected function get_actual_value(Context $context)
-    {
+    protected function get_actual_value(Context $context): bool
+	{
         $fn = $this->get_type();
 
         // Check if the function exists.
@@ -97,7 +148,53 @@ class IsConditional extends BaseCondition
             return false;
         }
 
-        // Call the WordPress conditional function with no arguments.
+        // Call with or without function arguments.
+        if (isset($this->config['fn_args']) && is_array($this->config['fn_args']) && ! empty($this->config['fn_args'])) {
+            return (bool) call_user_func_array($fn, $this->config['fn_args']);
+        }
+
         return (bool) call_user_func($fn);
+    }
+
+    /**
+     * Check if a string looks like a comparison operator we support.
+     *
+     * Supported operators for this condition:
+     * - '='
+     * - '!='
+     * - 'IS'
+     * - 'IS NOT'
+	 *
+	 * @since 0.1.0
+     *
+     * @param string $value Candidate operator string.
+     * @return bool
+     */
+    private static function looks_like_operator(string $value): bool
+    {
+        $upper = strtoupper(trim($value));
+        $supported = array('=', '!=', 'IS', 'IS NOT');
+        return in_array($upper, $supported, true);
+    }
+
+    /**
+     * Normalize operator for boolean comparisons.
+     *
+     * For now, this simply uppercases known operators and falls back to 'IS'
+     * if the provided operator is not recognized.
+	 *
+	 * @since 0.1.0
+     *
+     * @param string $operator Provided operator.
+     * @param bool   $value    The boolean value (currently unused, but may be used in future).
+     * @return string
+     */
+    private static function normalize_operator(string $operator, bool $value): string
+    {
+        $upper = strtoupper(trim($operator));
+        if (self::looks_like_operator($upper)) {
+            return $upper;
+        }
+        return 'IS';
     }
 }
