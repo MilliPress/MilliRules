@@ -198,8 +198,8 @@ class Package extends BasePackage
     public function register_rule(array $rule, array $metadata): void
     {
         // Extract hook information from metadata.
-        $hook     = $metadata['hook'] ?? 'template_redirect';
-        $priority = $metadata['hook_priority'] ?? 20;
+        $hook     = $metadata['hook'] ?? 'wp';
+        $priority = $metadata['hook_priority'] ?? 10;
 
         // Ensure metadata is in rule for consistency.
         $rule['_metadata'] = $metadata;

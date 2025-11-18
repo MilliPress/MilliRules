@@ -111,7 +111,7 @@ class Rules
      * @since 0.1.0
      * @var string
      */
-    private string $hook = 'template_redirect';
+    private string $hook = 'wp';
 
     /**
      * The priority for the hook.
@@ -119,7 +119,7 @@ class Rules
      * @since 0.1.0
      * @var int
      */
-    private int $hook_priority = 20;
+    private int $hook_priority = 10;
 
     /**
      * Create a new rule builder.
@@ -148,7 +148,6 @@ class Rules
      * - Auto-detection based on used conditions/actions and hooks
      * - 'php' for early execution (before WordPress), 'wp' for WordPress context
      *
-     * @since 0.1.0
      * @since 0.1.0
      *
      * @param string      $id   The rule ID.
@@ -355,11 +354,11 @@ class Rules
      * @since 0.1.0
      * @since 0.1.0
      *
-     * @param string $hook     The WordPress hook name (default: 'template_redirect').
-     * @param int    $priority The hook priority (default: 20).
+     * @param string $hook     The WordPress hook name (default: 'wp').
+     * @param int    $priority The hook priority (default: 10).
      * @return self
      */
-    public function on(string $hook = 'template_redirect', int $priority = 20): self
+    public function on(string $hook = 'wp', int $priority = 10): self
     {
         $this->hook = $hook;
         $this->hook_priority = $priority;
@@ -787,7 +786,7 @@ class Rules
     private function detect_type(array $required_packages): string
     {
         // Check if explicit hook was set (non-default values).
-        if ($this->hook !== 'template_redirect' || $this->hook_priority !== 20) {
+        if ($this->hook !== 'wp' || $this->hook_priority !== 10) {
             // Explicit hook usage implies WordPress context.
             return 'wp';
         }
@@ -840,7 +839,7 @@ class Rules
         }
 
         // Validation 2: Explicit type='php' with ->on() usage.
-        if ($this->explicit_type === 'php' && ( $this->hook !== 'template_redirect' || $this->hook_priority !== 20 )) {
+        if ($this->explicit_type === 'php' && ( $this->hook !== 'wp' || $this->hook_priority !== 10 )) {
             error_log(
                 "MilliRules: Rule '{$rule_id}' has explicit type='php' but uses WordPress hook '{$this->hook}' - " .
                 'auto-changing type to \'wp\' as hooks require WordPress context.'
