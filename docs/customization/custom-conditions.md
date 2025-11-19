@@ -28,8 +28,9 @@ Rules::create('weekend_special')
 - Method names convert from camelCase to snake_case
 - `->isWeekend()` becomes `type='is_weekend'`
 - `->userHasRole()` becomes `type='user_has_role'`
-- Arguments map intelligently based on condition type
-- Operators auto-detect from value types
+- **Name-based conditions** (header, param, cookie, constant): first arg = name, second = value, third = operator
+- **Value-based conditions**: first arg = value, second = operator
+- Operators auto-detect from value types when not specified
 
 ### Using custom() Method
 
