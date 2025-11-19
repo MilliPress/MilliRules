@@ -80,8 +80,8 @@ class Context
      * @since 0.1.0
      *
      * @param string   $key      Context key (e.g., 'request', 'post', 'cookie').
-     * @param callable $provider Callable that returns array to merge into context.
-     *                           Signature: function(): array<string, mixed>
+     * @param callable(): array<string, mixed> $provider Callable that returns array to merge into context.
+     *                                                    Signature: function(): array<string, mixed>
      * @return self Fluent interface.
      */
     public function register_provider(string $key, callable $provider): self

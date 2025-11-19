@@ -218,9 +218,9 @@ class ConditionBuilder
      *
      * @since 0.1.0
      *
-     * @param string                             $type The condition type identifier.
-     * @param array<string, mixed>|callable|null $arg  The condition configuration or a callable function.
-     *                                                  Callback signature: function(array $context): bool.
+     * @param string                                              $type The condition type identifier.
+     * @param array<string, mixed>|callable(Context, array): bool|null $arg  The condition configuration or a callable function.
+     *                                                                        Callback signature: function(Context $context, array $config): bool
      * @return self
      */
     public function custom(string $type, $arg = array()): self

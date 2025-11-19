@@ -186,7 +186,8 @@ class Rules
      * @since 0.1.0
      *
      * @param string   $type     The condition type identifier.
-     * @param callable $callback The callback function.
+     * @param callable(Context, array): bool $callback The callback function that receives Context and config array.
+     *                                                  Signature: function(Context $context, array $config): bool
      * @return void
      * @throws \InvalidArgumentException If callback is not callable.
      */
@@ -205,7 +206,8 @@ class Rules
      * @since 0.1.0
      *
      * @param string   $type     The action type identifier.
-     * @param callable $callback The callback function.
+     * @param callable(Context, array): void $callback The callback function that receives Context and config array.
+     *                                                  Signature: function(Context $context, array $config): void
      * @return void
      * @throws \InvalidArgumentException If callback is not callable.
      */
@@ -265,7 +267,8 @@ class Rules
      * @since 0.1.0
      *
      * @param string   $placeholder The placeholder name (e.g., 'custom' for {custom:value}).
-     * @param callable $resolver    The resolver callback (receives context and parts array).
+     * @param callable(Context, array): mixed $resolver The resolver callback that receives Context and parts array.
+     *                                                   Signature: function(Context $context, array $parts): mixed
      * @return void
      */
     public static function register_placeholder(string $placeholder, callable $resolver): void
