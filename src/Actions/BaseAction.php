@@ -24,20 +24,23 @@ use MilliRules\PlaceholderResolver;
 abstract class BaseAction implements ActionInterface
 {
     /**
-     * Action value.
+     * Action type identifier.
      *
      * @since 0.1.0
-     * @var mixed
+     * @var string
      */
-    protected $value;
+    protected string $type;
 
     /**
-     * Full action configuration.
+     * Action arguments (both positional and named).
+     *
+     * Contains all arguments from dynamic method calls (numeric keys)
+     * and custom() calls (string keys), excluding 'type'.
      *
      * @since 0.1.0
-     * @var array<string, mixed>
+     * @var array<int|string, mixed>
      */
-    protected array $config;
+    protected array $args;
 
     /**
      * Placeholder resolver instance.
@@ -52,13 +55,20 @@ abstract class BaseAction implements ActionInterface
      *
      * @since 0.1.0
      *
-     * @param array<string, mixed> $config  The action configuration.
+     * @param array<int|string, mixed> $config  The action configuration.
      * @param Context     $context The execution context.
      */
     public function __construct(array $config, Context $context)
     {
-        $this->config   = $config;
-        $this->value    = $config['value'] ?? null;
+        $this->type = $config['type'] ?? '';
+
+        // Extract all arguments excluding 'type'.
+        $this->args = array_filter(
+            $config,
+            fn($key) => $key !== 'type',
+            ARRAY_FILTER_USE_KEY
+        );
+
         $this->resolver = new PlaceholderResolver($context);
     }
 
