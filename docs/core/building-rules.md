@@ -58,7 +58,7 @@ Add descriptive information to your rules:
 ```php
 <?php
 Rules::create('api_cache_control')
-    ->title('Control API Response Caching')  // Human-readable title
+    ->title('Control API Response Caching')   // Human-readable title
     ->order(15)                               // Execution sequence
     ->enabled(true)                           // Enable/disable
     ->register();
@@ -105,7 +105,7 @@ Conditions determine when a rule should execute. The `when()` method starts the 
 <?php
 Rules::create('check_request')
     ->when()
-        ->request_url('/api/users')      // Check URL
+        ->request_url('/api/users')       // Check URL
         ->request_method('POST')          // Check HTTP method
     ->then()
         ->custom('process_users')
@@ -120,10 +120,10 @@ Chain multiple conditions together:
 <?php
 Rules::create('secure_api')
     ->when()
-        ->request_url('/api/*')                          // URL pattern
-        ->request_method('POST')                          // HTTP method
+        ->request_url('/api/*')                               // URL pattern
+        ->request_method('POST')                              // HTTP method
         ->request_header('Content-Type', 'application/json')  // Header
-        ->cookie('session_id')                            // Cookie exists
+        ->cookie('session_id')                                // Cookie exists
     ->then()
         ->custom('process_request')
     ->register();
@@ -573,7 +573,7 @@ While MilliRules doesn't support nested conditions directly, you can simulate th
 Rules::create('condition_group_1')->order(10)
     ->when()
         ->request_url('/special/*')      // A
-        ->cookie('premium_user')          // B
+        ->cookie('premium_user')         // B
     ->then()
         ->custom('grant_access')
     ->register();
@@ -592,38 +592,38 @@ Rules::create('condition_group_2')->order(10)
 
 ### Rule Builder Methods
 
-| Method | Parameters | Returns | Description |
-|--------|-----------|---------|-------------|
-| `create()` | `string $id, ?string $type` | `Rules` | Create new rule |
-| `title()` | `string $title` | `Rules` | Set rule title |
-| `order()` | `int $order` | `Rules` | Set execution order |
-| `enabled()` | `bool $enabled` | `Rules` | Enable/disable rule |
-| `when()` | - | `ConditionBuilder` | Start condition builder |
-| `when_all()` | - | `ConditionBuilder` | Start with AND logic |
-| `when_any()` | - | `ConditionBuilder` | Start with OR logic |
-| `when_none()` | - | `ConditionBuilder` | Start with NOT logic |
-| `then()` | `?array $actions` | `ActionBuilder` | Start action builder |
-| `on()` | `string $hook, int $priority` | `Rules` | Set WordPress hook |
-| `register()` | - | `void` | Register rule with engine |
+| Method        | Parameters                    | Returns            | Description               |
+|---------------|-------------------------------|--------------------|---------------------------|
+| `create()`    | `string $id, ?string $type`   | `Rules`            | Create new rule           |
+| `title()`     | `string $title`               | `Rules`            | Set rule title            |
+| `order()`     | `int $order`                  | `Rules`            | Set execution order       |
+| `enabled()`   | `bool $enabled`               | `Rules`            | Enable/disable rule       |
+| `when()`      | -                             | `ConditionBuilder` | Start condition builder   |
+| `when_all()`  | -                             | `ConditionBuilder` | Start with AND logic      |
+| `when_any()`  | -                             | `ConditionBuilder` | Start with OR logic       |
+| `when_none()` | -                             | `ConditionBuilder` | Start with NOT logic      |
+| `then()`      | `?array $actions`             | `ActionBuilder`    | Start action builder      |
+| `on()`        | `string $hook, int $priority` | `Rules`            | Set WordPress hook        |
+| `register()`  | -                             | `void`             | Register rule with engine |
 
 ### Condition Builder Methods
 
-| Method | Parameters | Returns | Description |
-|--------|-----------|---------|-------------|
-| `match_all()` | - | `ConditionBuilder` | Use AND logic |
-| `match_any()` | - | `ConditionBuilder` | Use OR logic |
-| `match_none()` | - | `ConditionBuilder` | Use NOT logic |
-| `custom()` | `string $type, mixed $arg` | `ConditionBuilder` | Add custom condition |
-| `add_namespace()` | `string $namespace` | `ConditionBuilder` | Add condition namespace |
-| `{dynamic}()` | `mixed ...$args` | `mixed` | Dynamic condition methods |
+| Method            | Parameters                 | Returns            | Description               |
+|-------------------|----------------------------|--------------------|---------------------------|
+| `match_all()`     | -                          | `ConditionBuilder` | Use AND logic             |
+| `match_any()`     | -                          | `ConditionBuilder` | Use OR logic              |
+| `match_none()`    | -                          | `ConditionBuilder` | Use NOT logic             |
+| `custom()`        | `string $type, mixed $arg` | `ConditionBuilder` | Add custom condition      |
+| `add_namespace()` | `string $namespace`        | `ConditionBuilder` | Add condition namespace   |
+| `{dynamic}()`     | `mixed ...$args`           | `mixed`            | Dynamic condition methods |
 
 ### Action Builder Methods
 
-| Method | Parameters | Returns | Description |
-|--------|-----------|---------|-------------|
-| `custom()` | `string $type, mixed $arg` | `ActionBuilder` | Add custom action |
-| `add_namespace()` | `string $namespace` | `ActionBuilder` | Add action namespace |
-| `{dynamic}()` | `mixed ...$args` | `mixed` | Dynamic action methods |
+| Method            | Parameters                 | Returns         | Description            |
+|-------------------|----------------------------|-----------------|------------------------|
+| `custom()`        | `string $type, mixed $arg` | `ActionBuilder` | Add custom action      |
+| `add_namespace()` | `string $namespace`        | `ActionBuilder` | Add action namespace   |
+| `{dynamic}()`     | `mixed ...$args`           | `mixed`         | Dynamic action methods |
 
 ## Best Practices
 
@@ -667,7 +667,7 @@ Rules::create('api_authentication')
 // ✅ Good - logical grouping
 Rules::create('secure_api_access')
     ->when()
-        ->request_url('/api/secure/*')   // Context: API endpoint
+        ->request_url('/api/secure/*')    // Context: API endpoint
         ->request_method('POST')          // Context: HTTP method
         ->cookie('auth_token')            // Context: Authentication
     ->then()->custom('process_secure_request')
@@ -774,7 +774,7 @@ add_action('wp_footer', function() {
 });
 
 // ✅ Correct - register early
-add_action('init', function() {
+add_action('plugins_loaded', function() {
     MilliRules::init();
     Rules::create('my_rule')->on('template_redirect')->when()->then()->register();
 }, 1); // Early priority
