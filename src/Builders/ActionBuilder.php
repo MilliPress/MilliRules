@@ -22,7 +22,7 @@ use MilliRules\Rules;
  * Provides dynamic method resolution for actions - any method call is converted to an action
  * configuration. Method names are converted from camelCase to snake_case for action types.
  *
- * Example: ->sendEmail('user@example.com') becomes ['type' => 'send_email', 'value' => 'user@example.com']
+ * Example: ->sendEmail('user@example.com', 'high') becomes ['type' => 'send_email', 'args' => ['user@example.com', 'high']]
  *
  * Custom Actions:
  * For actions registered via Rules::register_action() by other plugins, use the custom() method.
@@ -170,7 +170,7 @@ class ActionBuilder
      *
      * Method name resolution:
      * - Converts camelCase to snake_case (e.g., sendEmail → send_email)
-     * - First argument becomes 'value', second becomes 'expire' in action config
+     * - All arguments are stored in 'args' array for flexible access
      *
      * Auto-delegation:
      * - If method exists on Rules object, transfers actions and delegates the call
@@ -204,13 +204,10 @@ class ActionBuilder
         $replaced = preg_replace('/(?<!^)[A-Z]/', '_$0', $method);
         $type = strtolower(is_string($replaced) ? $replaced : $method);
 
-        $config = array( 'type' => $type );
-        if (! empty($args)) {
-            $config['value'] = $args[0];
-            if (isset($args[1])) {
-                $config['expire'] = $args[1];
-            }
-        }
+        $config = array(
+            'type' => $type,
+            'args' => $args,
+        );
 
         $this->actions[] = $config;
         return $this;
