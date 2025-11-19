@@ -668,9 +668,6 @@ use MilliRules\Context;
 
 // ✅ Good - uses context effectively
 Rules::register_action('log_user_action', function(Context $context, $config) {
-    $context->load('user');
-    $context->load('request');
-
     $user = $context->get('user.login', 'guest');
     $url = $context->get('request.uri', 'unknown');
     error_log("User $user accessed $url");
@@ -679,20 +676,7 @@ Rules::register_action('log_user_action', function(Context $context, $config) {
 
 ## Common Patterns
 
-### 1. Early Exit Pattern
-
-Stop processing based on conditions:
-
-```php
-<?php
-Rules::create('maintenance_mode')
-    ->order(1)  // Execute first
-    ->when()->constant('MAINTENANCE_MODE', true)
-    ->then()->custom('show_maintenance_page')->custom('exit')
-    ->register();
-```
-
-### 2. Progressive Enhancement Pattern
+### 1. Progressive Enhancement Pattern
 
 Layer features based on availability:
 

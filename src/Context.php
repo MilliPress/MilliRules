@@ -149,7 +149,7 @@ class Context
     {
         $parts   = explode('.', $path);
 
-        // Auto-loads the top-level key is loaded
+        // Autoloads the top-level key is loaded
         if (! empty($parts)) {
             $this->load($parts[0]);
         }
