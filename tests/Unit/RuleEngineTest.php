@@ -21,13 +21,13 @@ test('rule engine executes simple rule with matching condition', function () {
     $engine = new RuleEngine();
 
     // Register a custom condition
-    Rules::register_condition('always_true', function ($context, $config) {
+    Rules::register_condition('always_true', function (Context $context, $config) {
         return true;
     });
 
     // Register a custom action
     $actionExecuted = false;
-    Rules::register_action('test_action', function ($context, $config) use (&$actionExecuted) {
+    Rules::register_action('test_action', function (Context $context, $config) use (&$actionExecuted) {
         $actionExecuted = true;
     });
 
@@ -56,7 +56,7 @@ test('rule engine skips rule with non-matching condition', function () {
     $engine = new RuleEngine();
 
     // Register a custom condition that returns false
-    Rules::register_condition('always_false', function ($context, $config) {
+    Rules::register_condition('always_false', function (Context $context, $config) {
         return false;
     });
 
@@ -81,11 +81,11 @@ test('rule engine skips rule with non-matching condition', function () {
 test('rule engine respects "all" match type', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('condition_a', function ($context, $config) {
+    Rules::register_condition('condition_a', function (Context $context, $config) {
         return true;
     });
 
-    Rules::register_condition('condition_b', function ($context, $config) {
+    Rules::register_condition('condition_b', function (Context $context, $config) {
         return false;
     });
 
@@ -111,11 +111,11 @@ test('rule engine respects "all" match type', function () {
 test('rule engine respects "any" match type', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('true_condition', function ($context, $config) {
+    Rules::register_condition('true_condition', function (Context $context, $config) {
         return true;
     });
 
-    Rules::register_condition('false_condition', function ($context, $config) {
+    Rules::register_condition('false_condition', function (Context $context, $config) {
         return false;
     });
 
@@ -141,7 +141,7 @@ test('rule engine respects "any" match type', function () {
 test('rule engine respects "none" match type', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('failing_condition', function ($context, $config) {
+    Rules::register_condition('failing_condition', function (Context $context, $config) {
         return false;
     });
 
@@ -169,8 +169,8 @@ test('rule engine respects "none" match type', function () {
 test('rule engine passes context to conditions', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('check_user', function ($context, $config) {
-        return isset($context['user_id']) && $context['user_id'] === 123;
+    Rules::register_condition('check_user', function (Context $context, $config) {
+        return $context->has('user_id') && $context->get('user_id') === 123;
     });
 
     $rules = [
@@ -195,13 +195,13 @@ test('rule engine passes context to conditions', function () {
 test('rule engine allows actions to access context', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('always_match', function ($context, $config) {
+    Rules::register_condition('always_match', function (Context $context, $config) {
         return true;
     });
 
     $capturedUserId = null;
-    Rules::register_action('capture_user', function ($context, $config) use (&$capturedUserId) {
-        $capturedUserId = $context['user_id'] ?? null;
+    Rules::register_action('capture_user', function (Context $context, $config) use (&$capturedUserId) {
+        $capturedUserId = $context->get('user_id');
     });
 
     $rules = [
@@ -230,7 +230,7 @@ test('rule engine allows actions to access context', function () {
 test('rule engine skips disabled rules', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('test_condition', function ($context, $config) {
+    Rules::register_condition('test_condition', function (Context $context, $config) {
         return true;
     });
 

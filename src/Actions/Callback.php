@@ -84,8 +84,8 @@ class Callback implements ActionInterface
     public function execute(Context $context): void
     {
         try {
-            // Call the callback with context (as array for BC) and config.
-            call_user_func($this->callback, $this->context->to_array(), $this->config);
+            // Call the callback with context object and config.
+            call_user_func($this->callback, $this->context, $this->config);
         } catch (\Exception $e) {
             error_log(
                 sprintf(

@@ -386,19 +386,33 @@ $userId = $context->get('user.id', 0);  // Triggers 'user' provider loading
 
 ### Accessing Context in Custom Code
 
-Use the Context object methods to access data:
+Callback actions and conditions receive the Context object, which provides methods to access data:
 
 ```php
 <?php
 use MilliRules\Context;
 
 Rules::register_action('log_context', function(Context $context, $config) {
-    // Load and access request data
-    $context->load('request');
+    // get() automatically loads data (recommended)
     $method = $context->get('request.method', 'UNKNOWN');
+    $user_id = $context->get('user.id', 0);
 
-    // Load and access WordPress user data (if available)
+    error_log("Request: $method, User: $user_id");
+});
+```
+
+You can also explicitly load context sections for clarity:
+
+```php
+<?php
+use MilliRules\Context;
+
+Rules::register_action('log_context', function(Context $context, $config) {
+    // Explicit load() for clarity (optional)
+    $context->load('request');
     $context->load('user');
+
+    $method = $context->get('request.method', 'UNKNOWN');
     $user_id = $context->get('user.id', 0);
 
     error_log("Request: $method, User: $user_id");
@@ -411,8 +425,9 @@ The Context class provides several useful methods:
 
 ```php
 <?php
-// Get a value using dot notation
+// Get a value using dot notation (automatically loads the section if needed)
 $value = $context->get('post.type', 'post');
+// ↑ Internally calls $context->load('post') if not already loaded
 
 // Set a value using dot notation
 $context->set('custom.data', 'value');
@@ -422,7 +437,7 @@ if ($context->has('user.id')) {
     // User data is loaded
 }
 
-// Explicitly load a context section
+// Explicitly load a context section (optional - get() does this automatically)
 $context->load('request');
 
 // Export context as array (for debugging)
@@ -430,7 +445,7 @@ $array = $context->to_array();
 ```
 
 > [!IMPORTANT]
-> Context sections are loaded lazily. Only the data actually needed by your rules will be retrieved, improving performance significantly.
+> Context sections are loaded lazily. The `get()` method **automatically loads** the top-level section if it hasn't been loaded yet. You rarely need to call `load()` manually - it's mainly useful for pre-loading multiple sections or for code clarity.
 
 ## Packages: Modular Functionality
 
@@ -490,7 +505,7 @@ MilliRules automatically resolves dependencies:
 > [!WARNING]
 > Circular dependencies (Package A requires Package B, Package B requires Package A) will cause an error. Design your packages carefully to avoid this.
 
-## Rule Types: PHP vs WordPress
+## Rule Types: PHP vs. WordPress
 
 MilliRules supports two rule types that determine execution strategy:
 

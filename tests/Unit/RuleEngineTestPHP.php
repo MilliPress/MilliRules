@@ -6,6 +6,7 @@ use MilliRules\Tests\TestCase;
 use MilliRules\RuleEngine;
 use MilliRules\Rules;
 use MilliRules\Packages\PackageManager;
+use MilliRules\Context;
 
 /**
  * Comprehensive tests for RuleEngine class
@@ -59,7 +60,7 @@ class RuleEngineTestPHP extends TestCase
         $engine = new RuleEngine();
 
         $executedAction = false;
-        Rules::register_action('test_action', function ($context, $config) use (&$executedAction) {
+        Rules::register_action('test_action', function (Context $context, $config) use (&$executedAction) {
             $executedAction = true;
         });
 
@@ -85,11 +86,11 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('always_true', function ($context, $config) {
+        Rules::register_condition('always_true', function (Context $context, $config) {
             return true;
         });
 
-        Rules::register_action('track_execution', function ($context, $config) use (&$executed) {
+        Rules::register_action('track_execution', function (Context $context, $config) use (&$executed) {
             $executed = true;
         });
 
@@ -118,7 +119,7 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('always_false', function ($context, $config) {
+        Rules::register_condition('always_false', function (Context $context, $config) {
             return false;
         });
 
@@ -147,11 +148,11 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('true1', function ($context, $config) {
+        Rules::register_condition('true1', function (Context $context, $config) {
             return true;
         });
 
-        Rules::register_condition('true2', function ($context, $config) {
+        Rules::register_condition('true2', function (Context $context, $config) {
             return true;
         });
 
@@ -176,11 +177,11 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('true_cond', function ($context, $config) {
+        Rules::register_condition('true_cond', function (Context $context, $config) {
             return true;
         });
 
-        Rules::register_condition('false_cond', function ($context, $config) {
+        Rules::register_condition('false_cond', function (Context $context, $config) {
             return false;
         });
 
@@ -205,11 +206,11 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('true_cond', function ($context, $config) {
+        Rules::register_condition('true_cond', function (Context $context, $config) {
             return true;
         });
 
-        Rules::register_condition('false_cond', function ($context, $config) {
+        Rules::register_condition('false_cond', function (Context $context, $config) {
             return false;
         });
 
@@ -234,11 +235,11 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('false1', function ($context, $config) {
+        Rules::register_condition('false1', function (Context $context, $config) {
             return false;
         });
 
-        Rules::register_condition('false2', function ($context, $config) {
+        Rules::register_condition('false2', function (Context $context, $config) {
             return false;
         });
 
@@ -267,7 +268,7 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('always_true', function ($context, $config) {
+        Rules::register_condition('always_true', function (Context $context, $config) {
             return true;
         });
 
@@ -292,7 +293,7 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('always_true', function ($context, $config) {
+        Rules::register_condition('always_true', function (Context $context, $config) {
             return true;
         });
 
@@ -320,7 +321,7 @@ class RuleEngineTestPHP extends TestCase
         $engine = new RuleEngine();
 
         $capturedContext = null;
-        Rules::register_condition('capture_context', function ($context, $config) use (&$capturedContext) {
+        Rules::register_condition('capture_context', function (Context $context, $config) use (&$capturedContext) {
             $capturedContext = $context;
             return true;
         });
@@ -339,20 +340,20 @@ class RuleEngineTestPHP extends TestCase
         $context = ['user_id' => 123, 'request' => ['url' => '/test']];
         $engine->execute($rules, $context);
 
-        $this->assertEquals(123, $capturedContext['user_id']);
-        $this->assertEquals('/test', $capturedContext['request']['url']);
+        $this->assertEquals(123, $capturedContext->get('user_id'));
+        $this->assertEquals('/test', $capturedContext->get('request.url'));
     }
 
     public function testContextPassedToActions(): void
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('always_true', function ($context, $config) {
+        Rules::register_condition('always_true', function (Context $context, $config) {
             return true;
         });
 
         $capturedContext = null;
-        Rules::register_action('capture_context', function ($context, $config) use (&$capturedContext) {
+        Rules::register_action('capture_context', function (Context $context, $config) use (&$capturedContext) {
             $capturedContext = $context;
         });
 
@@ -372,7 +373,7 @@ class RuleEngineTestPHP extends TestCase
         $context = ['user_id' => 456];
         $result = $engine->execute($rules, $context);
 
-        $this->assertEquals(456, $capturedContext['user_id']);
+        $this->assertEquals(456, $capturedContext->get('user_id'));
     }
 
     public function testGetContext(): void
@@ -418,7 +419,7 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('always_true', function ($context, $config) {
+        Rules::register_condition('always_true', function (Context $context, $config) {
             return true;
         });
 
@@ -447,7 +448,7 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('always_true', function ($context, $config) {
+        Rules::register_condition('always_true', function (Context $context, $config) {
             return true;
         });
 
@@ -476,15 +477,15 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('true_cond', function ($context, $config) {
+        Rules::register_condition('true_cond', function (Context $context, $config) {
             return true;
         });
 
-        Rules::register_condition('false_cond', function ($context, $config) {
+        Rules::register_condition('false_cond', function (Context $context, $config) {
             return false;
         });
 
-        Rules::register_action('test_action', function ($context, $config) {
+        Rules::register_action('test_action', function (Context $context, $config) {
             // Action
         });
 
@@ -530,7 +531,7 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('error_condition', function ($context, $config) {
+        Rules::register_condition('error_condition', function (Context $context, $config) {
             throw new \Exception('Test exception in condition');
         });
 
@@ -555,11 +556,11 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('always_true', function ($context, $config) {
+        Rules::register_condition('always_true', function (Context $context, $config) {
             return true;
         });
 
-        Rules::register_action('error_action', function ($context, $config) {
+        Rules::register_action('error_action', function (Context $context, $config) {
             throw new \Exception('Test exception in action');
         });
 
@@ -609,7 +610,7 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('always_true', function ($context, $config) {
+        Rules::register_condition('always_true', function (Context $context, $config) {
             return true;
         });
 
@@ -684,12 +685,12 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        Rules::register_condition('always_true', function ($context, $config) {
+        Rules::register_condition('always_true', function (Context $context, $config) {
             return true;
         });
 
         $executionOrder = [];
-        Rules::register_action('track_order', function ($context, $config) use (&$executionOrder) {
+        Rules::register_action('track_order', function (Context $context, $config) use (&$executionOrder) {
             $executionOrder[] = $config['rule_id'] ?? 'unknown';
         });
 

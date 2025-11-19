@@ -128,7 +128,7 @@ class ActionBuilder
      *
      * @param string                        $type The action type identifier.
      * @param array<string, mixed>|callable $arg The action configuration array or a callable function.
-     *                             Callback signature: function(array $context, array $config): void.
+     *                             Callback signature: function(Context $context, array $config): void.
      * @return self
      */
     public function custom(string $type, $arg = array()): self
