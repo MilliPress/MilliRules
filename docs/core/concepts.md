@@ -45,9 +45,9 @@ Every rule consists of:
 use MilliRules\Rules;
 
 Rules::create('rule_id')           // Unique identifier
-    ->title('Rule Title')           // Human-readable name
-    ->order(10)                     // Execution sequence
-    ->enabled(true)                 // Enable/disable flag
+    ->title('Rule Title')           // Human-readable name (optional)
+    ->order(10)                     // Execution sequence (optional)
+    ->enabled(true)                 // Enable/disable flag (optional)
     ->when()                        // Condition builder
         ->condition1()
         ->condition2()
@@ -59,16 +59,16 @@ Rules::create('rule_id')           // Unique identifier
 
 ### Rule Properties
 
-| Property | Type | Description | Default |
-|----------|------|-------------|---------|
-| `id` | string | Unique identifier (required) | - |
-| `title` | string | Human-readable name | Empty |
-| `order` | int | Execution sequence (lower = first) | 10 |
-| `enabled` | bool | Whether rule should execute | true |
-| `type` | string | Rule type (`php` or `wp`) | Auto-detected |
-| `match_type` | string | Condition logic (`all`, `any`, `none`) | `all` |
-| `conditions` | array | Condition configurations | [] |
-| `actions` | array | Action configurations | [] |
+| Property     | Type   | Description                            | Default       |
+|--------------|--------|----------------------------------------|---------------|
+| `id`         | string | Unique identifier (required)           | -             |
+| `title`      | string | Human-readable name                    | Empty         |
+| `order`      | int    | Execution sequence (lower = first)     | 10            |
+| `enabled`    | bool   | Whether rule should execute            | true          |
+| `type`       | string | Rule type (`php` or `wp`)              | Auto-detected |
+| `match_type` | string | Condition logic (`all`, `any`, `none`) | `all`         |
+| `conditions` | array  | Condition configurations               | []            |
+| `actions`    | array  | Action configurations                  | []            |
 
 > [!IMPORTANT]
 > Rule IDs must be unique within your application. Using duplicate IDs may cause unexpected behavior. Consider prefixing IDs with your plugin or project name.
@@ -79,8 +79,8 @@ Rules execute in sequence based on their `order` value:
 
 ```php
 <?php
-Rules::create('first_rule')->order(5)->when()->request_url('/test')->then()->register();
 Rules::create('second_rule')->order(10)->when()->request_url('/test')->then()->register();
+Rules::create('first_rule')->order(5)->when()->request_url('/test')->then()->register();
 Rules::create('third_rule')->order(20)->when()->request_url('/test')->then()->register();
 ```
 
@@ -144,16 +144,18 @@ Available in any PHP environment:
 
 #### 2. WordPress Package Conditions
 
-Available only in WordPress environments:
+Available only in WordPress environments. MilliRules supports **all** WordPress `is_*` conditional tags (like `is_single()`, `is_tax()`, `is_404()`, etc.):
 
 ```php
 <?php
 ->when()
     ->is_user_logged_in()             // User authentication
     ->is_singular('post')             // Singular post/page
-    ->is_archive('category')          // Archive pages
+    ->is_archive()                    // Archive pages
+    ->is_tax('channel', 'mtv', '!=')  // Taxonomy term with optional operator
     ->post_type('product')            // Post type
     ->is_home()                       // Home page
+    ->is_sticky()                     // Supports ANY is_* function!
 ```
 
 > [!NOTE]
@@ -297,13 +299,21 @@ class SendEmailAction implements ActionInterface {
 
 #### 3. WordPress Hook Actions
 
-Trigger WordPress actions or filters:
+Trigger WordPress actions or filters with inlined callback:
 
 ```php
 <?php
+->on('wp_mail', 10) // Registers with WordPress hook
 ->then()
-    ->custom('do_action', ['value' => 'my_custom_hook'])
-    ->custom('apply_filters', ['value' => 'my_custom_filter'])
+    ->custom('log_sent_mail', function($context) {
+        $hook_name = $context['hook']['name']; // Will be 'wp_mail'
+        $hook_args = $context['hook']['args']; // Will be the array of arguments
+        
+        if( $hook_name === 'wp_mail' ) {
+            // Log email sent to $hook_args[0] with subject $hook_args[1] and message $hook_args[2]
+            error_log("Sent email to $hook_args[0] with subject \"$hook_args[1]\"")
+        }
+    }})
 ```
 
 > [!TIP]

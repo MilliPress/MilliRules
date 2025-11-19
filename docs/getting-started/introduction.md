@@ -20,7 +20,7 @@ MilliRules allows you to define rules that automatically execute actions when sp
 
 Before installing MilliRules, ensure you have:
 
-- **PHP 7.4 or higher** - MilliRules requires PHP 7.4+
+- **PHP 7.4 or higher**
 - **Composer** - For dependency management
 - **(Optional) WordPress 5.0+** - If using WordPress-specific features
 
@@ -32,22 +32,13 @@ MilliRules is installed via Composer. Run this command in your project directory
 composer require MilliPress/MilliRules
 ```
 
-### Autoloading
-
-After installation, include Composer's autoloader in your project:
-
-```php
-<?php
-require_once __DIR__ . '/vendor/autoload.php';
-```
-
 ## Initializing MilliRules
 
 Before creating rules, you need to initialize MilliRules. This registers the available packages (PHP and WordPress) and prepares the rule engine.
 
 ### Basic Initialization
 
-For most WordPress installations, use the simple initialization:
+For most installations, whether you are using WordPress or a standalone PHP application, use the simple initialization:
 
 ```php
 <?php
@@ -57,22 +48,9 @@ use MilliRules\MilliRules;
 MilliRules::init();
 ```
 
-This automatically:
-- Registers the **PHP package** (always available)
-- Registers the **WordPress package** (if WordPress is detected)
-- Loads both packages if they're available
-
-### Framework-Agnostic Usage
-
-If you're using MilliRules outside WordPress, it will automatically use only the PHP package:
-
-```php
-<?php
-use MilliRules\MilliRules;
-
-// In a non-WordPress environment, only PHP package loads
-MilliRules::init();
-```
+This automatically detects your environment:
+- In **WordPress**, it registers and loads both the PHP and WordPress packages.
+- In **Framework-agnostic** environments, it automatically loads only the PHP package.
 
 ### Custom Package Selection
 
@@ -107,9 +85,7 @@ use MilliRules\MilliRules;
 use MilliRules\Rules;
 
 // Initialize the rule engine
-add_action('init', function() {
-    MilliRules::init();
-}, 1); // Priority 1 ensures rules are registered early
+MilliRules::init();
 ```
 
 ### Step 2: Create Your First Rule
@@ -120,11 +96,11 @@ use MilliRules\Rules;
 
 // Create a rule that runs on WordPress 'init' hook
 Rules::create('log_admin_access', 'wp')
-    ->title('Log Admin Dashboard Access')
-    ->order(10)
+    ->title('Log Admin Dashboard Access') // Optional
+    ->order(10) // Optional
     ->when()
         ->request_url('/wp-admin/*')  // Matches any admin URL
-        ->is_user_logged_in()          // User must be logged in
+        ->is_user_logged_in()         // User must be logged in
     ->then()
         ->custom('log_message', ['value' => 'Admin dashboard accessed'])
     ->register();
@@ -161,27 +137,25 @@ require_once __DIR__ . '/vendor/autoload.php';
 use MilliRules\MilliRules;
 use MilliRules\Rules;
 
-// Initialize MilliRules early
-add_action('init', function() {
-    MilliRules::init();
+// Initialize MilliRules
+MilliRules::init();
 
-    // Register custom log action
-    Rules::register_action('log_message', function($context, $config) {
-        $message = $config['value'] ?? 'No message';
-        error_log('MilliRules: ' . $message);
-    });
+// Register custom log action
+Rules::register_action('log_message', function($context, $config) {
+    $message = $config['value'] ?? 'No message';
+    error_log('MilliRules: ' . $message);
+});
 
-    // Create the rule
-    Rules::create('log_admin_access', 'wp')
-        ->title('Log Admin Dashboard Access')
-        ->order(10)
-        ->when()
-            ->request_url('/wp-admin/*')
-            ->is_user_logged_in()
-        ->then()
-            ->custom('log_message', ['value' => 'Admin dashboard accessed'])
-        ->register();
-}, 1);
+// Create the rule
+Rules::create('log_admin_access', 'wp')
+    ->title('Log Admin Dashboard Access')
+    ->order(10)
+    ->when()
+        ->request_url('/wp-admin/*')
+        ->is_user_logged_in()
+    ->then()
+        ->custom('log_message', ['value' => 'Admin dashboard accessed'])
+    ->register();
 ```
 
 > [!TIP]
@@ -235,8 +209,6 @@ Now that you've created your first rule, you're ready to explore more advanced f
 - **[Built-in Conditions](../reference/conditions.md)** - Discover all available conditions
 - **[Operators](../reference/operators.md)** - Learn about pattern matching and comparison operators
 
-## Common Pitfalls
-
 ### 1. Forgetting to Initialize
 
 ```php
@@ -259,10 +231,8 @@ add_action('init', function() {
     MilliRules::init();
 }, 999); // Rules may miss early hooks
 
-// ✅ Correct - initialize early
-add_action('init', function() {
-    MilliRules::init();
-}, 1); // Priority 1 ensures early initialization
+// ✅ Correct - initialize early or at top level
+MilliRules::init();
 ```
 
 ### 3. Missing Autoloader
