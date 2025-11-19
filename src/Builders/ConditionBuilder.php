@@ -373,47 +373,59 @@ class ConditionBuilder
      */
     private function build_condition_config(string $type, array $args): array
     {
-        $config = array(
-            'type'  => $type,
-            '_args' => $args,
+		// Store raw arguments for conditions that need them (e.g., IsConditional).
+		$config = [
+			'type' => $type,
+			'_args' => $args,
+		];
+
+		// No arguments - boolean condition.
+		if (empty($args)) {
+			$config['operator'] = 'IS';
+			return $config;
+		}
+
+		$operator = null;
+		if (is_string(end($args)) && $this->is_operator(end($args))) {
+			$operator = array_pop($args);
+		}
+
+		// Name-based condition: 2+ args means first is name, second is value.
+		// Examples: ->cookie('session_id', 'abc123') or ->cookie('session_id', 'abc123', '=')
+		if (count($args) >= 2) {
+			$config['name'] = $args[0];
+			$config['value'] = $args[1];
+			$config['operator'] = $operator ?? $this->infer_operator($args[1], '=');
+			return $config;
+		}
+
+		// Value-based condition: 1 arg means it's the value to compare.
+		// Examples: ->user_age(18) or ->user_age(18, '>=')
+		$config['value'] = $args[0];
+		$config['operator'] = $operator ?? $this->infer_operator($args[0], '=');
+		return $config;
+    }
+
+    /**
+     * Check if a string is a known operator.
+     *
+     * @since 0.1.0
+     *
+     * @param string $value The string to check.
+     * @return bool True if the value is a known operator, false otherwise.
+     */
+    private function is_operator(string $value): bool
+    {
+        $operators = array(
+            '=', '==', '!=', '<>', '>', '>=', '<', '<=',
+            'LIKE', 'NOT LIKE',
+            'IN', 'NOT IN',
+            'REGEXP',
+            'EXISTS', 'NOT EXISTS',
+            'IS',
         );
 
-        // No arguments - default condition.
-        if (empty($args)) {
-            return $config;
-        }
-
-        // The first argument is always the value or name parameter.
-        $first_arg = $args[0];
-
-        // Special handling for conditions that take a name parameter (header, param, cookie, constant, archive, query_var).
-        $name_based_types = array( 'request_header', 'request_param', 'cookie', 'constant', 'is_archive', 'query_var' );
-        if (in_array($type, $name_based_types, true)) {
-            $config['name'] = $first_arg;
-            // The second argument is value.
-            if (isset($args[1])) {
-                $config['value'] = $args[1];
-                // Third argument is operator.
-                if (isset($args[2])) {
-                    $config['operator'] = $args[2];
-                } else {
-                    // Auto-infer operator if not provided.
-                    $config['operator'] = $this->infer_operator($args[1], '=');
-                }
-            }
-        } else {
-            // Standard value-based condition.
-            $config['value'] = $first_arg;
-            // Second argument is operator.
-            if (isset($args[1])) {
-                $config['operator'] = $args[1];
-            } else {
-                // Auto-infer operator.
-                $config['operator'] = $this->infer_operator($first_arg, '=');
-            }
-        }
-
-        return $config;
+        return in_array($value, $operators, true);
     }
 
     /**
