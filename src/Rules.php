@@ -186,8 +186,8 @@ class Rules
      * @since 0.1.0
      *
      * @param string   $type     The condition type identifier.
-     * @param callable(Context, array): bool $callback The callback function that receives Context and config array.
-     *                                                  Signature: function(Context $context, array $config): bool
+     * @param callable(array, Context): bool $callback The callback function that receives args array and Context.
+     *                                                  Signature: function(array $args, Context $context): bool
      * @return void
      * @throws \InvalidArgumentException If callback is not callable.
      */
@@ -206,8 +206,8 @@ class Rules
      * @since 0.1.0
      *
      * @param string   $type     The action type identifier.
-     * @param callable(Context, array): void $callback The callback function that receives Context and config array.
-     *                                                  Signature: function(Context $context, array $config): void
+     * @param callable(array, Context): void $callback The callback function that receives args array and Context.
+     *                                                  Signature: function(array $args, Context $context): void
      * @return void
      * @throws \InvalidArgumentException If callback is not callable.
      */

@@ -21,13 +21,13 @@ test('rule engine executes simple rule with matching condition', function () {
     $engine = new RuleEngine();
 
     // Register a custom condition
-    Rules::register_condition('always_true', function (Context $context, $config) {
+    Rules::register_condition('always_true', function ($args, Context $context) {
         return true;
     });
 
     // Register a custom action
     $actionExecuted = false;
-    Rules::register_action('test_action', function (Context $context, $config) use (&$actionExecuted) {
+    Rules::register_action('test_action', function ($args, Context $context) use (&$actionExecuted) {
         $actionExecuted = true;
     });
 
@@ -56,7 +56,7 @@ test('rule engine skips rule with non-matching condition', function () {
     $engine = new RuleEngine();
 
     // Register a custom condition that returns false
-    Rules::register_condition('always_false', function (Context $context, $config) {
+    Rules::register_condition('always_false', function ($args, Context $context) {
         return false;
     });
 
@@ -81,11 +81,11 @@ test('rule engine skips rule with non-matching condition', function () {
 test('rule engine respects "all" match type', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('condition_a', function (Context $context, $config) {
+    Rules::register_condition('condition_a', function ($args, Context $context) {
         return true;
     });
 
-    Rules::register_condition('condition_b', function (Context $context, $config) {
+    Rules::register_condition('condition_b', function ($args, Context $context) {
         return false;
     });
 
@@ -111,11 +111,11 @@ test('rule engine respects "all" match type', function () {
 test('rule engine respects "any" match type', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('true_condition', function (Context $context, $config) {
+    Rules::register_condition('true_condition', function ($args, Context $context) {
         return true;
     });
 
-    Rules::register_condition('false_condition', function (Context $context, $config) {
+    Rules::register_condition('false_condition', function ($args, Context $context) {
         return false;
     });
 
@@ -141,7 +141,7 @@ test('rule engine respects "any" match type', function () {
 test('rule engine respects "none" match type', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('failing_condition', function (Context $context, $config) {
+    Rules::register_condition('failing_condition', function ($args, Context $context) {
         return false;
     });
 
@@ -169,7 +169,7 @@ test('rule engine respects "none" match type', function () {
 test('rule engine passes context to conditions', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('check_user', function (Context $context, $config) {
+    Rules::register_condition('check_user', function ($args, Context $context) {
         return $context->has('user_id') && $context->get('user_id') === 123;
     });
 
@@ -195,12 +195,12 @@ test('rule engine passes context to conditions', function () {
 test('rule engine allows actions to access context', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('always_match', function (Context $context, $config) {
+    Rules::register_condition('always_match', function ($args, Context $context) {
         return true;
     });
 
     $capturedUserId = null;
-    Rules::register_action('capture_user', function (Context $context, $config) use (&$capturedUserId) {
+    Rules::register_action('capture_user', function ($args, Context $context) use (&$capturedUserId) {
         $capturedUserId = $context->get('user_id');
     });
 
@@ -230,7 +230,7 @@ test('rule engine allows actions to access context', function () {
 test('rule engine skips disabled rules', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('test_condition', function (Context $context, $config) {
+    Rules::register_condition('test_condition', function ($args, Context $context) {
         return true;
     });
 
@@ -258,13 +258,13 @@ test('rule engine skips disabled rules', function () {
 test('rule engine executes multiple rules in sequence', function () {
     $engine = new RuleEngine();
 
-    Rules::register_condition('rule_condition', function ($context, $config) {
+    Rules::register_condition('rule_condition', function ($args, Context $context) {
         return true;
     });
 
     $executionOrder = [];
-    Rules::register_action('track_execution', function ($context, $config) use (&$executionOrder) {
-        $executionOrder[] = $config['rule_name'] ?? 'unknown';
+    Rules::register_action('track_execution', function ($args, Context $context) use (&$executionOrder) {
+        $executionOrder[] = $args['rule_name'] ?? 'unknown';
     });
 
     $rules = [

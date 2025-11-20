@@ -84,8 +84,8 @@ class Callback implements ConditionInterface
     public function matches(Context $context): bool
     {
         try {
-            // Call the callback with context object and config.
-            $result = call_user_func($this->callback, $this->context, $this->config);
+            // Call the callback with config and context object.
+            $result = call_user_func($this->callback, $this->config, $this->context);
 
             // Ensure boolean return value.
             return (bool) $result;

@@ -209,26 +209,39 @@ class ConditionBuilder
     /**
      * Add custom condition (for 3rd-party extensions and dynamically registered conditions).
      *
-     * Use this method for conditions registered via Rules::registerCondition() by other plugins.
+     * Use this method for conditions registered via Rules::register_condition() by other plugins.
      *
-     * Example:
+     * When passing a callable as the second parameter (inline callback), the callback
+     * receives only the Context parameter for a cleaner signature.
+     *
+     * Examples:
      *   ->custom('is_premium_user')
      *   ->custom('has_role', ['role' => 'editor'])
-     *   ->custom('my_check', function($context) { return true; })
+     *   ->custom('my_check', function(Context $context) {
+     *       // Inline condition logic - only receives Context
+     *       return $context->get('user.role') === 'admin';
+     *   })
      *
      * @since 0.1.0
      *
-     * @param string                                              $type The condition type identifier.
-     * @param array<string, mixed>|callable(Context, array): bool|null $arg  The condition configuration or a callable function.
-     *                                                                        Callback signature: function(Context $context, array $config): bool
+     * @param string                                    $type The condition type identifier.
+     * @param array<string, mixed>|callable(\MilliRules\Context): bool|null $arg  The condition configuration or a callable function.
+     *                                                                 Inline callback signature: function(\MilliRules\Context $context): bool
+     *                                                                 Registered callback signature: function(array $args, \MilliRules\Context $context): bool
      * @return self
      */
     public function custom(string $type, $arg = array()): self
     {
         // Handle callback passed as the second parameter.
         if (is_callable($arg)) {
-            // Register the callback with the provided type name.
-            Rules::register_condition($type, $arg);
+            // Wrap callback to pass only Context (args is redundant for inline callbacks).
+            $wrappedCallback = function($args, $context) use ($arg) {
+                // Call original callback with only Context.
+                return call_user_func($arg, $context);
+            };
+
+            // Register the wrapped callback.
+            Rules::register_condition($type, $wrappedCallback);
 
             // Use the provided type with empty config.
             $this->conditions[] = array( 'type' => $type );
