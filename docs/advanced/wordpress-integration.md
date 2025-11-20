@@ -307,10 +307,10 @@ Create reusable conditions or actions that access hook arguments:
 ```php
 <?php
 // Register a condition that checks post ID range
-Rules::register_condition('post_id_in_range', function(Context $context, $config) {
+Rules::register_condition('post_id_in_range', function($args, Context $context) {
     $post_id = $context['wp']['hook']['args'][0] ?? 0;
-    $min = $config['min'] ?? 0;
-    $max = $config['max'] ?? PHP_INT_MAX;
+    $min = $args['min'] ?? 0;
+    $max = $args['max'] ?? PHP_INT_MAX;
 
     return $post_id >= $min && $post_id <= $max;
 });
@@ -346,7 +346,7 @@ $post    = $context['wp']['hook']['args'][1];
 
 ```php
 <?php
-Rules::register_condition('is_post_being_published', function(Context $context, $config) {
+Rules::register_condition('is_post_being_published', function($args, Context $context) {
     $hook_name = $context['wp']['hook']['name'] ?? '';
 
     // Different hooks have different argument structures
@@ -401,8 +401,8 @@ Rules::create('authenticated_only')
     ->register();
 
 // Check user roles (custom condition)
-Rules::register_condition('user_has_role', function(Context $context, $config) {
-    $required_role = $config['role'] ?? '';
+Rules::register_condition('user_has_role', function($args, Context $context) {
+    $required_role = $args['role'] ?? '';
     $user_roles = $context['wp']['user']['roles'] ?? [];
 
     return in_array($required_role, $user_roles);
@@ -457,8 +457,8 @@ Rules::create('product_features')
     ->register();
 
 // Custom post status check
-Rules::register_condition('post_status', function(Context $context, $config) {
-    $expected = $config['value'] ?? '';
+Rules::register_condition('post_status', function($args, Context $context) {
+    $expected = $args['value'] ?? '';
     $actual = $context['wp']['post']['post_status'] ?? '';
 
     return $actual === $expected;
@@ -483,9 +483,9 @@ Create WordPress-specific actions for common operations.
 
 ```php
 <?php
-Rules::register_action('prepend_to_content', function(Context $context, $config) {
-    $text = $config['text'] ?? '';
-    $priority = $config['priority'] ?? 10;
+Rules::register_action('prepend_to_content', function($args, Context $context) {
+    $text = $args['text'] ?? '';
+    $priority = $args['priority'] ?? 10;
 
     add_filter('the_content', function($content) use ($text) {
         return $text . $content;
@@ -506,11 +506,11 @@ Rules::create('add_reading_time')
 
 ```php
 <?php
-Rules::register_action('add_menu_item', function(Context $context, $config) {
-    $menu_slug = $config['menu_slug'] ?? '';
-    $title = $config['title'] ?? '';
-    $capability = $config['capability'] ?? 'read';
-    $url = $config['url'] ?? '#';
+Rules::register_action('add_menu_item', function($args, Context $context) {
+    $menu_slug = $args['menu_slug'] ?? '';
+    $title = $args['title'] ?? '';
+    $capability = $args['capability'] ?? 'read';
+    $url = $args['url'] ?? '#';
 
     add_menu_page($title, $title, $capability, $menu_slug, function() use ($url) {
         wp_redirect($url);
@@ -535,7 +535,7 @@ Rules::create('add_tools_menu')
 
 ```php
 <?php
-Rules::register_action('register_sidebar', function(Context $context, $config) {
+Rules::register_action('register_sidebar', function($args, Context $context) {
     $sidebar_config = wp_parse_args($config, [
         'name' => 'Custom Sidebar',
         'id' => 'custom-sidebar',
@@ -564,10 +564,10 @@ Rules::create('conditional_sidebar')
 
 ```php
 <?php
-Rules::register_action('update_user_meta', function(Context $context, $config) {
+Rules::register_action('update_user_meta', function($args, Context $context) {
     $user_id = $context->get('user.id', 0) ?? 0;
-    $meta_key = $config['key'] ?? '';
-    $meta_value = $config['value'] ?? '';
+    $meta_key = $args['key'] ?? '';
+    $meta_value = $args['value'] ?? '';
 
     if (!$user_id || !$meta_key) {
         return;
@@ -595,23 +595,23 @@ Rules::create('track_login_time')
 
 ```php
 <?php
-Rules::register_condition('cart_total', function(Context $context, $config) {
+Rules::register_condition('cart_total', function($args, Context $context) {
     if (!function_exists('WC')) {
         return false;
     }
 
-    $minimum = $config['minimum'] ?? 0;
+    $minimum = $args['minimum'] ?? 0;
     $cart_total = WC()->cart->get_total('');
 
     return $cart_total >= $minimum;
 });
 
-Rules::register_condition('has_product_in_cart', function(Context $context, $config) {
+Rules::register_condition('has_product_in_cart', function($args, Context $context) {
     if (!function_exists('WC')) {
         return false;
     }
 
-    $product_id = $config['product_id'] ?? 0;
+    $product_id = $args['product_id'] ?? 0;
 
     foreach (WC()->cart->get_cart() as $cart_item) {
         if ($cart_item['product_id'] == $product_id) {
@@ -627,12 +627,12 @@ Rules::register_condition('has_product_in_cart', function(Context $context, $con
 
 ```php
 <?php
-Rules::register_action('apply_coupon', function(Context $context, $config) {
+Rules::register_action('apply_coupon', function($args, Context $context) {
     if (!function_exists('WC')) {
         return;
     }
 
-    $coupon_code = $config['coupon'] ?? '';
+    $coupon_code = $args['coupon'] ?? '';
 
     if ($coupon_code && !WC()->cart->has_discount($coupon_code)) {
         WC()->cart->apply_coupon($coupon_code);
@@ -657,8 +657,8 @@ Rules::create('auto_apply_coupon')
 ```php
 <?php
 // Enable/disable features based on rules
-Rules::register_action('enable_feature', function(Context $context, $config) {
-    $feature = $config['feature'] ?? '';
+Rules::register_action('enable_feature', function($args, Context $context) {
+    $feature = $args['feature'] ?? '';
 
     if ($feature) {
         update_option("feature_enabled_{$feature}", true);
@@ -680,9 +680,9 @@ Rules::create('enable_beta_features')
 
 ```php
 <?php
-Rules::register_action('restrict_access', function(Context $context, $config) {
-    $message = $config['message'] ?? 'Access denied';
-    $redirect = $config['redirect'] ?? home_url();
+Rules::register_action('restrict_access', function($args, Context $context) {
+    $message = $args['message'] ?? 'Access denied';
+    $redirect = $args['redirect'] ?? home_url();
 
     wp_die($message, 'Access Denied', [
         'link_url' => $redirect,
@@ -712,8 +712,8 @@ Rules::create('protect_admin_pages')
 add_action('plugins_loaded', function() {
     MilliRules::init();
 
-    Rules::register_action('load_plugin_module', function(Context $context, $config) {
-        $module = $config['module'] ?? '';
+    Rules::register_action('load_plugin_module', function($args, Context $context) {
+        $module = $args['module'] ?? '';
         $file = plugin_dir_path(__FILE__) . "modules/{$module}.php";
 
         if (file_exists($file)) {
@@ -759,7 +759,7 @@ add_action('wp_footer', function() {
 ```php
 <?php
 // ✅ Good - checks function availability
-Rules::register_condition('wp_safe_condition', function(Context $context, $config) {
+Rules::register_condition('wp_safe_condition', function($args, Context $context) {
     if (!function_exists('get_current_user_id')) {
         return false;
     }
@@ -769,7 +769,7 @@ Rules::register_condition('wp_safe_condition', function(Context $context, $confi
 });
 
 // ❌ Bad - assumes WordPress is loaded
-Rules::register_condition('unsafe_condition', function(Context $context, $config) {
+Rules::register_condition('unsafe_condition', function($args, Context $context) {
     $user_id = get_current_user_id(); // May not exist!
     return $user_id > 0;
 });
@@ -779,7 +779,7 @@ Rules::register_condition('unsafe_condition', function(Context $context, $config
 
 ```php
 <?php
-Rules::register_condition('is_main_site', function(Context $context, $config) {
+Rules::register_condition('is_main_site', function($args, Context $context) {
     if (!is_multisite()) {
         return true; // Not multisite, always main site
     }
@@ -797,8 +797,8 @@ Rules::create('main_site_only_feature')
 
 ```php
 <?php
-Rules::register_action('show_message', function(Context $context, $config) {
-    $message = $config['message'] ?? '';
+Rules::register_action('show_message', function($args, Context $context) {
+    $message = $args['message'] ?? '';
 
     // Make translatable
     $translated = __($message, 'my-text-domain');

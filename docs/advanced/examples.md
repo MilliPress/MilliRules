@@ -42,7 +42,7 @@ add_action('plugins_loaded', function() {
     MilliRules::init();
 
     // Register cache check action
-    Rules::register_action('check_page_cache', function(Context $context, $config) {
+    Rules::register_action('check_page_cache', function($args, Context $context) {
         $context->load('request');
         $uri = $context->get('request.uri', '') ?? '';
         $cache_key = 'page_cache_' . md5($uri);
@@ -59,10 +59,10 @@ add_action('plugins_loaded', function() {
     });
 
     // Register cache save action
-    Rules::register_action('save_page_cache', function(Context $context, $config) {
+    Rules::register_action('save_page_cache', function($args, Context $context) {
         $uri = $context->get('request.uri', '') ?? '';
         $cache_key = 'page_cache_' . md5($uri);
-        $duration = $config['duration'] ?? 3600;
+        $duration = $args['duration'] ?? 3600;
 
         ob_start(function($buffer) use ($cache_key, $duration) {
             // Save to cache
@@ -133,23 +133,23 @@ add_action('init', function() {
     MilliRules::init();
 
     // Register custom conditions
-    Rules::register_condition('user_has_role', function(Context $context, $config) {
-        $required_role = $config['role'] ?? '';
+    Rules::register_condition('user_has_role', function($args, Context $context) {
+        $required_role = $args['role'] ?? '';
         $user_roles = $context['wp']['user']['roles'] ?? [];
         return in_array($required_role, $user_roles);
     });
 
-    Rules::register_condition('user_can', function(Context $context, $config) {
-        $capability = $config['capability'] ?? '';
+    Rules::register_condition('user_can', function($args, Context $context) {
+        $capability = $args['capability'] ?? '';
         $user_id = $context->get('user.id', 0) ?? 0;
         return $user_id && user_can($user_id, $capability);
     });
 
     // Register redirect action
-    Rules::register_action('redirect_to', function(Context $context, $config) {
-        $url = $config['url'] ?? home_url();
-        $status = $config['status'] ?? 302;
-        $message = $config['message'] ?? '';
+    Rules::register_action('redirect_to', function($args, Context $context) {
+        $url = $args['url'] ?? home_url();
+        $status = $args['status'] ?? 302;
+        $message = $args['message'] ?? '';
 
         if ($message) {
             set_transient('redirect_message_' . get_current_user_id(), $message, 30);
@@ -160,7 +160,7 @@ add_action('init', function() {
     });
 
     // Register message display action
-    Rules::register_action('show_redirect_message', function(Context $context, $config) {
+    Rules::register_action('show_redirect_message', function($args, Context $context) {
         $user_id = get_current_user_id();
         $message = get_transient('redirect_message_' . $user_id);
 
@@ -247,25 +247,25 @@ add_action('init', function() {
     MilliRules::init();
 
     // Register content modification actions
-    Rules::register_action('prepend_content', function(Context $context, $config) {
-        $text = $config['text'] ?? '';
-        $priority = $config['priority'] ?? 10;
+    Rules::register_action('prepend_content', function($args, Context $context) {
+        $text = $args['text'] ?? '';
+        $priority = $args['priority'] ?? 10;
 
         add_filter('the_content', function($content) use ($text) {
             return $text . $content;
         }, $priority);
     });
 
-    Rules::register_action('append_content', function(Context $context, $config) {
-        $text = $config['text'] ?? '';
-        $priority = $config['priority'] ?? 10;
+    Rules::register_action('append_content', function($args, Context $context) {
+        $text = $args['text'] ?? '';
+        $priority = $args['priority'] ?? 10;
 
         add_filter('the_content', function($content) use ($text) {
             return $content . $text;
         }, $priority);
     });
 
-    Rules::register_action('add_reading_time', function(Context $context, $config) {
+    Rules::register_action('add_reading_time', function($args, Context $context) {
         add_filter('the_content', function($content) {
             $word_count = str_word_count(strip_tags($content));
             $reading_time = ceil($word_count / 200); // 200 words per minute
@@ -369,7 +369,7 @@ add_action('init', function() {
     MilliRules::init();
 
     // Register tracking actions
-    Rules::register_action('track_page_view', function(Context $context, $config) {
+    Rules::register_action('track_page_view', function($args, Context $context) {
         global $wpdb;
 
         $table = $wpdb->prefix . 'page_views';
@@ -387,12 +387,12 @@ add_action('init', function() {
         ]);
     });
 
-    Rules::register_action('track_event', function(Context $context, $config) {
+    Rules::register_action('track_event', function($args, Context $context) {
         global $wpdb;
 
         $table = $wpdb->prefix . 'analytics_events';
-        $event_type = $config['event_type'] ?? 'pageview';
-        $event_data = $config['event_data'] ?? [];
+        $event_type = $args['event_type'] ?? 'pageview';
+        $event_data = $args['event_data'] ?? [];
         $user_id = $context->get('user.id', 0) ?? 0;
 
         $wpdb->insert($table, [
@@ -403,7 +403,7 @@ add_action('init', function() {
         ]);
     });
 
-    Rules::register_action('update_user_activity', function(Context $context, $config) {
+    Rules::register_action('update_user_activity', function($args, Context $context) {
         $user_id = $context->get('user.id', 0) ?? 0;
 
         if ($user_id) {
@@ -519,10 +519,10 @@ add_action('init', function() {
     MilliRules::init();
 
     // Register rate limit condition
-    Rules::register_condition('within_rate_limit', function(Context $context, $config) {
+    Rules::register_condition('within_rate_limit', function($args, Context $context) {
         $ip = $context['request']['ip'] ?? '';
-        $limit = $config['limit'] ?? 60; // Requests per minute
-        $period = $config['period'] ?? 60; // Seconds
+        $limit = $args['limit'] ?? 60; // Requests per minute
+        $period = $args['period'] ?? 60; // Seconds
 
         $cache_key = 'rate_limit_' . md5($ip);
         $current = get_transient($cache_key) ?: 0;
@@ -538,8 +538,8 @@ add_action('init', function() {
     });
 
     // Register rate limit response action
-    Rules::register_action('send_rate_limit_response', function(Context $context, $config) {
-        $retry_after = $config['retry_after'] ?? 60;
+    Rules::register_action('send_rate_limit_response', function($args, Context $context) {
+        $retry_after = $args['retry_after'] ?? 60;
 
         status_header(429);
         header('Content-Type: application/json');
@@ -604,14 +604,14 @@ add_action('init', function() {
     MilliRules::init();
 
     // Register feature flag condition
-    Rules::register_condition('feature_enabled', function(Context $context, $config) {
-        $feature = $config['feature'] ?? '';
+    Rules::register_condition('feature_enabled', function($args, Context $context) {
+        $feature = $args['feature'] ?? '';
         return get_option("feature_flag_{$feature}", false);
     });
 
     // Register feature actions
-    Rules::register_action('enable_feature', function(Context $context, $config) {
-        $feature = $config['feature'] ?? '';
+    Rules::register_action('enable_feature', function($args, Context $context) {
+        $feature = $args['feature'] ?? '';
 
         if ($feature) {
             // Mark feature as enabled
@@ -643,8 +643,8 @@ add_action('init', function() {
         ->register();
 
     // Rule 3: Gradual rollout (10% of users)
-    Rules::register_condition('in_rollout_group', function(Context $context, $config) {
-        $percentage = $config['percentage'] ?? 10;
+    Rules::register_condition('in_rollout_group', function($args, Context $context) {
+        $percentage = $args['percentage'] ?? 10;
         $user_id = $context->get('user.id', 0) ?? 0;
 
         // Consistent assignment based on user ID
@@ -693,24 +693,24 @@ add_action('init', function() {
     MilliRules::init();
 
     // Register WooCommerce conditions
-    Rules::register_condition('cart_total', function(Context $context, $config) {
-        $minimum = $config['minimum'] ?? 0;
-        $operator = $config['operator'] ?? '>=';
+    Rules::register_condition('cart_total', function($args, Context $context) {
+        $minimum = $args['minimum'] ?? 0;
+        $operator = $args['operator'] ?? '>=';
         $cart_total = WC()->cart->get_total('edit');
 
         return BaseCondition::compare_values($cart_total, $minimum, $operator);
     });
 
-    Rules::register_condition('cart_item_count', function(Context $context, $config) {
-        $count = $config['count'] ?? 1;
-        $operator = $config['operator'] ?? '>=';
+    Rules::register_condition('cart_item_count', function($args, Context $context) {
+        $count = $args['count'] ?? 1;
+        $operator = $args['operator'] ?? '>=';
         $cart_count = WC()->cart->get_cart_contents_count();
 
         return BaseCondition::compare_values($cart_count, $count, $operator);
     });
 
-    Rules::register_condition('has_product_category_in_cart', function(Context $context, $config) {
-        $category_slug = $config['category'] ?? '';
+    Rules::register_condition('has_product_category_in_cart', function($args, Context $context) {
+        $category_slug = $args['category'] ?? '';
 
         foreach (WC()->cart->get_cart() as $cart_item) {
             $product_id = $cart_item['product_id'];
@@ -723,8 +723,8 @@ add_action('init', function() {
     });
 
     // Register WooCommerce actions
-    Rules::register_action('apply_discount', function(Context $context, $config) {
-        $coupon = $config['coupon'] ?? '';
+    Rules::register_action('apply_discount', function($args, Context $context) {
+        $coupon = $args['coupon'] ?? '';
 
         if ($coupon && !WC()->cart->has_discount($coupon)) {
             WC()->cart->apply_coupon($coupon);
@@ -732,9 +732,9 @@ add_action('init', function() {
         }
     });
 
-    Rules::register_action('add_cart_notice', function(Context $context, $config) {
-        $message = $config['message'] ?? '';
-        $type = $config['type'] ?? 'notice';
+    Rules::register_action('add_cart_notice', function($args, Context $context) {
+        $message = $args['message'] ?? '';
+        $type = $args['type'] ?? 'notice';
 
         if ($message) {
             wc_add_notice($message, $type);
@@ -813,8 +813,8 @@ add_action('init', function() {
     MilliRules::init();
 
     // Register membership conditions
-    Rules::register_condition('has_membership_level', function(Context $context, $config) {
-        $required_level = $config['level'] ?? 'free';
+    Rules::register_condition('has_membership_level', function($args, Context $context) {
+        $required_level = $args['level'] ?? 'free';
         $user_id = $context->get('user.id', 0) ?? 0;
 
         if (!$user_id) {
@@ -828,7 +828,7 @@ add_action('init', function() {
         return ($levels[$user_level] ?? 0) >= ($levels[$required_level] ?? 0);
     });
 
-    Rules::register_condition('membership_expired', function(Context $context, $config) {
+    Rules::register_condition('membership_expired', function($args, Context $context) {
         $user_id = $context->get('user.id', 0) ?? 0;
 
         if (!$user_id) {
@@ -845,9 +845,9 @@ add_action('init', function() {
     });
 
     // Register membership actions
-    Rules::register_action('restrict_content', function(Context $context, $config) {
-        $message = $config['message'] ?? 'This content requires a membership.';
-        $cta_url = $config['cta_url'] ?? home_url('/membership');
+    Rules::register_action('restrict_content', function($args, Context $context) {
+        $message = $args['message'] ?? 'This content requires a membership.';
+        $cta_url = $args['cta_url'] ?? home_url('/membership');
 
         add_filter('the_content', function($content) use ($message, $cta_url) {
             $restricted = '<div class="membership-required" style="background: #f9f9f9; padding: 30px; text-align: center; border: 2px solid #ddd; border-radius: 5px;">';
@@ -860,7 +860,7 @@ add_action('init', function() {
         });
     });
 
-    Rules::register_action('show_membership_badge', function(Context $context, $config) {
+    Rules::register_action('show_membership_badge', function($args, Context $context) {
         $user_id = $context->get('user.id', 0) ?? 0;
         $level = get_user_meta($user_id, 'membership_level', true) ?: 'free';
 

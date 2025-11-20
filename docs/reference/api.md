@@ -350,7 +350,7 @@ Register custom condition callback.
 
 **Parameters**:
 - `$type` (string): Condition type identifier
-- `$callback` (callable): Callback function `function(Context $context, $config): bool`
+- `$callback` (callable): Callback function `function($args, Context $context): bool`
 
 **Returns**: `void`
 
@@ -370,15 +370,15 @@ Register custom action callback.
 
 **Parameters**:
 - `$type` (string): Action type identifier
-- `$callback` (callable): Callback function `function(Context $context, $config): void`
+- `$callback` (callable): Callback function `function($args, Context $context): void`
 
 **Returns**: `void`
 
 **Example**:
 ```php
 <?php
-Rules::register_action('log', function(Context $context, $config) {
-    error_log($config['value'] ?? '');
+Rules::register_action('log', function($args, Context $context) {
+    error_log($args['value'] ?? '');
 });
 ```
 

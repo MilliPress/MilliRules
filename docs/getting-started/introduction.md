@@ -114,8 +114,8 @@ Since `log_message` is a custom action, let's register it:
 <?php
 use MilliRules\Rules;
 
-Rules::register_action('log_message', function($context, $config) {
-    $message = $config['value'] ?? 'No message';
+Rules::register_action('log_message', function($args, Context $context) {
+    $message = $args['message'] ?? $args[0] ?? 'No message';
     error_log('MilliRules: ' . $message);
 });
 ```
@@ -141,8 +141,8 @@ use MilliRules\Rules;
 MilliRules::init();
 
 // Register custom log action
-Rules::register_action('log_message', function($context, $config) {
-    $message = $config['value'] ?? 'No message';
+Rules::register_action('log_message', function($args, Context $context) {
+    $message = $args['message'] ?? $args[0] ?? 'No message';
     error_log('MilliRules: ' . $message);
 });
 

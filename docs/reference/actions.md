@@ -52,16 +52,17 @@ use MilliRules\Rules;
 use MilliRules\Context;
 
 // Simple action
-Rules::register_action('log_message', function(Context $context, $config) {
-    $message = $config['value'] ?? 'No message';
+Rules::register_action('log_message', function($args, Context $context) {
+    $message = $args['message'] ?? $args[0] ?? 'No message';
     error_log('MilliRules: ' . $message);
 });
 
 // Action with context access
-Rules::register_action('log_user_action', function(Context $context, $config) {
-    $user = $context->get('user.login', 'guest') ?? 'guest';
-    $url = $context->get('request.uri', '') ?? 'unknown';
-    error_log("User {$user} accessed {$url}");
+Rules::register_action('log_user_action', function($args, Context $context) {
+    $action = $args['action'] ?? 'accessed';
+    $user = $context->get('user.login', 'guest');
+    $url = $context->get('request.uri', 'unknown');
+    error_log("User {$user} {$action} {$url}");
 });
 ```
 
@@ -222,17 +223,17 @@ See [Dynamic Placeholders](placeholders.md) for complete placeholder syntax.
 ```php
 <?php
 // Simple logging
-Rules::register_action('log', function(Context $context, $config) {
-    error_log($config['value'] ?? '');
+Rules::register_action('log', function($args, Context $context) {
+    error_log($args['value'] ?? '');
 });
 
 // Structured logging
-Rules::register_action('log_structured', function(Context $context, $config) {
+Rules::register_action('log_structured', function($args, Context $context) {
     $data = [
         'timestamp' => time(),
         'user' => $context->get('user.login', 'guest') ?? 'guest',
         'ip' => $context['request']['ip'] ?? 'unknown',
-        'message' => $config['value'] ?? '',
+        'message' => $args['value'] ?? '',
     ];
     error_log(json_encode($data));
 });
@@ -252,9 +253,9 @@ Rules::create('log_actions')
 
 ```php
 <?php
-Rules::register_action('redirect', function(Context $context, $config) {
-    $url = $config['url'] ?? home_url();
-    $status = $config['status'] ?? 302;
+Rules::register_action('redirect', function($args, Context $context) {
+    $url = $args['url'] ?? home_url();
+    $status = $args['status'] ?? 302;
 
     if (!headers_sent()) {
         wp_redirect($url, $status);
@@ -284,8 +285,8 @@ Rules::create('redirect_logged_out_users')
 
 ```php
 <?php
-Rules::register_action('set_cache_headers', function(Context $context, $config) {
-    $duration = $config['duration'] ?? 3600;
+Rules::register_action('set_cache_headers', function($args, Context $context) {
+    $duration = $args['duration'] ?? 3600;
 
     if (!headers_sent()) {
         header("Cache-Control: public, max-age={$duration}");
@@ -309,7 +310,7 @@ Rules::create('cache_api_responses')
 
 ```php
 <?php
-Rules::register_action('log_to_database', function(Context $context, $config) {
+Rules::register_action('log_to_database', function($args, Context $context) {
     global $wpdb;
 
     $table = $wpdb->prefix . 'access_log';
@@ -337,9 +338,9 @@ Rules::create('track_premium_access')
 ```php
 <?php
 // Trigger WordPress actions
-Rules::register_action('do_action', function(Context $context, $config) {
-    $hook = $config['value'] ?? '';
-    $args = $config['args'] ?? [];
+Rules::register_action('do_action', function($args, Context $context) {
+    $hook = $args['value'] ?? '';
+    $args = $args['args'] ?? [];
 
     if ($hook) {
         do_action($hook, ...$args);
@@ -347,10 +348,10 @@ Rules::register_action('do_action', function(Context $context, $config) {
 });
 
 // Trigger WordPress filters
-Rules::register_action('apply_filters', function(Context $context, $config) {
-    $hook = $config['value'] ?? '';
-    $value = $config['filter_value'] ?? '';
-    $args = $config['args'] ?? [];
+Rules::register_action('apply_filters', function($args, Context $context) {
+    $hook = $args['value'] ?? '';
+    $value = $args['filter_value'] ?? '';
+    $args = $args['args'] ?? [];
 
     if ($hook) {
         return apply_filters($hook, $value, ...$args);
@@ -374,13 +375,13 @@ Rules::create('trigger_custom_hooks')
 
 ```php
 <?php
-Rules::register_action('modify_content', function(Context $context, $config) {
+Rules::register_action('modify_content', function($args, Context $context) {
     add_filter('the_content', function($content) use ($config) {
-        $prepend = $config['prepend'] ?? '';
-        $append = $config['append'] ?? '';
+        $prepend = $args['prepend'] ?? '';
+        $append = $args['append'] ?? '';
 
         return $prepend . $content . $append;
-    }, $config['priority'] ?? 10);
+    }, $args['priority'] ?? 10);
 });
 
 // Usage
@@ -402,9 +403,9 @@ Rules::create('add_disclaimer')
 
 ```php
 <?php
-Rules::register_action('execute_if', function(Context $context, $config) {
-    $condition = $config['condition'] ?? null;
-    $callback = $config['callback'] ?? null;
+Rules::register_action('execute_if', function($args, Context $context) {
+    $condition = $args['condition'] ?? null;
+    $callback = $args['callback'] ?? null;
 
     if (is_callable($condition) && is_callable($callback)) {
         if ($condition($context)) {
@@ -436,15 +437,15 @@ Actions receive configuration through the `$config` array:
 
 ```php
 <?php
-Rules::register_action('flexible_action', function(Context $context, $config) {
+Rules::register_action('flexible_action', function($args, Context $context) {
     // Common configuration keys
-    $value = $config['value'] ?? '';           // Primary value
-    $enabled = $config['enabled'] ?? true;     // Enable flag
-    $priority = $config['priority'] ?? 10;     // Priority/order
-    $options = $config['options'] ?? [];       // Additional options
+    $value = $args['value'] ?? '';           // Primary value
+    $enabled = $args['enabled'] ?? true;     // Enable flag
+    $priority = $args['priority'] ?? 10;     // Priority/order
+    $options = $args['options'] ?? [];       // Additional options
 
     // Custom configuration
-    $custom_param = $config['custom_param'] ?? 'default';
+    $custom_param = $args['custom_param'] ?? 'default';
 });
 
 // Usage with full configuration
@@ -476,7 +477,7 @@ The context provides access to all available data:
 
 ```php
 <?php
-Rules::register_action('context_aware_action', function(Context $context, $config) {
+Rules::register_action('context_aware_action', function($args, Context $context) {
     // Request data
     $url = $context->get('request.uri', '') ?? '';
     $method = $context->get('request.method', '') ?? '';
@@ -534,7 +535,7 @@ MilliRules catches action exceptions and continues execution:
 
 ```php
 <?php
-Rules::register_action('safe_action', function(Context $context, $config) {
+Rules::register_action('safe_action', function($args, Context $context) {
     try {
         // Risky operation
         $result = risky_operation();
@@ -591,16 +592,16 @@ Rules::create('multi_step_process')
 ```php
 <?php
 // ✅ Good - single responsibility
-Rules::register_action('log_access', function(Context $context, $config) {
+Rules::register_action('log_access', function($args, Context $context) {
     error_log('Access logged');
 });
 
-Rules::register_action('update_counter', function(Context $context, $config) {
+Rules::register_action('update_counter', function($args, Context $context) {
     update_option('access_count', get_option('access_count', 0) + 1);
 });
 
 // ❌ Bad - multiple responsibilities
-Rules::register_action('do_everything', function(Context $context, $config) {
+Rules::register_action('do_everything', function($args, Context $context) {
     error_log('Access logged');
     update_option('access_count', get_option('access_count', 0) + 1);
     send_email('admin@example.com', 'Access', 'Someone accessed');
@@ -628,16 +629,16 @@ Rules::register_action('update', ...);
 
 ```php
 <?php
-Rules::register_action('safe_action', function(Context $context, $config) {
+Rules::register_action('safe_action', function($args, Context $context) {
     // Validate required configuration
-    if (empty($config['required_value'])) {
+    if (empty($args['required_value'])) {
         error_log('Action error: missing required_value');
         return;
     }
 
     // Validate data types
-    $count = absint($config['count'] ?? 0);
-    $enabled = (bool) ($config['enabled'] ?? true);
+    $count = absint($args['count'] ?? 0);
+    $enabled = (bool) ($args['enabled'] ?? true);
 
     // Proceed with validated data
     // ...
@@ -648,14 +649,14 @@ Rules::register_action('safe_action', function(Context $context, $config) {
 
 ```php
 <?php
-Rules::register_action('wordpress_dependent', function(Context $context, $config) {
+Rules::register_action('wordpress_dependent', function($args, Context $context) {
     // Check if WordPress functions are available
     if (!function_exists('wp_mail')) {
         error_log('WordPress not available');
         return;
     }
 
-    wp_mail($config['to'], $config['subject'], $config['message']);
+    wp_mail($args['to'], $args['subject'], $args['message']);
 });
 ```
 
@@ -667,9 +668,9 @@ Rules::register_action('wordpress_dependent', function(Context $context, $config
 define('DEFAULT_EMAIL_RECIPIENT', 'admin@example.com');
 define('DEFAULT_LOG_LEVEL', 'info');
 
-Rules::register_action('send_notification', function(Context $context, $config) {
-    $to = $config['to'] ?? DEFAULT_EMAIL_RECIPIENT;
-    $level = $config['level'] ?? DEFAULT_LOG_LEVEL;
+Rules::register_action('send_notification', function($args, Context $context) {
+    $to = $args['to'] ?? DEFAULT_EMAIL_RECIPIENT;
+    $level = $args['level'] ?? DEFAULT_LOG_LEVEL;
 
     // Use constants for consistent configuration
 });
@@ -684,13 +685,13 @@ Rules::register_action('send_notification', function(Context $context, $config) 
 ```php
 <?php
 // ❌ Wrong - context modifications don't persist
-Rules::register_action('modify_context', function(Context $context, $config) {
+Rules::register_action('modify_context', function($args, Context $context) {
     $context['custom_value'] = 'modified';
     // This change is lost after the action completes
 });
 
 // ✅ Correct - use external state or return values
-Rules::register_action('store_value', function(Context $context, $config) {
+Rules::register_action('store_value', function($args, Context $context) {
     update_option('custom_value', 'modified');
 });
 ```
@@ -721,13 +722,13 @@ Rules::create('rule')->order(10)
 ```php
 <?php
 // ❌ Wrong - prevents subsequent actions
-Rules::register_action('early_exit', function(Context $context, $config) {
+Rules::register_action('early_exit', function($args, Context $context) {
     echo 'Response';
     exit; // Stops all subsequent actions!
 });
 
 // ✅ Correct - use flags or return early
-Rules::register_action('conditional_processing', function(Context $context, $config) {
+Rules::register_action('conditional_processing', function($args, Context $context) {
     if (!some_condition()) {
         return; // Skip this action, continue to next
     }

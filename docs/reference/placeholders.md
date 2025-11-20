@@ -84,8 +84,8 @@ Access HTTP request data from the PHP package context.
 
 ```php
 <?php
-Rules::register_action('log_request', function($context, $config) {
-    $message = $config['value'] ?? '';
+Rules::register_action('log_request', function($args, Context $context) {
+    $message = $args['value'] ?? '';
     error_log($message);
 });
 
@@ -117,8 +117,8 @@ Access cookie values.
 
 ```php
 <?php
-Rules::register_action('personalize', function($context, $config) {
-    $theme = $config['theme'] ?? 'default';
+Rules::register_action('personalize', function($args, Context $context) {
+    $theme = $args['theme'] ?? 'default';
     apply_theme($theme);
 });
 
@@ -148,9 +148,9 @@ Access query and form parameters.
 
 ```php
 <?php
-Rules::register_action('process_action', function($context, $config) {
-    $action = $config['action'] ?? '';
-    $id = $config['id'] ?? 0;
+Rules::register_action('process_action', function($args, Context $context) {
+    $action = $args['action'] ?? '';
+    $id = $args['id'] ?? 0;
     error_log("Processing action: {$action} for ID: {$id}");
 });
 
@@ -207,8 +207,8 @@ Access WordPress-specific data (available only when WordPress package is loaded)
 <?php
 use MilliRules\Context;
 
-Rules::register_action('log_user_action', function(Context $context, $config) {
-    error_log($config['message'] ?? '');
+Rules::register_action('log_user_action', function($args, Context $context) {
+    error_log($args['message'] ?? '');
 });
 
 Rules::create('log_post_edit')
@@ -234,10 +234,10 @@ Placeholders are primarily used in action configurations to inject dynamic value
 
 ```php
 <?php
-Rules::register_action('send_notification', function($context, $config) {
-    $to = $config['to'] ?? '';
-    $subject = $config['subject'] ?? '';
-    $message = $config['message'] ?? '';
+Rules::register_action('send_notification', function($args, Context $context) {
+    $to = $args['to'] ?? '';
+    $subject = $args['subject'] ?? '';
+    $message = $args['message'] ?? '';
 
     // Placeholders already resolved by BaseAction
     wp_mail($to, $subject, $message);
@@ -260,8 +260,8 @@ Rules::create('notify_on_login')
 
 ```php
 <?php
-Rules::register_action('log_detailed', function($context, $config) {
-    error_log($config['message'] ?? '');
+Rules::register_action('log_detailed', function($args, Context $context) {
+    error_log($args['message'] ?? '');
 });
 
 Rules::create('detailed_logging')
@@ -278,9 +278,9 @@ Rules::create('detailed_logging')
 
 ```php
 <?php
-Rules::register_action('set_header', function($context, $config) {
-    $name = $config['name'] ?? '';
-    $value = $config['value'] ?? '';
+Rules::register_action('set_header', function($args, Context $context) {
+    $name = $args['name'] ?? '';
+    $value = $args['value'] ?? '';
 
     if (!headers_sent()) {
         header("{$name}: {$value}");
@@ -335,11 +335,11 @@ Callback actions need to manually resolve placeholders:
 <?php
 use MilliRules\PlaceholderResolver;
 
-Rules::register_action('manual_resolution', function($context, $config) {
+Rules::register_action('manual_resolution', function($args, Context $context) {
     $resolver = new PlaceholderResolver($context);
 
     // Resolve individual value
-    $message = $resolver->resolve($config['message'] ?? '');
+    $message = $resolver->resolve($args['message'] ?? '');
 
     // Use resolved value
     error_log($message);
@@ -394,8 +394,8 @@ Rules::register_placeholder('custom', function($context, $parts) {
 
 ```php
 <?php
-Rules::register_action('log_custom', function($context, $config) {
-    error_log($config['message'] ?? '');
+Rules::register_action('log_custom', function($args, Context $context) {
+    error_log($args['message'] ?? '');
 });
 
 Rules::create('use_custom_placeholders')
@@ -460,11 +460,11 @@ Use placeholders with fallback values:
 
 ```php
 <?php
-Rules::register_action('log_with_fallback', function($context, $config) {
+Rules::register_action('log_with_fallback', function($args, Context $context) {
     $resolver = new PlaceholderResolver($context);
 
     // Resolve with fallback
-    $user = $resolver->resolve($config['user'] ?? '') ?: 'guest';
+    $user = $resolver->resolve($args['user'] ?? '') ?: 'guest';
     $message = "User: {$user}";
 
     error_log($message);
@@ -485,9 +485,9 @@ Transform placeholder values:
 
 ```php
 <?php
-Rules::register_action('transform_placeholder', function($context, $config) {
+Rules::register_action('transform_placeholder', function($args, Context $context) {
     $resolver = new PlaceholderResolver($context);
-    $value = $resolver->resolve($config['value'] ?? '');
+    $value = $resolver->resolve($args['value'] ?? '');
 
     // Transform resolved value
     $transformed = strtoupper($value);
@@ -553,12 +553,12 @@ Understanding how placeholders are resolved:
 
 ```php
 <?php
-Rules::register_action('safe_action', function($context, $config) {
+Rules::register_action('safe_action', function($args, Context $context) {
     $resolver = new PlaceholderResolver($context);
 
     // Resolve with fallback
-    $user = $resolver->resolve($config['user'] ?? '') ?: 'Unknown User';
-    $ip = $resolver->resolve($config['ip'] ?? '') ?: '0.0.0.0';
+    $user = $resolver->resolve($args['user'] ?? '') ?: 'Unknown User';
+    $ip = $resolver->resolve($args['ip'] ?? '') ?: '0.0.0.0';
 
     error_log("User: {$user}, IP: {$ip}");
 });
@@ -568,9 +568,9 @@ Rules::register_action('safe_action', function($context, $config) {
 
 ```php
 <?php
-Rules::register_action('validated_action', function($context, $config) {
+Rules::register_action('validated_action', function($args, Context $context) {
     $resolver = new PlaceholderResolver($context);
-    $email = $resolver->resolve($config['email'] ?? '');
+    $email = $resolver->resolve($args['email'] ?? '');
 
     // Validate resolved value
     if (!is_email($email)) {
@@ -619,7 +619,7 @@ Rules::create('php_rule', 'php')
     ->register();
 
 // ✅ Correct - check context availability
-Rules::register_action('safe_wp_action', function($context, $config) {
+Rules::register_action('safe_wp_action', function($args, Context $context) {
     if (!isset($context['wp'])) {
         error_log('WordPress context not available');
         return;

@@ -47,7 +47,7 @@ $result = MilliRules::execute_rules(['PHP']);
 
 ```php
 <?php
-Rules::register_action('check_cache', function(Context $context, $config) {
+Rules::register_action('check_cache', function($args, Context $context) {
     $cache_key = 'page_' . md5($context->get('request.uri', '') ?? '');
     $cached = get_transient($cache_key);
 
@@ -60,9 +60,9 @@ Rules::register_action('check_cache', function(Context $context, $config) {
     }
 });
 
-Rules::register_action('save_to_cache', function(Context $context, $config) {
+Rules::register_action('save_to_cache', function($args, Context $context) {
     $cache_key = 'page_' . md5($context->get('request.uri', '') ?? '');
-    $duration = $config['duration'] ?? 3600;
+    $duration = $args['duration'] ?? 3600;
 
     ob_start(function($buffer) use ($cache_key, $duration) {
         set_transient($cache_key, $buffer, $duration);
@@ -140,13 +140,13 @@ add_action('init', function() {
 // Enable comprehensive debugging
 define('MILLIRULES_DEBUG', true);
 
-Rules::register_action('debug_log', function(Context $context, $config) {
+Rules::register_action('debug_log', function($args, Context $context) {
     if (!defined('MILLIRULES_DEBUG') || !MILLIRULES_DEBUG) {
         return;
     }
 
-    $message = $config['message'] ?? '';
-    $data = $config['data'] ?? [];
+    $message = $args['message'] ?? '';
+    $data = $args['data'] ?? [];
 
     error_log('=== MilliRules Debug ===');
     error_log('Message: ' . $message);
@@ -201,7 +201,7 @@ error_log("Memory used: " . size_format($memory_used));
 
 ```php
 <?php
-Rules::register_condition('debug_context', function(Context $context, $config) {
+Rules::register_condition('debug_context', function($args, Context $context) {
     error_log('=== Context Debug ===');
     error_log('Full context: ' . print_r($context, true));
     error_log('===================');
@@ -354,7 +354,7 @@ add_filter('millirules_context', function(Context $context) {
 ```php
 <?php
 // Transform context for specific rules
-Rules::register_action('with_transformed_context', function(Context $context, $config) {
+Rules::register_action('with_transformed_context', function($args, Context $context) {
     // Add computed values
     $context['computed'] = [
         'is_business_hours' => check_business_hours(),
@@ -363,7 +363,7 @@ Rules::register_action('with_transformed_context', function(Context $context, $c
     ];
 
     // Execute sub-action with transformed context
-    $callback = $config['callback'] ?? null;
+    $callback = $args['callback'] ?? null;
     if (is_callable($callback)) {
         $callback($context);
     }
@@ -378,10 +378,10 @@ Rules::register_action('with_transformed_context', function(Context $context, $c
 
 ```php
 <?php
-Rules::register_action('safe_api_call', function(Context $context, $config) {
+Rules::register_action('safe_api_call', function($args, Context $context) {
     try {
-        $response = wp_remote_post($config['url'], [
-            'body' => json_encode($config['data']),
+        $response = wp_remote_post($args['url'], [
+            'body' => json_encode($args['data']),
             'headers' => ['Content-Type' => 'application/json'],
             'timeout' => 10,
         ]);
@@ -402,7 +402,7 @@ Rules::register_action('safe_api_call', function(Context $context, $config) {
         error_log('API Error: ' . $e->getMessage());
 
         // Fallback behavior
-        $fallback = $config['fallback'] ?? null;
+        $fallback = $args['fallback'] ?? null;
         if (is_callable($fallback)) {
             return $fallback($context);
         }
@@ -416,7 +416,7 @@ Rules::register_action('safe_api_call', function(Context $context, $config) {
 
 ```php
 <?php
-Rules::register_action('notify_on_error', function(Context $context, $config) {
+Rules::register_action('notify_on_error', function($args, Context $context) {
     try {
         // Risky operation
         perform_critical_operation($config);
@@ -458,7 +458,7 @@ class MilliRulesTest extends WP_UnitTestCase {
 
     public function test_api_cache_rule() {
         // Register test action
-        Rules::register_action('test_cache', function(Context $context, $config) {
+        Rules::register_action('test_cache', function($args, Context $context) {
             update_option('test_cache_called', true);
         });
 
@@ -495,8 +495,8 @@ function test_complete_workflow() {
 
     $executed_actions = [];
 
-    Rules::register_action('track_execution', function(Context $context, $config) use (&$executed_actions) {
-        $executed_actions[] = $config['step'];
+    Rules::register_action('track_execution', function($args, Context $context) use (&$executed_actions) {
+        $executed_actions[] = $args['step'];
     });
 
     // Create multi-step rule

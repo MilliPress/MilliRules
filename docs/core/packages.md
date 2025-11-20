@@ -470,7 +470,7 @@ $wp_result = MilliRules::execute_rules(['WP']);
 <?php
 use MilliRules\Context;
 
-Rules::register_action('context_aware', function(Context $context, $config) {
+Rules::register_action('context_aware', function($args, Context $context) {
     // Check which providers are available
     // Note: Providers are loaded on-demand, not preloaded
 
@@ -516,7 +516,7 @@ Rules::create('flexible_rule')
 use MilliRules\Context;
 
 // ✅ Good - check before using package-specific features
-Rules::register_action('safe_wp_action', function(Context $context, $config) {
+Rules::register_action('safe_wp_action', function($args, Context $context) {
     $context->load('user');
 
     if (!$context->has('user.id')) {
@@ -529,7 +529,7 @@ Rules::register_action('safe_wp_action', function(Context $context, $config) {
 });
 
 // ❌ Bad - assumes WordPress context is always available
-Rules::register_action('unsafe_action', function(Context $context, $config) {
+Rules::register_action('unsafe_action', function($args, Context $context) {
     $context->load('user');
     $user_id = $context->get('user.id'); // May return null if not available!
 });

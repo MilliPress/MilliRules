@@ -316,8 +316,8 @@ For simple operations, define actions inline:
 <?php
 use MilliRules\Context;
 
-Rules::register_action('inline_log', function(Context $context, $config) {
-    $message = $config['value'] ?? 'No message';
+Rules::register_action('inline_log', function($args, Context $context) {
+    $message = $args['value'] ?? 'No message';
     error_log('MilliRules: ' . $message);
 });
 
@@ -430,10 +430,10 @@ Rules::create('weekend_special')
 <?php
 use MilliRules\Context;
 
-Rules::register_condition('time_range', function(Context $context, $config) {
+Rules::register_condition('time_range', function($args, Context $context) {
     $current_hour = (int) date('H');
-    $start = $config['start'] ?? 0;
-    $end = $config['end'] ?? 23;
+    $start = $args['start'] ?? 0;
+    $end = $args['end'] ?? 23;
 
     return $current_hour >= $start && $current_hour <= $end;
 });

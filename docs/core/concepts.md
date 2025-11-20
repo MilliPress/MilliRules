@@ -254,18 +254,18 @@ Define actions inline using callbacks:
 
 ```php
 <?php
-Rules::register_action('send_email', function($context, $config) {
-    $to = $config['value'] ?? '';
-    $subject = $config['subject'] ?? 'Notification';
-    wp_mail($to, $subject, 'Your message');
+Rules::register_action('send_email', function($args, Context $context) {
+    $to = $args['to'] ?? '';
+    $subject = $args['subject'] ?? 'Notification';
+    $message = $args['message'] ?? 'Your message';
+    wp_mail($to, $subject, $message);
 });
 
 // Use in rules:
 ->then()
-    ->custom('send_email', [
-        'value' => 'admin@example.com',
-        'subject' => 'New User Registration'
-    ])
+    ->send_email(['to' => 'admin@example.com', 'subject' => 'New User Registration'])
+    // OR
+    ->custom('send_email', ['to' => 'admin@example.com', 'subject' => 'New User Registration'])
 ```
 
 #### 2. Class-Based Actions
@@ -305,15 +305,15 @@ Trigger WordPress actions or filters with inlined callback:
 <?php
 ->on('wp_mail', 10) // Registers with WordPress hook
 ->then()
-    ->custom('log_sent_mail', function($context) {
-        $hook_name = $context['hook']['name']; // Will be 'wp_mail'
-        $hook_args = $context['hook']['args']; // Will be the array of arguments
-        
-        if( $hook_name === 'wp_mail' ) {
+    ->log_sent_mail(function($args, Context $context) {
+        $hook_name = $context->get('hook.name'); // Will be 'wp_mail'
+        $hook_args = $context->get('hook.args'); // Will be the array of arguments
+
+        if ($hook_name === 'wp_mail') {
             // Log email sent to $hook_args[0] with subject $hook_args[1] and message $hook_args[2]
-            error_log("Sent email to $hook_args[0] with subject \"$hook_args[1]\"")
+            error_log("Sent email to {$hook_args[0]} with subject \"{$hook_args[1]}\"");
         }
-    }})
+    })
 ```
 
 > [!TIP]
@@ -392,7 +392,7 @@ Callback actions and conditions receive the Context object, which provides metho
 <?php
 use MilliRules\Context;
 
-Rules::register_action('log_context', function(Context $context, $config) {
+Rules::register_action('log_context', function($args, Context $context) {
     // get() automatically loads data (recommended)
     $method = $context->get('request.method', 'UNKNOWN');
     $user_id = $context->get('user.id', 0);
@@ -407,7 +407,7 @@ You can also explicitly load context sections for clarity:
 <?php
 use MilliRules\Context;
 
-Rules::register_action('log_context', function(Context $context, $config) {
+Rules::register_action('log_context', function($args, Context $context) {
     // Explicit load() for clarity (optional)
     $context->load('request');
     $context->load('user');
@@ -667,10 +667,11 @@ Rules::create('disable_cache_dev')->order(30)  // Development override last
 use MilliRules\Context;
 
 // ✅ Good - uses context effectively
-Rules::register_action('log_user_action', function(Context $context, $config) {
+Rules::register_action('log_user_action', function($args, Context $context) {
+    $action = $args['action'] ?? 'accessed';
     $user = $context->get('user.login', 'guest');
     $url = $context->get('request.uri', 'unknown');
-    error_log("User $user accessed $url");
+    error_log("User $user $action $url");
 });
 ```
 
