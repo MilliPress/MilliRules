@@ -62,7 +62,8 @@ abstract class BaseAction implements ActionInterface
     {
         $this->type = $config['type'] ?? '';
 
-        // Extract all arguments excluding 'type'.
+        // Extract arguments: all config keys except 'type'.
+        // Both dynamic methods and custom() calls now use the same structure.
         $this->args = array_filter(
             $config,
             fn($key) => $key !== 'type',

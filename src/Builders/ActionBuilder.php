@@ -117,26 +117,37 @@ class ActionBuilder
      *
      * Use this method for actions registered via Rules::register_action() by other plugins.
      *
+     * When passing a callable as the second parameter (inline callback), the callback
+     * receives only the Context parameter for a cleaner signature.
+     *
      * Examples:
      *   ->custom('send_notification')
      *   ->custom('log_event', ['level' => 'info', 'message' => 'Triggered'])
-     *   ->custom('my_action', function($context, $config) {
-     *       // Custom action logic
+     *   ->custom('my_action', function(Context $context) {
+     *       // Inline action logic - only receives Context
+     *       $value = $context->get('some.key');
      *   })
      *
      * @since 0.1.0
      *
-     * @param string                                         $type The action type identifier.
-     * @param array<string, mixed>|callable(Context, array): void $arg The action configuration array or a callable function.
-     *                                                              Callback signature: function(Context $context, array $config): void
+     * @param string                                   $type The action type identifier.
+     * @param array<string, mixed>|callable(\MilliRules\Context): void $arg The action configuration array or a callable function.
+     *                                                        Inline callback signature: function(\MilliRules\Context $context): void
+     *                                                        Registered callback signature: function(array $args, \MilliRules\Context $context): void
      * @return self
      */
     public function custom(string $type, $arg = array()): self
     {
         // Handle callback passed as the second parameter.
         if (is_callable($arg)) {
-            // Register the callback with the provided type name.
-            Rules::register_action($type, $arg);
+            // Wrap callback to pass only Context (args is redundant for inline callbacks).
+            $wrappedCallback = function($args, $context) use ($arg) {
+                // Call original callback with only Context.
+                return call_user_func($arg, $context);
+            };
+
+            // Register the wrapped callback.
+            Rules::register_action($type, $wrappedCallback);
 
             // Use the provided type with empty config.
             $this->actions[] = array( 'type' => $type );
@@ -204,7 +215,18 @@ class ActionBuilder
         $replaced = preg_replace('/(?<!^)[A-Z]/', '_$0', $method);
         $type = strtolower(is_string($replaced) ? $replaced : $method);
 
-        $config = array_merge(array('type' => $type), $args);
+        // Merge arguments directly into config.
+        // This provides consistent structure with custom() method calls.
+        if (count($args) === 1 && is_array($args[0])) {
+            // Single array argument: merge as named parameters.
+            $config = array_merge(array('type' => $type), $args[0]);
+        } else {
+            // Multiple arguments or single scalar: store as positional.
+            $config = array('type' => $type);
+            foreach ($args as $i => $arg) {
+                $config[$i] = $arg;
+            }
+        }
 
         $this->actions[] = $config;
         return $this;
