@@ -150,8 +150,6 @@ use MilliRules\Context;
 public function register_providers(Context $context): void {
     // Register provider that loads complex data on-demand
     $context->register_provider('my_custom', function() {
-        global $wpdb;
-
         $user_data = [];
         if (is_user_logged_in()) {
             $user_id = get_current_user_id();
