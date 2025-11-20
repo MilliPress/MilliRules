@@ -205,7 +205,7 @@ Rules::create('dynamic_logging')
         ->request_url('/api/*')
     ->then()
         ->custom('custom_action', [
-            'value' => 'API request to {request:uri} from {request:ip}'
+            'value' => 'API request to {request.uri} from {request.ip}'
         ])
     ->register();
 

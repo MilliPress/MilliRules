@@ -14,13 +14,13 @@ namespace MilliRules;
 /**
  * Class PlaceholderResolver
  *
- * Handles resolution of dynamic placeholders using colon-separated syntax.
- * Examples: {post:id}, {request:uri}, {cookie:session_id}
+ * Handles resolution of dynamic placeholders using dot-notation syntax.
+ * Examples: {post.id}, {request.uri}, {cookie.session_id}
  *
  * Placeholders trigger lazy loading of context sections:
- * - {post:type} → ensures 'post' context is loaded
- * - {request:uri} → ensures 'request' context is loaded
- * - {cookie:name} → ensures 'cookie' context is loaded
+ * - {post.type} → ensures 'post' context is loaded
+ * - {request.uri} → ensures 'request' context is loaded
+ * - {cookie.name} → ensures 'cookie' context is loaded
  *
  * @since 0.1.0
  */
@@ -80,7 +80,7 @@ class PlaceholderResolver
      *
      * @since 0.1.0
      *
-     * @param string   $placeholder The placeholder name (e.g., 'custom' for {custom:value}).
+     * @param string   $placeholder The placeholder name (e.g., 'custom' for {custom.value}).
      * @param callable $resolver    The resolver callback (receives context and parts array).
      * @return void
      */
@@ -96,12 +96,12 @@ class PlaceholderResolver
      *
      * @since 0.1.0
      *
-     * @param string $placeholder The placeholder name (e.g., 'post:id' or 'request:uri').
+     * @param string $placeholder The placeholder name (e.g., 'post.id' or 'request.uri').
      * @return string The resolved value or the original placeholder if not found.
      */
     protected function get_placeholder_value(string $placeholder): string
     {
-        $parts = explode(':', $placeholder);
+        $parts = explode('.', $placeholder);
 
         $category = array_shift($parts);
 

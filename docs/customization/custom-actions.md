@@ -36,7 +36,7 @@ Rules::create('monitor_admin')
         ->alert_slack(['channel' => '#security', 'message' => 'Editor in admin area'])
         
         // Option C: Call registered action via custom()
-        ->custom('alert_slack', ['channel' => '#security', 'message' => '{user:login} accessed admin area'])
+        ->custom('alert_slack', ['channel' => '#security', 'message' => '{user.login} accessed admin area'])
     ->register();
 ```
 
@@ -108,7 +108,7 @@ Rules::create('send_notification')
 
 **Cons:**
 - ❌ Not reusable across multiple rules
-- ❌ No placeholder support (e.g. `{user:login}`)
+- ❌ No placeholder support (e.g. `{user.login}`)
 - ❌ Harder to test in isolation
 
 ---
@@ -197,7 +197,7 @@ class NotifyMail extends BaseAction
         $to = $this->args['to'] ?? '';
         $message = $this->args['message'] ?? '';
 
-        // Resolve placeholders like {user:login}
+        // Resolve placeholders like {user.login}
         $to = $this->resolve_value($to);
         $message = $this->resolve_value($message);
 
@@ -226,9 +226,9 @@ Rules::create('notify_on_login')
     ->when()->is_user_logged_in()
     ->then()
         // Both calling styles work identically
-        ->notify_mail(['to' => 'admin@example.com', 'message' => 'User {user:login} logged in'])
+        ->notify_mail(['to' => 'admin@example.com', 'message' => 'User {user.login} logged in'])
         // OR
-        ->custom('notify_mail', ['to' => 'admin@example.com', 'message' => 'User {user:login} logged in'])
+        ->custom('notify_mail', ['to' => 'admin@example.com', 'message' => 'User {user.login} logged in'])
     ->register();
 ```
 

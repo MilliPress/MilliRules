@@ -17,10 +17,10 @@ Placeholders are special tokens enclosed in curly braces that get replaced with 
 'value' => 'Fixed string'
 
 // Dynamic placeholder
-'value' => '{request:uri}'         // Current URL
-'value' => '{request:method}'      // HTTP method
-'value' => '{user:login}'          // Current user's login
-'value' => '{cookie:session_id}'   // Session cookie value
+'value' => '{request.uri}'         // Current URL
+'value' => '{request.method}'      // HTTP method
+'value' => '{user.login}'          // Current user's login
+'value' => '{cookie.session_id}'   // Session cookie value
 ```
 
 ## Placeholder Syntax
@@ -39,12 +39,12 @@ The placeholder syntax uses colon-separated parts to navigate the context hierar
 
 ```php
 <?php
-'{request:uri}'              // $context['request']['uri']
-'{request:method}'           // $context['request']['method']
+'{request.uri}'              // $context['request']['uri']
+'{request.method}'           // $context['request']['method']
 '{request:headers:host}'     // $context['request']['headers']['host']
-'{user:id}'                  // $context['user']['id']
-'{post:title}'               // $context['post']['title']
-'{cookie:session_id}'        // $context['cookie']['session_id']
+'{user.id}'                  // $context['user']['id']
+'{post.title}'               // $context['post']['title']
+'{cookie.session_id}'        // $context['cookie']['session_id']
 ```
 
 ## Built-in Placeholder Categories
@@ -57,15 +57,15 @@ Access HTTP request data from the PHP package context.
 
 | Placeholder            | Description       | Example Value                  |
 |------------------------|-------------------|--------------------------------|
-| `{request:method}`     | HTTP method       | `GET`, `POST`                  |
-| `{request:uri}`        | Full request URI  | `/wp-admin/edit.php`           |
-| `{request:scheme}`     | URL scheme        | `https`                        |
-| `{request:host}`       | Host name         | `example.com`                  |
-| `{request:path}`       | URL path          | `/wp-admin/edit.php`           |
-| `{request:query}`      | Query string      | `post_type=page`               |
-| `{request:referer}`    | HTTP referer      | `https://example.com/previous` |
-| `{request:user_agent}` | User agent string | `Mozilla/5.0...`               |
-| `{request:ip}`         | Client IP address | `192.168.1.1`                  |
+| `{request.method}`     | HTTP method       | `GET`, `POST`                  |
+| `{request.uri}`        | Full request URI  | `/wp-admin/edit.php`           |
+| `{request.scheme}`     | URL scheme        | `https`                        |
+| `{request.host}`       | Host name         | `example.com`                  |
+| `{request.path}`       | URL path          | `/wp-admin/edit.php`           |
+| `{request.query}`      | Query string      | `post_type=page`               |
+| `{request.referer}`    | HTTP referer      | `https://example.com/previous` |
+| `{request.user_agent}` | User agent string | `Mozilla/5.0...`               |
+| `{request.ip}`         | Client IP address | `192.168.1.1`                  |
 
 #### Request Headers
 
@@ -93,7 +93,7 @@ Rules::create('log_requests')
     ->when()->request_url('/api/*')
     ->then()
         ->custom('log_request', [
-            'value' => 'API request: {request:method} {request:uri} from {request:ip}'
+            'value' => 'API request: {request.method} {request.uri} from {request.ip}'
         ])
     ->register();
 
@@ -108,9 +108,9 @@ Access cookie values.
 
 ```php
 <?php
-'{cookie:session_id}'        // $_COOKIE['session_id']
-'{cookie:user_preference}'   // $_COOKIE['user_preference']
-'{cookie:theme}'             // $_COOKIE['theme']
+'{cookie.session_id}'        // $_COOKIE['session_id']
+'{cookie.user_preference}'   // $_COOKIE['user_preference']
+'{cookie.theme}'             // $_COOKIE['theme']
 ```
 
 #### Examples
@@ -126,7 +126,7 @@ Rules::create('apply_user_theme')
     ->when()->cookie('theme')
     ->then()
         ->custom('personalize', [
-            'theme' => '{cookie:theme}'  // Uses cookie value
+            'theme' => '{cookie.theme}'  // Uses cookie value
         ])
     ->register();
 ```
@@ -139,9 +139,9 @@ Access query and form parameters.
 
 ```php
 <?php
-'{param:action}'         // $_GET['action'] or $_POST['action']
-'{param:id}'            // $_GET['id'] or $_POST['id']
-'{param:page}'          // $_GET['page'] or $_POST['page']
+'{param.action}'         // $_GET['action'] or $_POST['action']
+'{param.id}'            // $_GET['id'] or $_POST['id']
+'{param.page}'          // $_GET['page'] or $_POST['page']
 ```
 
 #### Examples
@@ -160,8 +160,8 @@ Rules::create('process_request')
         ->request_param('id')
     ->then()
         ->custom('process_action', [
-            'action' => '{param:action}',
-            'id' => '{param:id}'
+            'action' => '{param.action}',
+            'id' => '{param.id}'
         ])
     ->register();
 ```
@@ -176,30 +176,30 @@ Access WordPress-specific data (available only when WordPress package is loaded)
 
 | Placeholder           | Description        | Example Value     |
 |-----------------------|--------------------|-------------------|
-| `{user:id}`           | User ID            | `123`             |
-| `{user:login}`        | User login name    | `john_doe`        |
-| `{user:email}`        | User email         | `john@example.com`|
-| `{user:display_name}` | Display name       | `John Doe`        |
-| `{user:roles}`        | User roles (array) | `administrator`   |
+| `{user.id}`           | User ID            | `123`             |
+| `{user.login}`        | User login name    | `john_doe`        |
+| `{user.email}`        | User email         | `john@example.com`|
+| `{user.display_name}` | Display name       | `John Doe`        |
+| `{user.roles}`        | User roles (array) | `administrator`   |
 
 #### Post Placeholders
 
 | Placeholder     | Description  | Example Value      |
 |-----------------|--------------|--------------------|
-| `{post:id}`     | Post ID      | `456`              |
-| `{post:title}`  | Post title   | `My Blog Post`     |
-| `{post:type}`   | Post type    | `post`, `page`     |
-| `{post:status}` | Post status  | `publish`, `draft` |
-| `{post:author}` | Author ID    | `123`              |
+| `{post.id}`     | Post ID      | `456`              |
+| `{post.title}`  | Post title   | `My Blog Post`     |
+| `{post.type}`   | Post type    | `post`, `page`     |
+| `{post.status}` | Post status  | `publish`, `draft` |
+| `{post.author}` | Author ID    | `123`              |
 
 #### Query Placeholders
 
 | Placeholder           | Description      | Example Value   |
 |-----------------------|------------------|-----------------|
-| `{query:is_singular}` | Is singular post | `true`, `false` |
-| `{query:is_home}`     | Is home page     | `true`, `false` |
-| `{query:is_archive}`  | Is archive page  | `true`, `false` |
-| `{query:is_admin}`    | Is admin area    | `true`, `false` |
+| `{query.is_singular}` | Is singular post | `true`, `false` |
+| `{query.is_home}`     | Is home page     | `true`, `false` |
+| `{query.is_archive}`  | Is archive page  | `true`, `false` |
+| `{query.is_admin}`    | Is admin area    | `true`, `false` |
 
 #### Examples
 
@@ -217,7 +217,7 @@ Rules::create('log_post_edit')
         ->is_user_logged_in()
     ->then()
         ->custom('log_user_action', [
-            'message' => 'User {user:login} (ID: {user:id}) editing post {post:id}'
+            'message' => 'User {user.login} (ID: {user.id}) editing post {post.id}'
         ])
     ->register();
 
@@ -251,7 +251,7 @@ Rules::create('notify_on_login')
         ->custom('send_notification', [
             'to' => 'admin@example.com',
             'subject' => 'User Login Alert',
-            'message' => 'User {user:login} logged in from {request:ip}'
+            'message' => 'User {user.login} logged in from {request.ip}'
         ])
     ->register();
 ```
@@ -268,8 +268,8 @@ Rules::create('detailed_logging')
     ->when()->request_url('/api/*')
     ->then()
         ->custom('log_detailed', [
-            'message' => '{request:method} request to {request:uri} from {request:ip} '
-                       . 'at {request:timestamp} by user {user:login}'
+            'message' => '{request.method} request to {request.uri} from {request.ip} '
+                       . 'at {request.timestamp} by user {user.login}'
         ])
     ->register();
 ```
@@ -349,7 +349,7 @@ Rules::create('use_manual_resolution')
     ->when()->request_url('/test')
     ->then()
         ->custom('manual_resolution', [
-            'message' => 'Testing from {request:ip}'
+            'message' => 'Testing from {request.ip}'
         ])
     ->register();
 ```
@@ -402,7 +402,7 @@ Rules::create('use_custom_placeholders')
     ->when()->request_url('/api/*')
     ->then()
         ->custom('log_custom', [
-            'message' => 'Request to {custom:site_name} at {custom:current_time}'
+            'message' => 'Request to {custom.site_name} at {custom.current_time}'
         ])
     ->register();
 
@@ -444,8 +444,8 @@ Rules::register_placeholder('env', function($context, $parts) {
 });
 
 // Usage:
-// {env:name}           → 'production'
-// {env:debug}          → true/false
+// {env.name}           → 'production'
+// {env.debug}          → true/false
 // {env:var:API_KEY}    → getenv('API_KEY')
 // {env:server:http_host} → $_SERVER['HTTP_HOST']
 ```
@@ -474,7 +474,7 @@ Rules::create('log_with_defaults')
     ->when()->request_url('*')
     ->then()
         ->custom('log_with_fallback', [
-            'user' => '{user:login}'  // Falls back to 'guest' if empty
+            'user' => '{user.login}'  // Falls back to 'guest' if empty
         ])
     ->register();
 ```
@@ -517,7 +517,7 @@ Access array values:
 Understanding how placeholders are resolved:
 
 ```
-1. Action configuration contains placeholder: "{request:uri}"
+1. Action configuration contains placeholder: "{request.uri}"
    ↓
 2. BaseAction::resolve_value() detects placeholder
    ↓
@@ -543,7 +543,7 @@ Understanding how placeholders are resolved:
 ```php
 <?php
 // ✅ Good - clear what data is being used
-'message' => 'User {user:login} accessed {request:uri}'
+'message' => 'User {user.login} accessed {request.uri}'
 
 // ❌ Bad - unclear placeholders
 'message' => 'User {u} accessed {r}'
@@ -588,7 +588,7 @@ Rules::register_action('validated_action', function($args, Context $context) {
 ```php
 <?php
 /**
- * Custom Placeholder: {payment:gateway}
+ * Custom Placeholder: {payment.gateway}
  * Returns the active payment gateway name
  *
  * Custom Placeholder: {payment:status:order_id}
@@ -614,7 +614,7 @@ Rules::create('php_rule', 'php')
     ->when()->request_url('/api/*')
     ->then()
         ->custom('action', [
-            'value' => '{user:login}'  // Empty! WordPress not available
+            'value' => '{user.login}'  // Empty! WordPress not available
         ])
     ->register();
 
@@ -626,7 +626,7 @@ Rules::register_action('safe_wp_action', function($args, Context $context) {
     }
 
     $resolver = new PlaceholderResolver($context);
-    $user = $resolver->resolve('{user:login}');
+    $user = $resolver->resolve('{user.login}');
     // ...
 });
 ```
@@ -642,7 +642,7 @@ Rules::register_action('safe_wp_action', function($args, Context $context) {
 'value' => '{request.uri}'
 
 // ✅ Correct - proper syntax
-'value' => '{request:uri}'
+'value' => '{request.uri}'
 ```
 
 ### 3. Case Sensitivity
@@ -651,7 +651,7 @@ Rules::register_action('safe_wp_action', function($args, Context $context) {
 <?php
 // Context keys are case-sensitive
 // ✅ Correct
-'{request:uri}'
+'{request.uri}'
 
 // ❌ Wrong
 '{Request:URI}'

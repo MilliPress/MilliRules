@@ -437,8 +437,8 @@ add_action('init', function() {
             ->custom('track_event', [
                 'event_type' => 'important_page_view',
                 'event_data' => [
-                    'page' => '{request:uri}',
-                    'referrer' => '{request:referer}'
+                    'page' => '{request.uri}',
+                    'referrer' => '{request.referer}'
                 ]
             ])
         ->register();
@@ -453,8 +453,8 @@ add_action('init', function() {
             ->custom('track_event', [
                 'event_type' => 'file_download',
                 'event_data' => [
-                    'file' => '{param:file}',
-                    'user_id' => '{user:id}'
+                    'file' => '{param.file}',
+                    'user_id' => '{user.id}'
                 ]
             ])
         ->register();

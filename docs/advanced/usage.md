@@ -161,7 +161,7 @@ Rules::create('debuggable_rule')
     ->then()
         ->custom('debug_log', [
             'message' => 'API request started',
-            'data' => ['url' => '{request:uri}']
+            'data' => ['url' => '{request.uri}']
         ])
         ->custom('process_api')
         ->custom('debug_log', [

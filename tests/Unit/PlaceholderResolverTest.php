@@ -51,8 +51,8 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('123', $resolver->resolve('{user:id}'));
-        $this->assertEquals('John', $resolver->resolve('{user:name}'));
+        $this->assertEquals('123', $resolver->resolve('{user.id}'));
+        $this->assertEquals('John', $resolver->resolve('{user.name}'));
     }
 
     public function testResolveNestedPlaceholder(): void
@@ -68,8 +68,8 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('Mozilla/5.0', $resolver->resolve('{request:headers:user-agent}'));
-        $this->assertEquals('text/html', $resolver->resolve('{request:headers:accept}'));
+        $this->assertEquals('Mozilla/5.0', $resolver->resolve('{request.headers.user-agent}'));
+        $this->assertEquals('text/html', $resolver->resolve('{request.headers.accept}'));
     }
 
     public function testResolveDeeplyNestedPlaceholder(): void
@@ -86,7 +86,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('deep value', $resolver->resolve('{level1:level2:level3:level4}'));
+        $this->assertEquals('deep value', $resolver->resolve('{level1.level2.level3.level4}'));
     }
 
     public function testResolveMultiplePlaceholdersInString(): void
@@ -100,7 +100,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $result = $resolver->resolve('Hello {user:name}, you are {user:age} years old');
+        $result = $resolver->resolve('Hello {user.name}, you are {user.age} years old');
         $this->assertEquals('Hello John, you are 30 years old', $result);
     }
 
@@ -127,10 +127,10 @@ class PlaceholderResolverTest extends TestCase
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
         // Non-existent category
-        $this->assertEquals('{nonexistent:value}', $resolver->resolve('{nonexistent:value}'));
+        $this->assertEquals('{nonexistent.value}', $resolver->resolve('{nonexistent.value}'));
 
         // Non-existent key in valid category
-        $this->assertEquals('{user:missing}', $resolver->resolve('{user:missing}'));
+        $this->assertEquals('{user.missing}', $resolver->resolve('{user.missing}'));
     }
 
     public function testPlaceholderWithMissingNestedKey(): void
@@ -145,8 +145,8 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('{request:headers:missing}', $resolver->resolve('{request:headers:missing}'));
-        $this->assertEquals('{request:missing:key}', $resolver->resolve('{request:missing:key}'));
+        $this->assertEquals('{request.headers.missing}', $resolver->resolve('{request.headers.missing}'));
+        $this->assertEquals('{request.missing.key}', $resolver->resolve('{request.missing.key}'));
     }
 
     public function testPlaceholderWithOnlyCategoryReturnsOriginal(): void
@@ -191,8 +191,8 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('test string', $resolver->resolve('{data:string}'));
-        $this->assertIsString($resolver->resolve('{data:string}'));
+        $this->assertEquals('test string', $resolver->resolve('{data.string}'));
+        $this->assertIsString($resolver->resolve('{data.string}'));
     }
 
     public function testResolveIntegerValue(): void
@@ -205,7 +205,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $result = $resolver->resolve('{data:integer}');
+        $result = $resolver->resolve('{data.integer}');
         $this->assertEquals('42', $result);
         $this->assertIsString($result);
     }
@@ -220,7 +220,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $result = $resolver->resolve('{data:float}');
+        $result = $resolver->resolve('{data.float}');
         $this->assertEquals('3.14', $result);
         $this->assertIsString($result);
     }
@@ -236,8 +236,8 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('1', $resolver->resolve('{data:true}'));
-        $this->assertEquals('', $resolver->resolve('{data:false}'));
+        $this->assertEquals('1', $resolver->resolve('{data.true}'));
+        $this->assertEquals('', $resolver->resolve('{data.false}'));
     }
 
     public function testNonScalarValueReturnsOriginalPlaceholder(): void
@@ -252,8 +252,8 @@ class PlaceholderResolverTest extends TestCase
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
         // Arrays and objects should not be resolved
-        $this->assertEquals('{data:array}', $resolver->resolve('{data:array}'));
-        $this->assertEquals('{data:object}', $resolver->resolve('{data:object}'));
+        $this->assertEquals('{data.array}', $resolver->resolve('{data.array}'));
+        $this->assertEquals('{data.object}', $resolver->resolve('{data.object}'));
     }
 
     public function testNullValueReturnsOriginalPlaceholder(): void
@@ -266,7 +266,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('{data:null}', $resolver->resolve('{data:null}'));
+        $this->assertEquals('{data.null}', $resolver->resolve('{data.null}'));
     }
 
     // ============================================
@@ -280,7 +280,7 @@ class PlaceholderResolverTest extends TestCase
         });
 
         $resolver = new PlaceholderResolver($this->createExecutionContext([]));
-        $result = $resolver->resolve('{custom:foo:bar}');
+        $result = $resolver->resolve('{custom.foo.bar}');
 
         $this->assertEquals('custom_foo_bar', $result);
     }
@@ -294,7 +294,7 @@ class PlaceholderResolverTest extends TestCase
         $context = ['value' => 'context_value'];
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('context_value', $resolver->resolve('{ctx:anything}'));
+        $this->assertEquals('context_value', $resolver->resolve('{ctx.anything}'));
     }
 
     public function testCustomPlaceholderReceivesParts(): void
@@ -305,8 +305,8 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext([]));
 
-        $this->assertEquals('a-b-c', $resolver->resolve('{join:a:b:c}'));
-        $this->assertEquals('x', $resolver->resolve('{join:x}'));
+        $this->assertEquals('a-b-c', $resolver->resolve('{join.a.b.c}'));
+        $this->assertEquals('x', $resolver->resolve('{join.x}'));
         $this->assertEquals('', $resolver->resolve('{join}'));
     }
 
@@ -319,7 +319,7 @@ class PlaceholderResolverTest extends TestCase
         $resolver = new PlaceholderResolver($this->createExecutionContext([]));
 
         // Null return should result in original placeholder
-        $this->assertEquals('{null_resolver:test}', $resolver->resolve('{null_resolver:test}'));
+        $this->assertEquals('{null_resolver.test}', $resolver->resolve('{null_resolver.test}'));
     }
 
     public function testCustomPlaceholderOverridesBuiltin(): void
@@ -338,7 +338,7 @@ class PlaceholderResolverTest extends TestCase
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
         // Custom resolver should take precedence
-        $this->assertEquals('custom_request_handler', $resolver->resolve('{request:url}'));
+        $this->assertEquals('custom_request_handler', $resolver->resolve('{request.url}'));
     }
 
     public function testMultipleCustomPlaceholders(): void
@@ -353,8 +353,8 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext([]));
 
-        $this->assertEquals('foo_value', $resolver->resolve('{foo:test}'));
-        $this->assertEquals('bar_value', $resolver->resolve('{bar:test}'));
+        $this->assertEquals('foo_value', $resolver->resolve('{foo.test}'));
+        $this->assertEquals('bar_value', $resolver->resolve('{bar.test}'));
     }
 
     // ============================================
@@ -368,10 +368,10 @@ class PlaceholderResolverTest extends TestCase
         });
 
         $resolver = new PlaceholderResolver($this->createExecutionContext([]));
-        $result = $resolver->resolve('{error:test}');
+        $result = $resolver->resolve('{error.test}');
 
         // Should return original placeholder when exception is thrown
-        $this->assertEquals('{error:test}', $result);
+        $this->assertEquals('{error.test}', $result);
     }
 
     public function testCustomPlaceholderWithInvalidReturnType(): void
@@ -381,7 +381,7 @@ class PlaceholderResolverTest extends TestCase
         });
 
         $resolver = new PlaceholderResolver($this->createExecutionContext([]));
-        $result = $resolver->resolve('{array_return:test}');
+        $result = $resolver->resolve('{array_return.test}');
 
         // Non-scalar return should be converted to string if possible, or return original
         $this->assertIsString($result);
@@ -405,7 +405,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $result = $resolver->resolve('User: {user:name}, Type: {custom:value}');
+        $result = $resolver->resolve('User: {user.name}, Type: {custom.value}');
         $this->assertEquals('User: John, Type: CUSTOM', $result);
     }
 
@@ -420,7 +420,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $template = 'Request: {request:method} {request:url} was processed';
+        $template = 'Request: {request.method} {request.url} was processed';
         $result = $resolver->resolve($template);
 
         $this->assertEquals('Request: POST /admin/users was processed', $result);
@@ -435,7 +435,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $result = $resolver->resolve('{a:v}{b:v}');
+        $result = $resolver->resolve('{a.v}{b.v}');
         $this->assertEquals('12', $result);
     }
 
@@ -449,7 +449,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $result = $resolver->resolve('{data:special}');
+        $result = $resolver->resolve('{data.special}');
         $this->assertEquals('value with {braces} and $special @chars!', $result);
     }
 
@@ -465,9 +465,9 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('first', $resolver->resolve('{array:0}'));
-        $this->assertEquals('second', $resolver->resolve('{array:1}'));
-        $this->assertEquals('third', $resolver->resolve('{array:2}'));
+        $this->assertEquals('first', $resolver->resolve('{array.0}'));
+        $this->assertEquals('second', $resolver->resolve('{array.1}'));
+        $this->assertEquals('third', $resolver->resolve('{array.2}'));
     }
 
     public function testDeepNestingWithMixedTypes(): void
@@ -486,9 +486,9 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('value', $resolver->resolve('{level1:level2:string}'));
-        $this->assertEquals('42', $resolver->resolve('{level1:level2:number}'));
-        $this->assertEquals('deep', $resolver->resolve('{level1:level2:level3:nested}'));
+        $this->assertEquals('value', $resolver->resolve('{level1.level2.string}'));
+        $this->assertEquals('42', $resolver->resolve('{level1.level2.number}'));
+        $this->assertEquals('deep', $resolver->resolve('{level1.level2.level3.nested}'));
     }
 
     // ============================================
@@ -499,7 +499,7 @@ class PlaceholderResolverTest extends TestCase
     {
         $resolver = new PlaceholderResolver($this->createExecutionContext([]));
 
-        $this->assertEquals('{any:value}', $resolver->resolve('{any:value}'));
+        $this->assertEquals('{any.value}', $resolver->resolve('{any.value}'));
         $this->assertEquals('plain text', $resolver->resolve('plain text'));
     }
 
@@ -513,7 +513,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('10:30:45', $resolver->resolve('{data:time}'));
+        $this->assertEquals('10:30:45', $resolver->resolve('{data.time}'));
     }
 
     public function testPlaceholderAtMiddleOfNonArrayPath(): void
@@ -527,7 +527,7 @@ class PlaceholderResolverTest extends TestCase
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
         // Trying to access nested property of non-array value
-        $this->assertEquals('{request:url:path}', $resolver->resolve('{request:url:path}'));
+        $this->assertEquals('{request.url.path}', $resolver->resolve('{request.url.path}'));
     }
 
     public function testZeroStringValue(): void
@@ -540,7 +540,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('0', $resolver->resolve('{data:zero}'));
+        $this->assertEquals('0', $resolver->resolve('{data.zero}'));
     }
 
     public function testEmptyStringValue(): void
@@ -553,7 +553,7 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('', $resolver->resolve('{data:empty}'));
+        $this->assertEquals('', $resolver->resolve('{data.empty}'));
     }
 
     public function testPlaceholderCaseSensitivity(): void
@@ -565,9 +565,9 @@ class PlaceholderResolverTest extends TestCase
 
         $resolver = new PlaceholderResolver($this->createExecutionContext($context));
 
-        $this->assertEquals('John', $resolver->resolve('{User:Name}'));
-        $this->assertEquals('Jane', $resolver->resolve('{user:name}'));
-        $this->assertEquals('{USER:NAME}', $resolver->resolve('{USER:NAME}'));
+        $this->assertEquals('John', $resolver->resolve('{User.Name}'));
+        $this->assertEquals('Jane', $resolver->resolve('{user.name}'));
+        $this->assertEquals('{USER.NAME}', $resolver->resolve('{USER.NAME}'));
     }
 
     public function testMalformedPlaceholderSyntax(): void
