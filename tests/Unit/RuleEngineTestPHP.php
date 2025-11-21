@@ -59,27 +59,64 @@ class RuleEngineTestPHP extends TestCase
     {
         $engine = new RuleEngine();
 
-        $executedAction = false;
-        Rules::register_action('test_action', function ($args, Context $context) use (&$executedAction) {
-            $executedAction = true;
+        $executedActionAll = false;
+        $executedActionAny = false;
+        $executedActionNone = false;
+
+        Rules::register_action('test_action_all', function ($args, Context $context) use (&$executedActionAll) {
+            $executedActionAll = true;
+        });
+
+        Rules::register_action('test_action_any', function ($args, Context $context) use (&$executedActionAny) {
+            $executedActionAny = true;
+        });
+
+        Rules::register_action('test_action_none', function ($args, Context $context) use (&$executedActionNone) {
+            $executedActionNone = true;
         });
 
         $rules = [
             [
-                'id' => 'no-conditions',
+                'id' => 'no-conditions-all',
                 'enabled' => true,
+                'match_type' => 'all',
                 'conditions' => [],
                 'actions' => [
-                    ['type' => 'test_action'],
+                    ['type' => 'test_action_all'],
+                ],
+            ],
+            [
+                'id' => 'no-conditions-any',
+                'enabled' => true,
+                'match_type' => 'any',
+                'conditions' => [],
+                'actions' => [
+                    ['type' => 'test_action_any'],
+                ],
+            ],
+            [
+                'id' => 'no-conditions-none',
+                'enabled' => true,
+                'match_type' => 'none',
+                'conditions' => [],
+                'actions' => [
+                    ['type' => 'test_action_none'],
                 ],
             ],
         ];
 
         $result = $engine->execute($rules);
 
-        $this->assertEquals(1, $result['rules_processed']);
-        $this->assertEquals(1, $result['rules_matched']);
-        $this->assertTrue($executedAction);
+        // All 3 rules processed
+        $this->assertEquals(3, $result['rules_processed']);
+
+        // Only 2 rules matched: 'all' and 'none' (not 'any')
+        $this->assertEquals(2, $result['rules_matched']);
+
+        // Only actions for 'all' and 'none' executed
+        $this->assertTrue($executedActionAll, 'match_type=all with empty conditions should match');
+        $this->assertFalse($executedActionAny, 'match_type=any with empty conditions should not match');
+        $this->assertTrue($executedActionNone, 'match_type=none with empty conditions should match');
     }
 
     public function testExecuteRuleWithMatchingCondition(): void

@@ -205,7 +205,21 @@ class RuleEngine
     private function check_conditions(array $conditions, string $match_type): bool
     {
         if (empty($conditions)) {
-            return true;
+            // Handle empty conditions based on match type logic.
+            switch ($match_type) {
+                case 'none':
+                    // No conditions exist, so none are true (vacuous truth).
+                    return true;
+
+                case 'any':
+                    // Need at least one true condition, but none exist.
+                    return false;
+
+                case 'all':
+                default:
+                    // All (zero) conditions are satisfied (vacuous truth).
+                    return true;
+            }
         }
 
         $matches = array();

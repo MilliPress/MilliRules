@@ -309,13 +309,14 @@ test('rule engine executes multiple rules in sequence', function () {
 /**
  * Empty Conditions Tests
  */
-test('rule engine matches rules with empty conditions', function () {
+test('rule engine matches rules with empty conditions and match_type all', function () {
     $engine = new RuleEngine();
 
     $rules = [
         [
-            'id' => 'no-conditions-rule',
+            'id' => 'no-conditions-rule-all',
             'enabled' => true,
+            'match_type' => 'all',
             'conditions' => [],
             'actions' => []
         ]
@@ -323,6 +324,44 @@ test('rule engine matches rules with empty conditions', function () {
 
     $result = $engine->execute($rules, new Context());
 
-    // Rules with no conditions should match
+    // Rules with no conditions and match_type 'all' should match (vacuous truth)
+    expect($result['rules_matched'])->toBe(1);
+});
+
+test('rule engine does not match rules with empty conditions and match_type any', function () {
+    $engine = new RuleEngine();
+
+    $rules = [
+        [
+            'id' => 'no-conditions-rule-any',
+            'enabled' => true,
+            'match_type' => 'any',
+            'conditions' => [],
+            'actions' => []
+        ]
+    ];
+
+    $result = $engine->execute($rules, new Context());
+
+    // Rules with no conditions and match_type 'any' should not match
+    expect($result['rules_matched'])->toBe(0);
+});
+
+test('rule engine matches rules with empty conditions and match_type none', function () {
+    $engine = new RuleEngine();
+
+    $rules = [
+        [
+            'id' => 'no-conditions-rule-none',
+            'enabled' => true,
+            'match_type' => 'none',
+            'conditions' => [],
+            'actions' => []
+        ]
+    ];
+
+    $result = $engine->execute($rules, new Context());
+
+    // Rules with no conditions and match_type 'none' should match (vacuous truth)
     expect($result['rules_matched'])->toBe(1);
 });
