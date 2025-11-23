@@ -82,9 +82,9 @@ function-call form.
 
 ## Implementation Notes
 
-- The builder records all raw method arguments in a generic `_args` key
+- The builder records all raw method arguments in a generic `args` key
   in the condition config.
-- The WordPress `IsConditional` class interprets `_args` to determine
+- The WordPress `IsConditional` class interprets `args` to determine
   whether to operate in boolean mode or function-call mode.
-- Other packages can reuse the `_args` convention in their own condition
+- Other packages can reuse the `args` convention in their own condition
   classes without any changes to core engine or base condition logic.
