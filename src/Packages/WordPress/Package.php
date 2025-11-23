@@ -197,6 +197,11 @@ class Package extends BasePackage
      */
     public function register_rule(array $rule, array $metadata): void
     {
+        // Skip disabled rules - don't register hooks or store them.
+        if (isset($metadata['enabled']) && ! $metadata['enabled']) {
+            return;
+        }
+
         // Extract hook information from metadata.
         $hook     = $metadata['hook'] ?? 'wp';
         $priority = $metadata['hook_priority'] ?? 10;
