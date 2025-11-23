@@ -38,7 +38,7 @@ class IsConditionalTest extends TestCase
     {
         $config = array(
             'type'      => 'is_404',
-            '_args' => array(false),
+            'args' => array(false),
         );
 
         $condition = new IsConditional($config, new Context());
@@ -56,7 +56,7 @@ class IsConditionalTest extends TestCase
     {
         $config = array(
             'type'      => 'is_tax',
-            '_args' => array('genre', 'sci-fi'),
+            'args' => array('genre', 'sci-fi'),
         );
 
         $condition = new IsConditional($config, new Context());
@@ -73,7 +73,7 @@ class IsConditionalTest extends TestCase
     {
         $config = array(
             'type'      => 'is_tax',
-            '_args' => array('genre', 'sci-fi', '!='),
+            'args' => array('genre', 'sci-fi', '!='),
         );
 
         $condition = new IsConditional($config, new Context());
@@ -91,7 +91,7 @@ class IsConditionalTest extends TestCase
     {
         $config = array(
             'type'      => 'is_singular',
-            '_args' => array('page'),
+            'args' => array('page'),
         );
 
         $condition = new IsConditional($config, new Context());
@@ -108,7 +108,7 @@ class IsConditionalTest extends TestCase
     {
         $config = array(
             'type'      => 'is_singular',
-            '_args' => array('post'),
+            'args' => array('post'),
         );
 
         $condition = new IsConditional($config, new Context());

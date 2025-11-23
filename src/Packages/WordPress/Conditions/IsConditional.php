@@ -38,13 +38,29 @@ use MilliRules\Context;
  *     ->is_tax('genre', 'sci-fi')          // is_tax('genre','sci-fi') IS TRUE
  *     ->is_tax('genre', 'sci-fi', '!=')    // is_tax('genre','sci-fi') != TRUE
  *
- * Raw arguments are provided by ConditionBuilder via the generic '_args' key.
+ * Raw arguments are provided by ConditionBuilder via the 'args' key.
  * Other packages can reuse this convention for their own condition types.
  *
  * @since 0.1.0
  */
 class IsConditional extends BaseCondition
 {
+    /**
+     * Define argument mapping for IsConditional.
+     *
+     * IsConditional uses custom argument handling - returns empty array
+     * to signal that all args should be passed through for custom interpretation.
+     * See BaseCondition::get_argument_mapping() for detailed explanation.
+     *
+     * @since 0.1.0
+     *
+     * @return array<int, string>
+     */
+    public static function get_argument_mapping(): array
+    {
+        return [];  // Empty = pass through as 'args' for custom handling
+    }
+
     /**
      * Constructor.
      *
@@ -69,8 +85,8 @@ class IsConditional extends BaseCondition
         }
 
         // If we have raw arguments from the builder, interpret them.
-        if (isset($config['_args']) && is_array($config['_args']) && ! empty($config['_args'])) {
-            $raw_args = $config['_args'];
+        if (isset($config['args']) && is_array($config['args']) && ! empty($config['args'])) {
+            $raw_args = $config['args'];
             $first    = $raw_args[0];
 
             // Mode A: boolean mode when first arg is boolean (->is_404(false), ->is_404(true, 'IS NOT')).
