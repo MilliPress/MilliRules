@@ -13,6 +13,7 @@
 namespace MilliRules\Builders;
 
 use MilliRules\Rules;
+use MilliRules\RuleEngine;
 
 /**
  * Condition Builder
@@ -376,7 +377,13 @@ class ConditionBuilder
     /**
      * Build condition configuration from method arguments.
      *
-     * Intelligently maps method arguments to condition config based on argument count and types.
+     * Uses the condition's get_argument_mapping() to intelligently map builder arguments
+     * to the condition configuration structure.
+     *
+     * Common patterns:
+     * - Value-based (['value']): ->post_type('page') → ['value' => 'page']
+     * - Name-based (['name', 'value']): ->cookie('session', 's123') → ['name' => 'session', 'value' => 's123', 'operator' => 'EXISTS']
+     * - Custom ([]): ->is_404() → ['args' => [], 'operator' => 'IS']
      *
      * @since 0.1.0
      *
@@ -386,11 +393,7 @@ class ConditionBuilder
      */
     private function build_condition_config(string $type, array $args): array
     {
-		// Store raw arguments for conditions that need them (e.g., IsConditional).
-		$config = [
-			'type' => $type,
-			'_args' => $args,
-		];
+		$config = ['type' => $type];
 
 		// No arguments - boolean condition.
 		if (empty($args)) {
@@ -398,25 +401,87 @@ class ConditionBuilder
 			return $config;
 		}
 
+		// Extract operator if the last argument looks like one.
 		$operator = null;
 		if (is_string(end($args)) && $this->is_operator(end($args))) {
 			$operator = array_pop($args);
 		}
 
-		// Name-based condition: 2+ args means first is name, second is value.
-		// Examples: ->cookie('session_id', 'abc123') or ->cookie('session_id', 'abc123', '=')
-		if (count($args) >= 2) {
-			$config['name'] = $args[0];
-			$config['value'] = $args[1];
-			$config['operator'] = $operator ?? $this->infer_operator($args[1], '=');
+		// Get the argument mapping from the condition class.
+		$mapping = $this->get_condition_argument_mapping($type);
+
+		// Empty mapping = custom handling, pass through all args.
+		if (empty($mapping)) {
+			$config['args'] = $args;
+			if ($operator !== null) {
+				$config['operator'] = $operator;
+			}
 			return $config;
 		}
 
-		// Value-based condition: 1 arg means it's the value to compare.
-		// Examples: ->user_age(18) or ->user_age(18, '>=')
-		$config['value'] = $args[0];
-		$config['operator'] = $operator ?? $this->infer_operator($args[0], '=');
+		// Apply the mapping: map positional args to config keys.
+		foreach ($args as $index => $value) {
+			if (isset($mapping[$index])) {
+				$config[$mapping[$index]] = $value;
+			}
+		}
+
+		// Determine the operator based on what was mapped.
+		$config['operator'] = $this->determine_operator($config, $mapping, $operator);
+
 		return $config;
+    }
+
+    /**
+     * Get the argument mapping for a condition type.
+     *
+     * Queries the condition class's get_argument_mapping() method to determine
+     * how builder arguments should map to config keys.
+     *
+     * @since 0.1.0
+     *
+     * @param string $type The condition type (e.g., 'cookie', 'post_type').
+     * @return array<int, string> The mapping array, or default ['value'] if class not found.
+     */
+    private function get_condition_argument_mapping(string $type): array
+    {
+        // Resolve the condition class name.
+        $class_name = RuleEngine::type_to_class_name($type, 'Conditions');
+
+        // If class doesn't exist, use default value-based mapping.
+        if (! class_exists($class_name)) {
+            return ['value'];
+        }
+
+        // Get the mapping from the class.
+        return $class_name::get_argument_mapping();
+    }
+
+    /**
+     * Determine the appropriate operator based on the mapped config.
+     *
+     * @since 0.1.0
+     *
+     * @param array<string, mixed> $config   The config with mapped values.
+     * @param array<int, string>   $mapping  The argument mapping used.
+     * @param string|null          $operator Explicit operator from args.
+     * @return string The operator to use.
+     */
+    private function determine_operator(array $config, array $mapping, ?string $operator): string
+    {
+        // If explicit operator provided, use it.
+        if ($operator !== null) {
+            return $operator;
+        }
+
+        // If we have 'name' but no 'value', it's an existence check.
+        if (isset($config['name']) && ! isset($config['value'])) {
+            return 'EXISTS';
+        }
+
+        // Otherwise, infer operator from the value (or default to '=').
+        $value = $config['value'] ?? null;
+        return $this->infer_operator($value, '=');
     }
 
     /**
