@@ -44,6 +44,21 @@ use MilliRules\Context;
 class QueryVar extends BaseCondition
 {
     /**
+     * Define argument mapping for QueryVar condition.
+     *
+     * QueryVar is name-based: first arg = query var name, second arg = value to compare.
+     * See BaseCondition::get_argument_mapping() for detailed explanation.
+     *
+     * @since 0.1.0
+     *
+     * @return array<int, string>
+     */
+    public static function get_argument_mapping(): array
+    {
+        return ['name', 'value'];
+    }
+
+    /**
      * Query variable name.
      *
      * @since 0.1.0

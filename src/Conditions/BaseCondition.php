@@ -65,6 +65,48 @@ abstract class BaseCondition implements ConditionInterface
     protected PlaceholderResolver $resolver;
 
     /**
+     * Define how builder arguments map to condition config keys.
+     *
+     * This method controls how the ConditionBuilder interprets method arguments
+     * and maps them to the condition configuration array.
+     *
+     * Common Patterns:
+     *
+     * Value-Based Conditions (default: ['value']):
+     * - Check a single, predetermined field in the context
+     * - First argument = the VALUE to compare against
+     * - Examples:
+     *   - RequestMethod: ->request_method('POST') → ['value' => 'POST']
+     *   - PostType: ->post_type('page') → ['value' => 'page']
+     *   - UserRole: ->user_role('admin') → ['value' => 'admin']
+     *
+     * Name-Based Conditions (['name', 'value']):
+     * - Require specifying WHICH field/key to check from a collection
+     * - First argument = the field NAME to check
+     * - Second argument = the VALUE to compare (optional, defaults to EXISTS check)
+     * - Examples:
+     *   - Cookie: ->cookie('session_id') → ['name' => 'session_id', 'operator' => 'EXISTS']
+     *   - Cookie: ->cookie('session_id', 'abc') → ['name' => 'session_id', 'value' => 'abc']
+     *   - RequestHeader: ->request_header('User-Agent') → ['name' => 'User-Agent', 'operator' => 'EXISTS']
+     *   - RequestParam: ->request_param('action', 'edit') → ['name' => 'action', 'value' => 'edit']
+     *
+     * Custom Handling (empty array: []):
+     * - Returns empty array to signal "pass through all arguments as 'args'"
+     * - Condition handles argument interpretation in its constructor
+     * - Example: IsConditional with variable argument patterns
+     *
+     * Override this method in your condition class to define custom argument mapping.
+     *
+     * @since 0.1.0
+     *
+     * @return array<int, string> Array of config keys that arguments map to, or empty for custom handling.
+     */
+    public static function get_argument_mapping(): array
+    {
+        return ['value'];  // Default: value-based condition
+    }
+
+    /**
      * Constructor.
      *
      * @since 0.1.0

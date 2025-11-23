@@ -38,6 +38,21 @@ use MilliRules\Context;
 class Constant extends BaseCondition
 {
     /**
+     * Define argument mapping for Constant condition.
+     *
+     * Constant is name-based: first arg = constant name, second arg = value to compare.
+     * See BaseCondition::get_argument_mapping() for detailed explanation.
+     *
+     * @since 0.1.0
+     *
+     * @return array<int, string>
+     */
+    public static function get_argument_mapping(): array
+    {
+        return ['name', 'value'];
+    }
+
+    /**
      * Get the condition type.
      *
      * @since 0.1.0
