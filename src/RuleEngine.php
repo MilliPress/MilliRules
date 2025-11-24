@@ -11,6 +11,7 @@
 
 namespace MilliRules;
 
+use MilliRules\Logger;
 use MilliRules\Conditions\ConditionInterface;
 use MilliRules\Actions\ActionInterface;
 use MilliRules\Packages\PackageManager;
@@ -152,6 +153,9 @@ class RuleEngine
             $this->execute_rule($rule);
         }
 
+        // Flush any aggregated errors
+        Logger::flush_aggregated();
+
         return array(
             'rules_processed'  => $this->stats['rules_processed'],
             'rules_skipped'    => $this->stats['rules_skipped'],
@@ -247,7 +251,7 @@ class RuleEngine
             try {
                 $matches[] = $condition->matches($this->context);
             } catch (\Exception $e) {
-                error_log('MilliRules: Error checking condition: ' . $e->getMessage());
+                Logger::aggregate('condition_check', 'Error checking condition: ' . $e->getMessage());
                 $matches[] = false;
             }
         }
@@ -283,9 +287,9 @@ class RuleEngine
 
             // Check if this action type is already locked.
             if (! empty($type) && isset($this->locked_actions[ $type ])) {
-                error_log(
+                Logger::warning(
                     sprintf(
-                        "MilliRules: Action '%s' locked by rule '%s', skipping execution in rule '%s'",
+                        "Action '%s' locked by rule '%s', skipping execution in rule '%s'",
                         $type,
                         $this->locked_actions[ $type ],
                         $rule_id
@@ -308,7 +312,7 @@ class RuleEngine
                     $this->locked_actions[ $type ] = $rule_id;
                 }
             } catch (\Exception $e) {
-                error_log('MilliRules: Error executing action: ' . $e->getMessage());
+                Logger::aggregate('action_execution', 'Error executing action: ' . $e->getMessage());
             }
         }
     }
@@ -376,9 +380,9 @@ class RuleEngine
             $available_list = empty($available_packages) ? 'none' : implode(', ', $available_packages);
             $missing_list   = implode(', ', $missing_packages);
 
-            error_log(
+            Logger::warning(
                 sprintf(
-                    "MilliRules: Rule '%s' requires packages [%s] but only [%s] are available. Missing: [%s]",
+                    "Rule '%s' requires packages [%s] but only [%s] are available. Missing: [%s]",
                     $rule_id,
                     $required_list,
                     $available_list,
@@ -406,7 +410,7 @@ class RuleEngine
         $type = is_string($type_value) ? $type_value : '';
 
         if (empty($type)) {
-            error_log('MilliRules: Condition type not specified');
+            Logger::error('Condition type not specified');
             return null;
         }
 
@@ -418,7 +422,7 @@ class RuleEngine
                 try {
                     return new Conditions\Callback($type, $callback, $config, $this->context);
                 } catch (\Exception $e) {
-                    error_log('MilliRules: Error creating callback condition: ' . $e->getMessage());
+                    Logger::error('Error creating callback condition: ' . $e->getMessage());
                     return null;
                 }
             }
@@ -430,7 +434,7 @@ class RuleEngine
 
         // Check if the class exists.
         if (! class_exists($class_name)) {
-            error_log('MilliRules: Unknown condition type: ' . $type);
+            Logger::error('Unknown condition type: ' . $type);
             return null;
         }
 
@@ -438,7 +442,7 @@ class RuleEngine
             $instance = new $class_name($config, $this->context);
             return $instance instanceof ConditionInterface ? $instance : null;
         } catch (\Exception $e) {
-            error_log('MilliRules: Error creating condition: ' . $e->getMessage());
+            Logger::error('Error creating condition: ' . $e->getMessage());
             return null;
         }
     }
@@ -457,7 +461,7 @@ class RuleEngine
         $type = is_string($type_value) ? $type_value : '';
 
         if (empty($type)) {
-            error_log('MilliRules: Action type not specified');
+            Logger::error('Action type not specified');
             return null;
         }
 
@@ -469,7 +473,7 @@ class RuleEngine
                 try {
                     return new Actions\Callback($type, $callback, $config, $this->context);
                 } catch (\Exception $e) {
-                    error_log('MilliRules: Error creating callback action: ' . $e->getMessage());
+                    Logger::error('Error creating callback action: ' . $e->getMessage());
                     return null;
                 }
             }
@@ -481,7 +485,7 @@ class RuleEngine
 
         // Check if the class exists.
         if (! class_exists($class_name)) {
-            error_log('MilliRules: Unknown action type: ' . $type);
+            Logger::error('Unknown action type: ' . $type);
             return null;
         }
 
@@ -489,7 +493,7 @@ class RuleEngine
             $instance = new $class_name($config, $this->context);
             return $instance instanceof ActionInterface ? $instance : null;
         } catch (\Exception $e) {
-            error_log('MilliRules: Error creating action: ' . $e->getMessage());
+            Logger::error('Error creating action: ' . $e->getMessage());
             return null;
         }
     }

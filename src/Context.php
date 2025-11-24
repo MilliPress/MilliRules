@@ -12,6 +12,8 @@
 
 namespace MilliRules;
 
+use MilliRules\Logger;
+
 /**
  * Class Context
  *
@@ -128,7 +130,7 @@ class Context
                 $this->data = $this->array_merge_recursive_distinct($this->data, $result);
             }
         } catch (\Exception $e) {
-            error_log('MilliRules: Error loading context key "' . $key . '": ' . $e->getMessage());
+            Logger::error('Error loading context key "' . $key . '": ' . $e->getMessage());
         }
 
         return $this;

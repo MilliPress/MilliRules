@@ -20,11 +20,12 @@
  *
  * @package     MilliRules
  * @author      Philipp Wellmer
- * @since 0.1.0
+ * @since 		0.1.0
  */
 
 namespace MilliRules\Packages;
 
+use MilliRules\Logger;
 use MilliRules\Rules;
 use MilliRules\RuleEngine;
 
@@ -304,8 +305,8 @@ abstract class BasePackage implements PackageInterface
         } catch (\Exception $e) {
             // Log error with package name for context.
             $package_name = $this->get_name();
-            error_log(
-                "MilliRules: Error executing rules for package '{$package_name}': " . $e->getMessage()
+            Logger::error(
+                "Error executing rules for package '{$package_name}': " . $e->getMessage()
             );
 
             // Return error result structure (consistent with RuleEngine::execute() format).

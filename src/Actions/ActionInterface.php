@@ -6,7 +6,8 @@
  * Contract for all action classes in the rules system.
  *
  * @package MilliRules
- * @since 0.1.0
+ * @author  Philipp Wellmer
+ * @since   0.1.0
  */
 
 namespace MilliRules\Actions;

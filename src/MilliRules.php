@@ -8,11 +8,12 @@
  *
  * @package     MilliRules
  * @author      Philipp Wellmer
- * @since 0.1.0
+ * @since 		0.1.0
  */
 
 namespace MilliRules;
 
+use MilliRules\Logger;
 use MilliRules\Packages\PackageManager;
 use MilliRules\Packages\PackageInterface;
 use MilliRules\Packages\PHP\Package as PhpPackage;
@@ -103,7 +104,7 @@ class MilliRules
                     // Validate package implements PackageInterface.
                     if (! $package instanceof PackageInterface) {
                         $class_name = is_object($package) ? get_class($package) : gettype($package);
-                        error_log("MilliRules: Cannot register package - '{$class_name}' does not implement PackageInterface");
+                        Logger::error("Cannot register package - '{$class_name}' does not implement PackageInterface");
                         continue;
                     }
 
@@ -115,12 +116,12 @@ class MilliRules
             $loaded = PackageManager::load_packages($package_names);
 
             if (empty($loaded)) {
-                error_log('MilliRules: Warning - No packages were loaded');
+                Logger::warning('No packages were loaded');
             }
 
             return $loaded;
         } catch (\Exception $e) {
-            error_log('MilliRules: Error in MilliRules::init(): ' . $e->getMessage());
+            Logger::error('Error in MilliRules::init(): ' . $e->getMessage());
             return array();
         }
     }
@@ -153,12 +154,12 @@ class MilliRules
 			$loaded = PackageManager::load_packages($package_names);
 
 			if (empty($loaded)) {
-				error_log('MilliRules: Warning - No packages were loaded via MilliRules::load_packages()');
+				Logger::warning('No packages were loaded via MilliRules::load_packages()');
 			}
 
 			return $loaded;
 		} catch (\Exception $e) {
-			error_log('MilliRules: Error in MilliRules::load_packages(): ' . $e->getMessage());
+			Logger::error('Error in MilliRules::load_packages(): ' . $e->getMessage());
 			return array();
 		}
 	}
@@ -213,7 +214,7 @@ class MilliRules
                     if (in_array($package_name, $loaded_package_names, true)) {
                         $validated_packages[] = $package_name;
                     } else {
-                        error_log("MilliRules: Package '{$package_name}' specified in allowed_packages but not loaded - skipping");
+                        Logger::warning("Package '{$package_name}' specified in allowed_packages but not loaded - skipping");
                     }
                 }
 
@@ -222,7 +223,7 @@ class MilliRules
 
                 // If all packages were invalid, log warning.
                 if (empty($allowed_packages)) {
-                    error_log('MilliRules: No valid packages in allowed_packages filter - no rules will execute');
+                    Logger::warning('No valid packages in allowed_packages filter - no rules will execute');
                 }
             }
 
@@ -249,13 +250,13 @@ class MilliRules
                     }
                 } catch (\Exception $e) {
                     $package_name = $package->get_name();
-                    error_log("MilliRules: Error collecting rules from package '{$package_name}': " . $e->getMessage());
+                    Logger::error("Error collecting rules from package '{$package_name}': " . $e->getMessage());
                 }
             }
 
             // Check if any rules were collected.
             if (empty($all_rules)) {
-                error_log('MilliRules: No rules found for execution');
+                Logger::info('No rules found for execution');
 
                 // Return empty result (valid state, not an error).
                 return array(
@@ -271,7 +272,7 @@ class MilliRules
             $engine = new RuleEngine();
             return $engine->execute($all_rules, $context, $allowed_packages);
         } catch (\Exception $e) {
-            error_log('MilliRules: Error in MilliRules::execute_rules(): ' . $e->getMessage());
+            Logger::error('Error in MilliRules::execute_rules(): ' . $e->getMessage());
 
             // Return error result.
             return array(

@@ -7,10 +7,12 @@
  *
  * @package     MilliRules
  * @author      Philipp Wellmer
+ * @since 		0.1.0
  */
 
 namespace MilliRules\Conditions;
 
+use MilliRules\Logger;
 use MilliRules\Context;
 use MilliRules\PlaceholderResolver;
 
@@ -241,7 +243,7 @@ abstract class BaseCondition implements ConditionInterface
                 return (bool) $actual !== (bool) $expected;
 
             default:
-                error_log('MilliRules: Unknown operator: ' . $operator);
+                Logger::error('Unknown operator: ' . $operator);
                 return false;
         }
     }

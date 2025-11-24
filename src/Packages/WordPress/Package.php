@@ -17,11 +17,12 @@
  * @package     MilliRules
  * @subpackage  WordPress
  * @author      Philipp Wellmer
- * @since 0.1.0
+ * @since 		0.1.0
  */
 
 namespace MilliRules\Packages\WordPress;
 
+use MilliRules\Logger;
 use MilliRules\Packages\BasePackage;
 use MilliRules\RuleEngine;
 
@@ -284,7 +285,7 @@ class Package extends BasePackage
 
         // Log success.
         if ($count > 0) {
-            error_log("MilliRules: Registered {$count} pending WordPress hooks");
+            Logger::info("Registered {$count} pending WordPress hooks");
         }
     }
 
@@ -338,7 +339,7 @@ class Package extends BasePackage
                 add_action($hook, $closure, $priority, 99);
             }
         } catch (\Exception $e) {
-            error_log("MilliRules: Error registering hook '{$hook}': " . $e->getMessage());
+            Logger::error("Error registering hook '{$hook}': " . $e->getMessage());
         }
     }
 
@@ -383,7 +384,7 @@ class Package extends BasePackage
             $engine = new RuleEngine();
             $engine->execute($sorted_rules, $context);
         } catch (\Exception $e) {
-            error_log("MilliRules: Error executing rules for hook '{$hook}': " . $e->getMessage());
+            Logger::error("Error executing rules for hook '{$hook}': " . $e->getMessage());
         }
     }
 

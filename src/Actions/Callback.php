@@ -6,11 +6,13 @@
  * Wrapper class for callback-based actions registered via Rules::register_action().
  *
  * @package MilliRules
- * @since 0.1.0
+ * @author  Philipp Wellmer
+ * @since 	0.1.0
  */
 
 namespace MilliRules\Actions;
 
+use MilliRules\Logger;
 use MilliRules\Context;
 
 /**
@@ -87,17 +89,17 @@ class Callback implements ActionInterface
             // Call the callback with config and context object.
             call_user_func($this->callback, $this->config, $this->context);
         } catch (\Exception $e) {
-            error_log(
+            Logger::error(
                 sprintf(
-                    'MilliRules: Error in callback action "%s": %s',
+                    'Error in callback action "%s": %s',
                     $this->type,
                     $e->getMessage()
                 )
             );
         } catch (\Throwable $e) {
-            error_log(
+            Logger::error(
                 sprintf(
-                    'MilliRules: Fatal error in callback action "%s": %s',
+                    'Fatal error in callback action "%s": %s',
                     $this->type,
                     $e->getMessage()
                 )

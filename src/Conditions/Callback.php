@@ -11,6 +11,7 @@
 
 namespace MilliRules\Conditions;
 
+use MilliRules\Logger;
 use MilliRules\Context;
 
 /**
@@ -90,18 +91,18 @@ class Callback implements ConditionInterface
             // Ensure boolean return value.
             return (bool) $result;
         } catch (\Exception $e) {
-            error_log(
+            Logger::error(
                 sprintf(
-                    'MilliRules: Error in callback condition "%s": %s',
+                    'Error in callback condition "%s": %s',
                     $this->type,
                     $e->getMessage()
                 )
             );
             return false;
         } catch (\Throwable $e) {
-            error_log(
+            Logger::error(
                 sprintf(
-                    'MilliRules: Fatal error in callback condition "%s": %s',
+                    'Fatal error in callback condition "%s": %s',
                     $this->type,
                     $e->getMessage()
                 )

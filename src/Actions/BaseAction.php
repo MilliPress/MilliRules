@@ -6,7 +6,8 @@
  * Abstract base class for all action implementations.
  *
  * @package MilliRules
- * @since 0.1.0
+ * @author  Philipp Wellmer
+ * @since   0.1.0
  */
 
 namespace MilliRules\Actions;

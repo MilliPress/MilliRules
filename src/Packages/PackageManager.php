@@ -21,6 +21,8 @@
 
 namespace MilliRules\Packages;
 
+use MilliRules\Logger;
+
 /**
  * Class PackageManager
  *
@@ -197,7 +199,7 @@ class PackageManager
 
         // Check if package exists.
         if (! isset(self::$packages[ $name ])) {
-            error_log("MilliRules: Package '{$name}' not registered");
+            Logger::warning("Package '{$name}' not registered");
             return false;
         }
 
@@ -205,14 +207,14 @@ class PackageManager
 
         // Check if available.
         if (! $package->is_available()) {
-            error_log("MilliRules: Package '{$name}' is not available in this environment");
+            Logger::warning("Package '{$name}' is not available in this environment");
             return false;
         }
 
         // Cycle detection.
         if (in_array($name, $loading_stack, true)) {
             $cycle_path = implode(' → ', $loading_stack) . ' → ' . $name;
-            error_log("MilliRules: Circular dependency detected: {$cycle_path}");
+            Logger::error("Circular dependency detected: {$cycle_path}");
             return false;
         }
 
@@ -223,7 +225,7 @@ class PackageManager
         $required_packages = $package->get_required_packages();
         foreach ($required_packages as $required_name) {
             if (! self::load_package_recursive($required_name, $loading_stack)) {
-                error_log("MilliRules: Failed to load required package '{$required_name}' for '{$name}'");
+                Logger::error("Failed to load required package '{$required_name}' for '{$name}'");
                 // Remove from loading stack.
                 array_pop($loading_stack);
                 return false;
@@ -502,7 +504,7 @@ class PackageManager
             if (isset(self::$packages[ $package_name ])) {
                 self::$packages[ $package_name ]->register_rule($rule, $metadata);
             } else {
-                error_log("MilliRules: Cannot register rule '{$rule_id}' - package '{$package_name}' not registered");
+                Logger::warning("Cannot register rule '{$rule_id}' - package '{$package_name}' not registered");
             }
         }
     }
@@ -544,7 +546,7 @@ class PackageManager
                     if (isset(self::$packages[ $package_name ])) {
                         self::$packages[ $package_name ]->register_rule($pending['rule'], $pending['metadata']);
                     } else {
-                        error_log("MilliRules: Cannot register rule '{$rule_id}' - package '{$package_name}' not registered");
+                        Logger::warning("Cannot register rule '{$rule_id}' - package '{$package_name}' not registered");
                     }
                 }
                 $registered_count++;

@@ -13,6 +13,7 @@
 
 namespace MilliRules;
 
+use MilliRules\Logger;
 use MilliRules\Builders\ConditionBuilder;
 use MilliRules\Builders\ActionBuilder;
 use MilliRules\Packages\PackageManager;
@@ -186,7 +187,7 @@ class Rules
      * @since 0.1.0
      *
      * @param string   $type     The condition type identifier.
-     * @param callable(array, Context): bool $callback The callback function that receives args array and Context.
+     * @param callable(array<string, mixed>, Context): bool $callback The callback function that receives args array and Context.
      *                                                  Signature: function(array $args, Context $context): bool
      * @return void
      * @throws \InvalidArgumentException If callback is not callable.
@@ -206,7 +207,7 @@ class Rules
      * @since 0.1.0
      *
      * @param string   $type     The action type identifier.
-     * @param callable(array, Context): void $callback The callback function that receives args array and Context.
+     * @param callable(array<string, mixed>, Context): void $callback The callback function that receives args array and Context.
      *                                                  Signature: function(array $args, Context $context): void
      * @return void
      * @throws \InvalidArgumentException If callback is not callable.
@@ -267,7 +268,7 @@ class Rules
      * @since 0.1.0
      *
      * @param string   $placeholder The placeholder name (e.g., 'custom' for {custom:value}).
-     * @param callable(Context, array): mixed $resolver The resolver callback that receives Context and parts array.
+     * @param callable(Context, array<int, string>): mixed $resolver The resolver callback that receives Context and parts array.
      *                                                   Signature: function(Context $context, array $parts): mixed
      * @return void
      */
@@ -552,7 +553,7 @@ class Rules
     public function register(): bool
     {
         if (! self::validate_rule($this->rule)) {
-            error_log('MilliRules: Failed to validate rule: ' . ( $this->rule['id'] ?? 'unknown' ));
+            Logger::error('Failed to validate rule: ' . ( $this->rule['id'] ?? 'unknown' ));
             return false;
         }
 
@@ -598,7 +599,7 @@ class Rules
 
         // Validate metadata is properly formed (defensive programming).
         if (! is_array($this->rule['_metadata'])) {
-            error_log('MilliRules: Failed to create metadata for rule: ' . ( $this->rule['id'] ?? 'unknown' ));
+            Logger::error('Failed to create metadata for rule: ' . ( $this->rule['id'] ?? 'unknown' ));
             return false;
         }
 
@@ -622,7 +623,7 @@ class Rules
 
         foreach ($required_fields as $field) {
             if (! isset($rule[ $field ])) {
-                error_log("MilliRules: Missing required field: {$field}");
+                Logger::error("Missing required field: {$field}");
                 return false;
             }
         }
@@ -631,7 +632,7 @@ class Rules
         $actions = $rule['actions'] ?? null;
 
         if (! is_array($conditions) || ! is_array($actions)) {
-            error_log('MilliRules: Conditions and actions must be arrays');
+            Logger::error('Conditions and actions must be arrays');
             return false;
         }
 
@@ -834,8 +835,8 @@ class Rules
 
         // Validation 1: Explicit type='php' with WordPress packages.
         if ($this->explicit_type === 'php' && in_array('WordPress', $required_packages, true)) {
-            error_log(
-                "MilliRules: Rule '{$rule_id}' has explicit type='php' but requires WordPress package - " .
+            Logger::warning(
+                "Rule '{$rule_id}' has explicit type='php' but requires WordPress package - " .
                 'this may not work as expected. Consider using type=\'wp\' or omitting type parameter for auto-detection.'
             );
             // Respect user intent - no override.
@@ -843,8 +844,8 @@ class Rules
 
         // Validation 2: Explicit type='php' with ->on() usage.
         if ($this->explicit_type === 'php' && ( $this->hook !== 'wp' || $this->hook_priority !== 10 )) {
-            error_log(
-                "MilliRules: Rule '{$rule_id}' has explicit type='php' but uses WordPress hook '{$this->hook}' - " .
+            Logger::warning(
+                "Rule '{$rule_id}' has explicit type='php' but uses WordPress hook '{$this->hook}' - " .
                 'auto-changing type to \'wp\' as hooks require WordPress context.'
             );
 

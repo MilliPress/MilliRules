@@ -11,6 +11,8 @@
 
 namespace MilliRules;
 
+use MilliRules\Logger;
+
 /**
  * Class PlaceholderResolver
  *
@@ -119,7 +121,7 @@ class PlaceholderResolver
                 $value = call_user_func(self::$custom_resolvers[ $category ], $this->context->to_array(), $parts);
                 return null !== $value ? (string) $value : '{' . $placeholder . '}';
             } catch (\Exception $e) {
-                error_log('MilliRules: Error in custom placeholder resolver for ' . $category . ': ' . $e->getMessage());
+                Logger::error('Error in custom placeholder resolver for ' . $category . ': ' . $e->getMessage());
                 return '{' . $placeholder . '}';
             }
         }
