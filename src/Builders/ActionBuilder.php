@@ -161,6 +161,30 @@ class ActionBuilder
     }
 
     /**
+     * Mark the last action as locked.
+     *
+     * Locked actions prevent subsequent actions of the same type from executing
+     * in later rules. The first matching locked action wins.
+     *
+     * Example:
+     *   ->do_cache(false)->lock()  // Lock cache setting
+     *
+     * @since 0.1.0
+     *
+     * @return self
+     */
+    public function lock(): self
+    {
+        // Get the last action from the stack.
+        $last_index = count($this->actions) - 1;
+        if ($last_index >= 0) {
+            // Add locked flag to the action config.
+            $this->actions[ $last_index ]['_locked'] = true;
+        }
+        return $this;
+    }
+
+    /**
      * End action building and return Rules object.
      *
      * @since 0.1.0

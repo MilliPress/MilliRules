@@ -74,6 +74,16 @@ class RuleEngine
     private array $available_packages = array();
 
     /**
+     * Tracks which action types are locked during execution.
+     *
+     * Structure: ['action_type' => 'rule_id_that_locked_it']
+     *
+     * @since 0.1.0
+     * @var array<string, string>
+     */
+    private array $locked_actions = array();
+
+    /**
      * Registered namespaces for condition and action resolution.
      *
      * @since 0.1.0
@@ -126,6 +136,9 @@ class RuleEngine
     {
         // Set the execution context.
         $this->context = $context;
+
+        // Reset locked actions for each execution.
+        $this->locked_actions = array();
 
         // Determine available packages for filtering.
         if (null !== $allowed_packages) {
@@ -265,6 +278,22 @@ class RuleEngine
     private function execute_actions(array $actions, string $rule_id): void
     {
         foreach ($actions as $action_config) {
+            $type_value = $action_config['type'] ?? '';
+            $type = is_string($type_value) ? $type_value : '';
+
+            // Check if this action type is already locked.
+            if (! empty($type) && isset($this->locked_actions[ $type ])) {
+                error_log(
+                    sprintf(
+                        "MilliRules: Action '%s' locked by rule '%s', skipping execution in rule '%s'",
+                        $type,
+                        $this->locked_actions[ $type ],
+                        $rule_id
+                    )
+                );
+                continue; // Skip this action.
+            }
+
             $action = $this->create_action($action_config);
             if (! $action) {
                 continue;
@@ -273,6 +302,11 @@ class RuleEngine
             try {
                 $action->execute($this->context);
                 $this->stats['actions_executed']++;
+
+                // If this action has the locked flag, lock the action type.
+                if (! empty($type) && ! empty($action_config['_locked'])) {
+                    $this->locked_actions[ $type ] = $rule_id;
+                }
             } catch (\Exception $e) {
                 error_log('MilliRules: Error executing action: ' . $e->getMessage());
             }

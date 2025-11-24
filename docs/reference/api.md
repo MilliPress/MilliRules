@@ -507,6 +507,45 @@ Add custom action.
 
 ---
 
+##### `lock(): ActionBuilder`
+
+Mark the last action as locked.
+
+Locked actions prevent subsequent actions **of the same type** from executing in later rules. The first matching locked action wins. This is useful for preventing cache TTL values or security settings from being overridden by lower-priority rules.
+
+**Returns**: `ActionBuilder`
+
+**Example**:
+```php
+<?php
+// Rule 1 (order: 10) - Disable cache for logged-in users
+Rules::create('no-cache-logged-in')->order(10)
+    ->when()->is_user_logged_in()
+    ->then()->do_cache(false)->lock()  // Lock the cache setting
+    ->register();
+
+// Rule 2 (order: 20) - This cache action will be IGNORED
+Rules::create('cache-api')->order(20)
+    ->when()->request_url('/api/*')
+    ->then()->do_cache(true)  // Blocked - cache already locked
+    ->register();
+
+// Lock multiple actions independently
+->then()
+    ->do_cache(false)->lock()           // Locks do_cache
+    ->do_log('User logged in')          // Not locked, still executes
+    ->do_set_header('X-Cache', 'MISS')  // Not locked, still executes
+```
+
+**Key Points**:
+- Locks are per action type, not per rule
+- Only affects actions of the same type
+- Different action types can still execute
+- Lock only applies if the rule's conditions match
+- Locks reset on each rule execution
+
+---
+
 ##### `add_namespace(string $namespace): ActionBuilder`
 
 Add action namespace for class resolution.

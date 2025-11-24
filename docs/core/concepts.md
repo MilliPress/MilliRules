@@ -119,6 +119,37 @@ For URL `/api/stable/users`:
 3. Rule 2 executes second (order: 20) → cache overridden to 7200
 4. **Final value**: 7200 seconds
 
+### Preventing Overwrites with Action Locking
+
+Sometimes you want to **prevent** later rules from overriding values. Use `->lock()` to lock an action, preventing subsequent actions of the same type from executing:
+
+```php
+<?php
+// Rule 1 (order: 10) sets cache and LOCKS it
+Rules::create('cache_short')->order(10)
+    ->when()->request_url('/api/*')
+    ->then()->custom('set_cache', ['value' => '3600'])->lock()  // Lock this action
+    ->register();
+
+// Rule 2 (order: 20) tries to override but is BLOCKED
+Rules::create('cache_long')->order(20)
+    ->when()->request_url('/api/stable/*')
+    ->then()->custom('set_cache', ['value' => '7200'])  // IGNORED - cache is locked
+    ->register();
+```
+
+For URL `/api/stable/users`:
+1. Both rules match
+2. Rule 1 executes first (order: 10) → cache set to 3600 and locked
+3. Rule 2 matches, but its `set_cache` action is **blocked** (cache already locked)
+4. **Final value**: 3600 seconds (protected from override)
+
+**Key Points**:
+- Locks are **per action type**, not per rule
+- Only affects actions with the **same type**
+- Different action types can still execute
+- Useful for security headers, cache TTL, access control decisions
+
 ## Conditions: The "When" Logic
 
 **Conditions** determine whether a rule should execute. They evaluate the current context and return true or false.
