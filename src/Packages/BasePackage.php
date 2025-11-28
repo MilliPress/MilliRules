@@ -189,10 +189,28 @@ abstract class BasePackage implements PackageInterface
     {
         $contexts = array();
 
-        // Convert namespace to directory path.
+        // Get the namespace of this BasePackage class.
+        // For non-scoped: 'MilliRules\Packages'
+        // For Mozart-scoped: 'Vendor\Deps\MilliRules\Packages'
+        $base_namespace = __NAMESPACE__;
+
+        // Convert namespaces to directory paths.
+        $base_namespace_path = str_replace('\\', DIRECTORY_SEPARATOR, $base_namespace);
         $namespace_path = str_replace('\\', DIRECTORY_SEPARATOR, $namespace);
-        $base_path      = dirname(dirname(__DIR__)); // MilliRules root.
-        $dir            = $base_path . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . str_replace('MilliRules' . DIRECTORY_SEPARATOR, '', $namespace_path);
+
+        // Calculate the relative namespace by removing the base namespace prefix.
+        // This works for both scoped and non-scoped packages.
+        if (strpos($namespace_path, $base_namespace_path) === 0) {
+            // Remove the base namespace prefix to get the relative path.
+            $relative_path = substr($namespace_path, strlen($base_namespace_path));
+            $relative_path = ltrim($relative_path, DIRECTORY_SEPARATOR);
+        } else {
+            // Fallback: just use the last part of the namespace.
+            $relative_path = basename($namespace_path);
+        }
+
+        // Build the directory path relative to __DIR__ (where BasePackage.php lives).
+        $dir = __DIR__ . DIRECTORY_SEPARATOR . $relative_path;
 
         if (! is_dir($dir)) {
             return array();
