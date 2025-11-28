@@ -940,10 +940,10 @@ Register namespace for class resolution.
 
 ## Next Steps
 
-- **[Real-World Examples](../advanced/examples.md)** - See API usage in complete examples
-- **[Getting Started](../getting-started/introduction.md)** - Basic usage guide
-- **[Building Rules](../core/building-rules.md)** - Fluent API guide
+- **[Real-World Examples](../04-advanced/01-examples.md)** - See API usage in complete examples
+- **[Getting Started](../01-getting-started/01-introduction.md)** - Basic usage guide
+- **[Building Rules](../02-core-concepts/03-building-rules.md)** - Fluent API guide
 
 ---
 
-**Ready for complete examples?** Continue to [Real-World Examples](../advanced/examples.md) to see the API in action with full working code.
+**Ready for complete examples?** Continue to [Real-World Examples](../04-advanced/01-examples.md) to see the API in action with full working code.

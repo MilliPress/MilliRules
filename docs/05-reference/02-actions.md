@@ -741,11 +741,11 @@ Rules::register_action('conditional_processing', function($args, Context $contex
 
 ## Next Steps
 
-- **[Operators and Pattern Matching](operators.md)** - Master condition operators
-- **[Dynamic Placeholders](placeholders.md)** - Use dynamic values in actions
-- **[Creating Custom Actions](../customization/custom-actions.md)** - Advanced action development
-- **[Real-World Examples](../advanced/examples.md)** - See actions in complete examples
+- **[Operators and Pattern Matching](../02-core-concepts/04-operators.md)** - Master condition operators
+- **[Dynamic Placeholders](../02-core-concepts/05-placeholders.md)** - Use dynamic values in actions
+- **[Creating Custom Actions](../03-customization/02-custom-actions.md)** - Advanced action development
+- **[Real-World Examples](../04-advanced/01-examples.md)** - See actions in complete examples
 
 ---
 
-**Ready to create custom actions?** Continue to [Creating Custom Actions](../customization/custom-actions.md) for advanced techniques and patterns.
+**Ready to create custom actions?** Continue to [Creating Custom Actions](../03-customization/02-custom-actions.md) for advanced techniques and patterns.

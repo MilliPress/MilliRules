@@ -662,11 +662,11 @@ Rules::register_action('safe_wp_action', function($args, Context $context) {
 
 ## Next Steps
 
-- **[Understanding the Package System](../core/packages.md)** - Learn about package architecture
-- **[Creating Custom Actions](../customization/custom-actions.md)** - Implement actions with placeholders
-- **[Advanced Usage Patterns](../advanced/usage.md)** - Advanced placeholder techniques
-- **[Real-World Examples](../advanced/examples.md)** - See placeholders in action
+- **[Understanding the Package System](02-packages.md)** - Learn about package architecture
+- **[Creating Custom Actions](../03-customization/02-custom-actions.md)** - Implement actions with placeholders
+- **[Advanced Patterns](../04-advanced/02-advanced-patterns.md)** - Advanced placeholder techniques
+- **[Real-World Examples](../04-advanced/01-examples.md)** - See placeholders in action
 
 ---
 
-**Ready to extend MilliRules?** Continue to [Creating Custom Packages](../customization/custom-packages.md) to learn how to add your own context data and placeholders.
+**Ready to extend MilliRules?** Continue to [Creating Custom Packages](../03-customization/03-custom-packages.md) to learn how to add your own context data and placeholders.

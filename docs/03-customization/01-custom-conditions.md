@@ -341,7 +341,7 @@ Custom conditions inheriting from `BaseCondition` automatically support all stan
 - `EXISTS`, `NOT EXISTS` - Value existence
 - `IS` - Boolean strict comparison
 
-See **[Operators Reference](../reference/operators.md)** for complete details.
+See **[Operators Reference](../02-core-concepts/04-operators.md)** for complete details.
 
 ### Auto-Detection
 
@@ -524,7 +524,7 @@ Rules::register_condition('should_notify', function($args, Context $context) {
 
 ## Next Steps
 
-- **[Custom Actions](custom-actions.md)** - Implement action logic
-- **[Built-in Conditions Reference](../reference/conditions.md)** - See available conditions
-- **[Operators Reference](../reference/operators.md)** - Complete operator guide
-- **[API Reference](../reference/api.md)** - Complete API documentation
+- **[Custom Actions](02-custom-actions.md)** - Implement action logic
+- **[Built-in Conditions Reference](../05-reference/01-conditions.md)** - See available conditions
+- **[Operators Reference](../02-core-concepts/04-operators.md)** - Complete operator guide
+- **[API Reference](../05-reference/03-api.md)** - Complete API documentation

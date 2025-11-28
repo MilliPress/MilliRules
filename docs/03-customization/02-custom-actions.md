@@ -404,7 +404,7 @@ Rules::register_action('cached_action', function($args, Context $context) {
 
 ## Next Steps
 
-- **[Custom Conditions](custom-conditions.md)** - Create conditional logic
-- **[Built-in Actions Reference](../reference/actions.md)** - See available actions
-- **[Placeholder System](../reference/placeholders.md)** - Dynamic value resolution
-- **[API Reference](../reference/api.md)** - Complete API documentation
+- **[Custom Conditions](01-custom-conditions.md)** - Create conditional logic
+- **[Built-in Actions Reference](../05-reference/02-actions.md)** - See available actions
+- **[Placeholder System](../02-core-concepts/05-placeholders.md)** - Dynamic value resolution
+- **[API Reference](../05-reference/03-api.md)** - Complete API documentation

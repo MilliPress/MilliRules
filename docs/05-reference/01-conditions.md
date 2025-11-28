@@ -962,7 +962,7 @@ Rules::create('weekend_special')
     ->register();
 ```
 
-See [Creating Custom Conditions](../customization/custom-conditions.md) for detailed information.
+See [Creating Custom Conditions](../03-customization/01-custom-conditions.md) for detailed information.
 
 ## Best Practices
 
@@ -1034,11 +1034,11 @@ Rules::create('complex_caching')
 
 ## Next Steps
 
-- **[Built-in Actions](actions.md)** - Learn about available actions
-- **[Operators](operators.md)** - Master comparison and pattern matching
-- **[Custom Conditions](../customization/custom-conditions.md)** - Create your own conditions
-- **[Examples](../advanced/examples.md)** - See conditions in real-world scenarios
+- **[Built-in Actions](02-actions.md)** - Learn about available actions
+- **[Operators](../02-core-concepts/04-operators.md)** - Master comparison and pattern matching
+- **[Custom Conditions](../03-customization/01-custom-conditions.md)** - Create your own conditions
+- **[Examples](../04-advanced/01-examples.md)** - See conditions in real-world scenarios
 
 ---
 
-**Need more details?** Check the [API Reference](api.md) for complete method signatures and parameters.
+**Need more details?** Check the [API Reference](03-api.md) for complete method signatures and parameters.

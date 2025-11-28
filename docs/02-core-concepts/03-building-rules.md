@@ -398,7 +398,7 @@ Rules::create('auto_operators')
 > [!TIP]
 > Let MilliRules auto-detect operators for cleaner code. Only specify operators explicitly when you need precise control or when auto-detection doesn't match your intent.
 
-For complete operator documentation, see [Operators and Pattern Matching](../reference/operators.md).
+For complete operator documentation, see [Operators and Pattern Matching](04-operators.md).
 
 ## Custom Conditions
 
@@ -446,7 +446,7 @@ Rules::create('business_hours')
     ->register();
 ```
 
-See [Creating Custom Conditions](../customization/custom-conditions.md) for advanced techniques.
+See [Creating Custom Conditions](../03-customization/01-custom-conditions.md) for advanced techniques.
 
 ## WordPress Hook Integration
 
@@ -835,11 +835,11 @@ Rules::create('debug_rule')
 
 ## Next Steps
 
-- **[Built-in Conditions Reference](../reference/conditions.md)** - Explore all available conditions
-- **[Operators and Pattern Matching](../reference/operators.md)** - Master comparison operators
-- **[Custom Conditions](../customization/custom-conditions.md)** - Create your own conditions
-- **[WordPress Integration](../advanced/wordpress-integration.md)** - WordPress-specific features
+- **[Built-in Conditions Reference](../05-reference/01-conditions.md)** - Explore all available conditions
+- **[Operators and Pattern Matching](04-operators.md)** - Master comparison operators
+- **[Custom Conditions](../03-customization/01-custom-conditions.md)** - Create your own conditions
+- **[WordPress Integration](../04-advanced/03-wordpress-integration.md)** - WordPress-specific features
 
 ---
 
-**Need more examples?** Check out [Real-World Examples](../advanced/examples.md) for complete, working code samples.
+**Need more examples?** Check out [Real-World Examples](../04-advanced/01-examples.md) for complete, working code samples.
