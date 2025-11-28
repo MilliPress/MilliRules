@@ -1,9 +1,9 @@
 ---
-title: 'Advanced Usage Patterns'
+title: 'Advanced Patterns'
 post_excerpt: 'Master advanced MilliRules techniques including early execution, performance optimization, debugging strategies, and complex rule patterns.'
 ---
 
-# Advanced Usage Patterns
+# Advanced Patterns
 
 This guide covers advanced techniques for optimizing performance, debugging issues, implementing complex rule patterns, and integrating MilliRules deeply into your applications.
 
