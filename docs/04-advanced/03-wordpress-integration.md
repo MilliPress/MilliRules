@@ -864,10 +864,10 @@ add_action('template_redirect', function() {
 
 ## Next Steps
 
-- **[API Reference](../reference/api.md)** - Complete method documentation
-- **[Real-World Examples](examples.md)** - WordPress integration examples
-- **[Advanced Usage](usage.md)** - Advanced WordPress patterns
+- **[API Reference](../05-reference/03-api.md)** - Complete method documentation
+- **[Real-World Examples](01-examples.md)** - WordPress integration examples
+- **[Advanced Patterns](02-advanced-patterns.md)** - Advanced WordPress patterns
 
 ---
 
-**Ready for complete examples?** Continue to [Real-World Examples](examples.md) to see full WordPress implementations and use cases.
+**Ready for complete examples?** Continue to [Real-World Examples](01-examples.md) to see full WordPress implementations and use cases.

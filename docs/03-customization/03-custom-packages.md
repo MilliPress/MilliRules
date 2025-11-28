@@ -822,11 +822,11 @@ public function register_providers(Context $context): void {
 
 ## Next Steps
 
-- **[Advanced Usage Patterns](../advanced/usage.md)** - Advanced package techniques
-- **[WordPress Integration](../advanced/wordpress-integration.md)** - WordPress-specific patterns
-- **[API Reference](../reference/api.md)** - Complete API documentation
-- **[Real-World Examples](../advanced/examples.md)** - See complete package implementations
+- **[Advanced Patterns](../04-advanced/02-advanced-patterns.md)** - Advanced package techniques
+- **[WordPress Integration](../04-advanced/03-wordpress-integration.md)** - WordPress-specific patterns
+- **[API Reference](../05-reference/03-api.md)** - Complete API documentation
+- **[Real-World Examples](../04-advanced/01-examples.md)** - See complete package implementations
 
 ---
 
-**Ready for advanced techniques?** Continue to [Advanced Usage Patterns](../advanced/usage.md) to learn optimization strategies and advanced rule patterns.
+**Ready for advanced techniques?** Continue to [Advanced Patterns](../04-advanced/02-advanced-patterns.md) to learn optimization strategies and advanced rule patterns.

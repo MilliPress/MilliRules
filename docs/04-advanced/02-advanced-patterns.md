@@ -562,10 +562,10 @@ function test_complete_workflow() {
 
 ## Next Steps
 
-- **[WordPress Integration Guide](wordpress-integration.md)** - WordPress-specific patterns
-- **[API Reference](../reference/api.md)** - Complete method documentation
-- **[Real-World Examples](examples.md)** - Complete working examples
+- **[WordPress Integration Guide](03-wordpress-integration.md)** - WordPress-specific patterns
+- **[API Reference](../05-reference/03-api.md)** - Complete method documentation
+- **[Real-World Examples](01-examples.md)** - Complete working examples
 
 ---
 
-**Ready to explore WordPress integration?** Continue to [WordPress Integration Guide](wordpress-integration.md) for WordPress-specific techniques and patterns.
+**Ready to explore WordPress integration?** Continue to [WordPress Integration Guide](03-wordpress-integration.md) for WordPress-specific techniques and patterns.

@@ -774,11 +774,11 @@ error_log('Available context keys: ' . implode(', ', array_keys($array)));
 
 ## Next Steps
 
-- **[Creating Custom Conditions](../customization/custom-conditions.md)** - Extend package conditions
-- **[Creating Custom Packages](../customization/custom-packages.md)** - Build your own packages
-- **[Advanced Usage](../advanced/usage.md)** - Advanced package techniques
-- **[WordPress Integration](../advanced/wordpress-integration.md)** - WordPress package details
+- **[Creating Custom Conditions](../03-customization/01-custom-conditions.md)** - Extend package conditions
+- **[Creating Custom Packages](../03-customization/03-custom-packages.md)** - Build your own packages
+- **[Advanced Patterns](../04-advanced/02-advanced-patterns.md)** - Advanced package techniques
+- **[WordPress Integration](../04-advanced/03-wordpress-integration.md)** - WordPress package details
 
 ---
 
-**Ready to create your own package?** Continue to [Creating Custom Packages](../customization/custom-packages.md) to learn how to extend MilliRules with your own functionality.
+**Ready to create your own package?** Continue to [Creating Custom Packages](../03-customization/03-custom-packages.md) to learn how to extend MilliRules with your own functionality.

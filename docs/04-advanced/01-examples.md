@@ -943,9 +943,9 @@ These examples demonstrate:
 
 ## Next Steps
 
-- **[Getting Started](../getting-started/introduction.md)** - Begin your MilliRules journey
-- **[Core Concepts](../core/concepts.md)** - Understand the fundamentals
-- **[API Reference](../reference/api.md)** - Complete method documentation
+- **[Getting Started](../01-getting-started/01-introduction.md)** - Begin your MilliRules journey
+- **[Core Concepts](../02-core-concepts/01-concepts.md)** - Understand the fundamentals
+- **[API Reference](../05-reference/03-api.md)** - Complete method documentation
 
 ---
 
