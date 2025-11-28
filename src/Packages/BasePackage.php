@@ -190,8 +190,6 @@ abstract class BasePackage implements PackageInterface
         $contexts = array();
 
         // Get the namespace of this BasePackage class.
-        // For non-scoped: 'MilliRules\Packages'
-        // For Mozart-scoped: 'Vendor\Deps\MilliRules\Packages'
         $base_namespace = __NAMESPACE__;
 
         // Convert namespaces to directory paths.
