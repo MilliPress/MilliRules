@@ -1,6 +1,7 @@
 ---
 title: 'Operators and Pattern Matching'
 post_excerpt: 'Complete guide to MilliRules operators including equality, comparison, pattern matching with wildcards and regex, and boolean logic.'
+menu_order: 40
 ---
 
 # Operators and Pattern Matching
@@ -960,11 +961,11 @@ MilliRules uses these rules for operator auto-detection:
 
 ## Next Steps
 
-- **[Dynamic Placeholders](placeholders.md)** - Use dynamic values in conditions
-- **[Built-in Conditions](conditions.md)** - See operators in action
-- **[Custom Conditions](../customization/custom-conditions.md)** - Implement custom operators
-- **[Real-World Examples](../advanced/examples.md)** - Complete working examples
+- **[Dynamic Placeholders](05-placeholders.md)** - Use dynamic values in conditions
+- **[Built-in Conditions](../05-reference/01-conditions.md)** - See operators in action
+- **[Custom Conditions](../03-customization/01-custom-conditions.md)** - Implement custom operators
+- **[Real-World Examples](../04-advanced/01-examples.md)** - Complete working examples
 
 ---
 
-**Ready for advanced features?** Continue to [Dynamic Placeholders](placeholders.md) to learn about using dynamic values in your rules.
+**Ready for advanced features?** Continue to [Dynamic Placeholders](05-placeholders.md) to learn about using dynamic values in your rules.

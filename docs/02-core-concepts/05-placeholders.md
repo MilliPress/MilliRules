@@ -1,6 +1,7 @@
 ---
 title: 'Dynamic Placeholders'
 post_excerpt: 'Use dynamic placeholders to inject runtime values into your MilliRules conditions and actions with flexible context-based resolution.'
+menu_order: 50
 ---
 
 # Dynamic Placeholders

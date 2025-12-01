@@ -1,6 +1,7 @@
 ---
 title: 'Core Concepts - Rules, Conditions, and Actions'
 post_excerpt: 'Understand the fundamental architecture of MilliRules including rules, conditions, actions, context, and the package system.'
+menu_order: 10
 ---
 
 # Core Concepts - Rules, Conditions, and Actions
@@ -750,11 +751,11 @@ Rules::create('api_no_cache')->order(20)
 
 Now that you understand core concepts, explore these topics:
 
-- **[Building Rules](building-rules.md)** - Master the fluent API in depth
-- **[Built-in Conditions](../reference/conditions.md)** - Complete condition reference
-- **[Operators](../reference/operators.md)** - Pattern matching and comparisons
-- **[Packages](packages.md)** - Deep dive into the package system
+- **[Building Rules](03-building-rules.md)** - Master the fluent API in depth
+- **[Built-in Conditions Reference](../05-reference/01-conditions.md)** - Complete condition reference
+- **[Operators](04-operators.md)** - Pattern matching and comparisons
+- **[Packages](02-packages.md)** - Deep dive into the package system
 
 ---
 
-**Questions about core concepts?** Check the [API Reference](../reference/api.md) or explore [Real-World Examples](../advanced/examples.md) to see these concepts in action.
+**Questions about core concepts?** Check the [Complete API Reference](../05-reference/03-api.md) or explore [Real-World Examples](../04-advanced/01-examples.md) to see these concepts in action.
