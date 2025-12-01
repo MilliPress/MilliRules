@@ -1,6 +1,7 @@
 ---
 title: 'Advanced Patterns'
 post_excerpt: 'Master advanced MilliRules techniques including early execution, performance optimization, debugging strategies, and complex rule patterns.'
+menu_order: 20
 ---
 
 # Advanced Patterns

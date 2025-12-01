@@ -1,6 +1,7 @@
 ---
 title: 'Real-World Examples'
 post_excerpt: 'Complete, working examples of MilliRules implementations including caching, access control, redirects, content manipulation, and more.'
+menu_order: 10
 ---
 
 # Real-World Examples

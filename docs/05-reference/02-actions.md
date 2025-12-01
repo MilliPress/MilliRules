@@ -1,6 +1,7 @@
 ---
 title: 'Built-in Actions Reference'
 post_excerpt: 'Learn about MilliRules action system, including custom callback actions, class-based actions, and creating reusable action patterns.'
+menu_order: 20
 ---
 
 # Built-in Actions Reference
@@ -212,7 +213,7 @@ Rules::create('dynamic_logging')
 // Logs: "API request to /api/users from 192.168.1.1"
 ```
 
-See [Dynamic Placeholders](placeholders.md) for complete placeholder syntax.
+See [Dynamic Placeholders](../02-core-concepts/05-placeholders.md) for complete placeholder syntax.
 
 ---
 
