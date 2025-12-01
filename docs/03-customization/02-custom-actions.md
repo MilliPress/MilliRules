@@ -1,6 +1,7 @@
 ---
 title: 'Creating Custom Actions'
 post_excerpt: 'Learn how to create custom actions in MilliRules using callback functions or ActionInterface classes for flexible, reusable functionality.'
+menu_order: 20
 ---
 
 # Creating Custom Actions

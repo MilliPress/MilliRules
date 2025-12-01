@@ -1,6 +1,7 @@
 ---
 title: 'Creating Custom Conditions'
 post_excerpt: 'Learn how to create custom conditions in MilliRules using callback functions or BaseCondition classes for flexible conditional logic.'
+menu_order: 10
 ---
 
 # Creating Custom Conditions

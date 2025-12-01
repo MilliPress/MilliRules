@@ -1,7 +1,7 @@
 ---
 title: 'Creating Your First Rule'
 post_excerpt: 'Learn how to create your first MilliRules rule with this hands-on tutorial featuring a complete WordPress example.'
-menu_order: 3
+menu_order: 30
 ---
 
 # Creating Your First Rule
