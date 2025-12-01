@@ -1,6 +1,7 @@
 ---
 title: 'Introduction to MilliRules'
 post_excerpt: 'Discover MilliRules, a powerful rule engine for PHP and WordPress that simplifies conditional logic with an elegant fluent API.'
+menu_order: 1
 ---
 
 # Introduction to MilliRules

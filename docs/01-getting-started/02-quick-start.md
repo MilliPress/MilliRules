@@ -1,6 +1,7 @@
 ---
 title: 'Quick Start Guide'
 post_excerpt: 'Get MilliRules up and running in minutes with this step-by-step installation and initialization guide.'
+menu_order: 2
 ---
 
 # Quick Start Guide
