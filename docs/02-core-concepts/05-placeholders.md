@@ -511,6 +511,75 @@ Access array values:
 '{request:headers:accept}' // Accept header
 ```
 
+### Object Property Access
+
+Access public properties and magic properties on objects using dot notation:
+
+```php
+<?php
+// Access public object properties
+'{hook:args:0:ID}'           // WP_Post object's ID property
+'{hook:args:0:post_title}'   // WP_Post object's post_title property
+'{hook:args:0:post_author}'  // WP_Post object's post_author property
+
+// Access magic properties (via __get() method)
+'{hook:args:2:permalink}'    // WP_Post object's permalink (magic property)
+
+// Mixed array and object access
+'{hook:args:2:ID}'          // Third argument (index 2) → object's ID property
+```
+
+#### WordPress Hook Examples
+
+WordPress hooks often pass objects as arguments. You can now access their properties directly:
+
+```php
+<?php
+use MilliRules\Context;
+
+// Example: transition_post_status hook passes (new_status, old_status, $post)
+Rules::register_action('clear_post_cache', function($args, Context $context) {
+    $url = $args['url'] ?? '';
+    // Clear cache for the URL
+    wp_cache_delete($url);
+});
+
+Rules::create('clear_on_publish')
+    ->when()
+        ->hook_is('transition_post_status')
+        ->hook_arg(0, '==', 'publish')  // New status is 'publish'
+    ->then()
+        ->custom('clear_post_cache', [
+            'url' => '{hook:args:2:permalink}'  // Access WP_Post's permalink property
+        ])
+    ->register();
+```
+
+#### Nested Objects and Arrays
+
+Combine array and object access for complex data structures:
+
+```php
+<?php
+// WordPress comment object in an array
+'{comments:0:comment_author}'       // First comment's author
+'{comments:0:comment_content}'      // First comment's content
+
+// API response with nested objects
+'{api:response:data:items:0:id}'    // First item's ID from API response
+
+// Custom data structures
+'{data:user:profile:settings}'      // Access nested object properties
+```
+
+#### How It Works
+
+When resolving placeholders, MilliRules automatically detects whether each segment is:
+- **Array access**: Uses `isset()` and `$array[$key]`
+- **Object property access**: Checks `property_exists()` for public properties, or `__get()` for magic properties
+
+This allows seamless access to mixed array/object structures without special syntax.
+
 ---
 
 ## Placeholder Resolution Flow
