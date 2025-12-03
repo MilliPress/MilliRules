@@ -150,13 +150,13 @@ jobs:
             CHANGELOG="${CHANGELOG}\n**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...v${VERSION}"
           fi
 
-          echo "$CHANGELOG" > /tmp/changelog.md
+          printf "%b" "$CHANGELOG" > /tmp/changelog.md
           cat /tmp/changelog.md
 
       - name: Commit version changes
         run: |
           VERSION="${{ inputs.version }}"
-          git add src/Rules.php
+          git add src/MilliRules.php
           git commit -m "chore: Bump version to $VERSION" || echo "No changes to commit"
           git push origin main
 
