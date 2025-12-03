@@ -121,11 +121,11 @@ jobs:
             COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s" --no-merges)
           fi
 
-          # Categorize commits
-          FEATURES=$(echo "$COMMITS" | grep -E "^- (feat|feature)" || true)
-          FIXES=$(echo "$COMMITS" | grep -E "^- fix" || true)
-          DOCS=$(echo "$COMMITS" | grep -E "^- docs?" || true)
-          CHORE=$(echo "$COMMITS" | grep -E "^- (chore|refactor)" || true)
+          # Categorize commits and strip prefixes
+          FEATURES=$(echo "$COMMITS" | grep -E "^- (feat|feature)" | sed -E 's/^- (feat|feature)(\([^)]*\))?:\s*/- /' || true)
+          FIXES=$(echo "$COMMITS" | grep -E "^- fix" | sed -E 's/^- fix(\([^)]*\))?:\s*/- /' || true)
+          DOCS=$(echo "$COMMITS" | grep -E "^- docs?" | sed -E 's/^- docs?(\([^)]*\))?:\s*/- /' || true)
+          CHORE=$(echo "$COMMITS" | grep -E "^- (chore|refactor)" | sed -E 's/^- (chore|refactor)(\([^)]*\))?:\s*/- /' || true)
 
           # Build changelog
           CHANGELOG="## What's Changed\n\n"
