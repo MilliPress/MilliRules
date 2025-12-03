@@ -55,14 +55,14 @@ jobs:
         run: |
           VERSION="${{ inputs.version }}"
 
-          # Update Rules.php VERSION constant
-          sed -i "s/public const VERSION = '[0-9]\+\.[0-9]\+\.[0-9]\+';/public const VERSION = '$VERSION';/" src/Rules.php
+          # Update MilliRules.php VERSION constant
+          sed -i "s/public const VERSION = '[0-9]\+\.[0-9]\+\.[0-9]\+';/public const VERSION = '$VERSION';/" src/MilliRules.php
 
           echo "Updated version to $VERSION"
-          git diff src/Rules.php
+          git diff src/MilliRules.php
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-dev
+        run: composer install --no-interaction --prefer-dist
 
       - name: Run tests
         run: composer test
