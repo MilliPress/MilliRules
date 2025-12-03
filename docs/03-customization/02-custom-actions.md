@@ -235,6 +235,219 @@ Rules::create('notify_on_login')
 
 ---
 
+## Accessing Action Arguments
+
+When creating custom action classes (using namespace or manual registration), you need to access the arguments passed to the action. MilliRules provides a fluent `get_arg()` API for type-safe argument access with automatic placeholder resolution.
+
+### The `get_arg()` Method
+
+Access action arguments using the `get_arg()` method in your action classes:
+
+```php
+<?php
+namespace MyPlugin\Actions;
+
+use MilliRules\Actions\BaseAction;
+use MilliRules\Context;
+
+class SendEmail extends BaseAction
+{
+    public function execute(Context $context): void
+    {
+        // Clean type-safe access with automatic placeholder resolution
+        $to = $this->get_arg('to', 'admin@example.com')->string();
+        $subject = $this->get_arg('subject', 'Notification')->string();
+        $html = $this->get_arg('html', false)->bool();
+        $priority = $this->get_arg('priority', 10)->int();
+
+        wp_mail($to, $subject, 'Message content');
+    }
+
+    public function get_type(): string
+    {
+        return 'send_email';
+    }
+}
+```
+
+### Type Conversion Methods
+
+The `get_arg()` method returns an `ArgumentValue` object that provides fluent type conversion:
+
+| Method | Returns | Default for null |
+|--------|---------|-----------------|
+| `->string()` | `string` | `''` (empty string) |
+| `->bool()` | `bool` | `false` |
+| `->int()` | `int` | `0` |
+| `->float()` | `float` | `0.0` |
+| `->array()` | `array` | `[]` (empty array) |
+| `->raw()` | `mixed` | `null` |
+
+### Automatic Placeholder Resolution
+
+Placeholders like `{user.email}` are automatically resolved when you call any type method:
+
+```php
+<?php
+// Rule definition
+Rules::create('welcome_email')
+    ->when()->is_user_logged_in()
+    ->then()
+        ->send_email([
+            'to' => '{user.email}',
+            'subject' => 'Welcome {user.login}!'
+        ])
+    ->register();
+
+// In your SendEmail action class
+$to = $this->get_arg('to')->string();
+// Result: 'john@example.com' (placeholder automatically resolved)
+
+$subject = $this->get_arg('subject')->string();
+// Result: 'Welcome john!' (placeholder automatically resolved)
+```
+
+### Positional Arguments
+
+Works with both named and positional arguments:
+
+```php
+<?php
+class LogMessage extends BaseAction
+{
+    public function execute(Context $context): void
+    {
+        // Called via: ->logMessage('ERROR', 'Something broke', 3)
+        $level = $this->get_arg(0, 'info')->string();
+        $message = $this->get_arg(1, 'No message')->string();
+        $priority = $this->get_arg(2, 1)->int();
+
+        error_log("[{$level}] {$message} (priority: {$priority})");
+    }
+
+    public function get_type(): string
+    {
+        return 'log_message';
+    }
+}
+```
+
+### Boolean String Handling
+
+The `->bool()` method intelligently handles string boolean values:
+
+```php
+<?php
+class CacheControl extends BaseAction
+{
+    public function execute(Context $context): void
+    {
+        // Handles: 'true', 'false', 'yes', 'no', '1', '0'
+        $enabled = $this->get_arg('enabled', true)->bool();
+        $public = $this->get_arg('public', false)->bool();
+
+        if ($enabled) {
+            // Set cache headers...
+        }
+    }
+
+    public function get_type(): string
+    {
+        return 'cache_control';
+    }
+}
+```
+
+**String to boolean mapping:**
+- `'true'`, `'yes'`, `'1'` → `true`
+- `'false'`, `'no'`, `'0'`, `''` → `false`
+- Other non-empty strings → `true`
+
+### Array Handling
+
+The `->array()` method handles JSON strings and scalar values:
+
+```php
+<?php
+class ProcessData extends BaseAction
+{
+    public function execute(Context $context): void
+    {
+        // Accepts array, JSON string, or wraps scalars
+        $items = $this->get_arg('items', [])->array();
+
+        // JSON: '["a","b","c"]' → ['a', 'b', 'c']
+        // Scalar: 'hello' → ['hello']
+        // Array: ['a', 'b'] → ['a', 'b']
+
+        foreach ($items as $item) {
+            // Process each item...
+        }
+    }
+
+    public function get_type(): string
+    {
+        return 'process_data';
+    }
+}
+```
+
+### Comparison: Old vs New Pattern
+
+**Old pattern (still works, but verbose):**
+
+```php
+<?php
+class OldStyleAction extends BaseAction
+{
+    public function execute(Context $context): void
+    {
+        // Manual null coalescing, type casting, and resolution
+        $to = $this->args['to'] ?? 'admin@example.com';
+        $to = $this->resolve_value($to);
+        $enabled = (bool) ($this->args['enabled'] ?? true);
+        $count = (int) ($this->args['count'] ?? 0);
+    }
+
+    public function get_type(): string
+    {
+        return 'old_style_action';
+    }
+}
+```
+
+**New pattern (recommended):**
+
+```php
+<?php
+class NewStyleAction extends BaseAction
+{
+    public function execute(Context $context): void
+    {
+        // Clean, concise, type-safe
+        $to = $this->get_arg('to', 'admin@example.com')->string();
+        $enabled = $this->get_arg('enabled', true)->bool();
+        $count = $this->get_arg('count', 0)->int();
+    }
+
+    public function get_type(): string
+    {
+        return 'new_style_action';
+    }
+}
+```
+
+### Benefits
+
+1. **Less boilerplate**: No manual `??` operators or type casting
+2. **Automatic resolution**: Placeholders resolved automatically
+3. **Type safety**: Explicit type conversion reduces bugs
+4. **Better defaults**: Type-appropriate defaults (0 for int, '' for string)
+5. **Consistent API**: Similar to modern ORMs and query builders
+6. **IDE friendly**: Good autocomplete with return type hints
+
+---
+
 ### Method 4: Manual Wrapper (Advanced - Rarely Needed)
 
 **Only use when:** Namespace registration isn't suitable (dynamic class names, runtime actions, etc.)

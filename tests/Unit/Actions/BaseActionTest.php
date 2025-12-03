@@ -33,6 +33,14 @@ class TestAction extends BaseAction
     {
         return $this->args;
     }
+
+    /**
+     * Public wrapper for testing get_arg() method.
+     */
+    public function test_get_arg($key, $default = null)
+    {
+        return $this->get_arg($key, $default);
+    }
 }
 
 /**
@@ -144,4 +152,209 @@ test('BaseAction filters type key from args', function () {
     // Type should not be in args
     expect($action->get_args())->toBe(['param1' => 'value1', 'param2' => 'value2'])
         ->and(isset($action->get_args()['type']))->toBeFalse();
+});
+
+// ============================================
+// get_arg() Integration Tests
+// ============================================
+
+/**
+ * Test: get_arg() with positional key
+ */
+test('get_arg() with positional key returns ArgumentValue', function () {
+    $config = [
+        'type' => 'test_action',
+        0 => 'value1',
+        1 => 'value2'
+    ];
+
+    $action = new TestAction($config, new Context());
+    $result = $action->test_get_arg(0);
+
+    expect($result)->toBeInstanceOf(\MilliRules\ArgumentValue::class)
+        ->and($result->string())->toBe('value1');
+});
+
+/**
+ * Test: get_arg() with named key returns ArgumentValue
+ */
+test('get_arg() with named key returns ArgumentValue', function () {
+    $config = [
+        'type' => 'test_action',
+        'to' => 'user@example.com',
+        'subject' => 'Hello'
+    ];
+
+    $action = new TestAction($config, new Context());
+    $result = $action->test_get_arg('to');
+
+    expect($result)->toBeInstanceOf(\MilliRules\ArgumentValue::class)
+        ->and($result->string())->toBe('user@example.com');
+});
+
+/**
+ * Test: get_arg() with missing key uses default
+ */
+test('get_arg() with missing key uses default', function () {
+    $config = [
+        'type' => 'test_action'
+    ];
+
+    $action = new TestAction($config, new Context());
+    $result = $action->test_get_arg('missing', 'default_value');
+
+    expect($result->string())->toBe('default_value');
+});
+
+/**
+ * Test: get_arg() with null value uses default
+ */
+test('get_arg() with null value uses default', function () {
+    $config = [
+        'type' => 'test_action',
+        'key' => null
+    ];
+
+    $action = new TestAction($config, new Context());
+    $result = $action->test_get_arg('key', 'fallback');
+
+    expect($result->string())->toBe('fallback');
+});
+
+/**
+ * Test: get_arg() supports type conversions
+ */
+test('get_arg() supports all type conversions', function () {
+    $config = [
+        'type' => 'test_action',
+        'str' => 'hello',
+        'int' => 123,
+        'bool' => 'true',
+        'float' => '123.45',
+        'arr' => ['a', 'b', 'c']
+    ];
+
+    $action = new TestAction($config, new Context());
+
+    expect($action->test_get_arg('str')->string())->toBe('hello')
+        ->and($action->test_get_arg('int')->int())->toBe(123)
+        ->and($action->test_get_arg('bool')->bool())->toBeTrue()
+        ->and($action->test_get_arg('float')->float())->toBe(123.45)
+        ->and($action->test_get_arg('arr')->array())->toBe(['a', 'b', 'c']);
+});
+
+/**
+ * Test: get_arg() resolves placeholders from context
+ */
+test('get_arg() resolves placeholders from context', function () {
+    $context = new Context();
+    $context->set('user', ['name' => 'John', 'email' => 'john@example.com']);
+
+    $config = [
+        'type' => 'test_action',
+        'greeting' => 'Hello {user.name}!',
+        'email' => '{user.email}'
+    ];
+
+    $action = new TestAction($config, $context);
+
+    expect($action->test_get_arg('greeting')->string())->toBe('Hello John!')
+        ->and($action->test_get_arg('email')->string())->toBe('john@example.com');
+});
+
+/**
+ * Test: get_arg() with zero value doesn't use default
+ */
+test('get_arg() with zero value does not use default', function () {
+    $config = [
+        'type' => 'test_action',
+        'count' => 0
+    ];
+
+    $action = new TestAction($config, new Context());
+    $result = $action->test_get_arg('count', 999);
+
+    expect($result->int())->toBe(0);
+});
+
+/**
+ * Test: get_arg() with false value doesn't use default
+ */
+test('get_arg() with false value does not use default', function () {
+    $config = [
+        'type' => 'test_action',
+        'enabled' => false
+    ];
+
+    $action = new TestAction($config, new Context());
+    $result = $action->test_get_arg('enabled', true);
+
+    expect($result->bool())->toBeFalse();
+});
+
+/**
+ * Test: get_arg() with empty string doesn't use default
+ */
+test('get_arg() with empty string does not use default', function () {
+    $config = [
+        'type' => 'test_action',
+        'message' => ''
+    ];
+
+    $action = new TestAction($config, new Context());
+    $result = $action->test_get_arg('message', 'default');
+
+    expect($result->string())->toBe('');
+});
+
+/**
+ * Test: get_arg() real-world email scenario
+ */
+test('get_arg() real-world email action scenario', function () {
+    $context = new Context();
+    $context->set('user', ['email' => 'recipient@example.com', 'name' => 'Jane']);
+
+    $config = [
+        'type' => 'send_email',
+        'to' => '{user.email}',
+        'subject' => 'Welcome {user.name}!',
+        'html' => 'true',
+        'priority' => '10'
+    ];
+
+    $action = new TestAction($config, $context);
+
+    // Simulates real action class accessing args
+    $to = $action->test_get_arg('to', 'admin@example.com')->string();
+    $subject = $action->test_get_arg('subject', 'Default Subject')->string();
+    $html = $action->test_get_arg('html', false)->bool();
+    $priority = $action->test_get_arg('priority', 5)->int();
+
+    expect($to)->toBe('recipient@example.com')
+        ->and($subject)->toBe('Welcome Jane!')
+        ->and($html)->toBeTrue()
+        ->and($priority)->toBe(10);
+});
+
+/**
+ * Test: get_arg() real-world logging scenario with positional args
+ */
+test('get_arg() real-world logging scenario with positional args', function () {
+    $config = [
+        'type' => 'log_message',
+        0 => 'ERROR',
+        1 => 'Something broke',
+        2 => 3
+    ];
+
+    $action = new TestAction($config, new Context());
+
+    // Simulates action class with positional arguments
+    $level = $action->test_get_arg(0, 'info')->string();
+    $message = $action->test_get_arg(1, 'No message')->string();
+    $priority = $action->test_get_arg(2, 1)->int();
+
+    expect($level)->toBe('ERROR')
+        ->and($message)->toBe('Something broke')
+        ->and($priority)->toBe(3);
 });
