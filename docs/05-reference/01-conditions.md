@@ -545,20 +545,6 @@ Examples:
 **Basic conditionals**:
 ```php
 <?php
-// Check if singular post/page
-Rules::create('singular_content')
-    ->when()
-        ->is_singular()
-    ->then()->custom('show_related_content')
-    ->register();
-
-// Check if blog home page
-Rules::create('blog_home')
-    ->when()
-        ->is_home()
-    ->then()->custom('show_featured_posts')
-    ->register();
-
 // Check if any archive page
 Rules::create('archive_pages')
     ->when()
@@ -577,59 +563,22 @@ In this mode:
 
 **With arguments**:
 ```php
-<?php
 // Single-argument conditional
 ->is_singular('page')           // is_singular('page') IS TRUE
 
 // Multi-argument conditional
 ->is_tax('genre', 'sci-fi')     // is_tax('genre', 'sci-fi') IS TRUE
-
-// Check for specific post type
-Rules::create('single_post')
-    ->when()
-        ->is_singular('post')
-    ->then()->custom('show_post_metadata')
-    ->register();
-
-// Check for specific page by slug
-Rules::create('about_page')
-    ->when()
-        ->is_page('about')
-    ->then()->custom('show_team_info')
-    ->register();
-
-// Check for 404 page
-Rules::create('not_found')
-    ->when()
-        ->is_404()
-    ->then()->custom('show_search_widget')
-    ->register();
 ```
 
 **Combining conditions**:
 ```php
 <?php
-// Category archives only (combine is_archive + is_category)
-Rules::create('category_archives')
+// Check if user is logged in and viewing a product archive
+Rules::create('archive_list_user_orders')
     ->when()
-        ->is_archive()
-        ->is_category()
-    ->then()->custom('show_category_description')
-    ->register();
-
-// Specific category archive
-Rules::create('news_category')
-    ->when()
-        ->is_category('news')
-    ->then()->custom('show_news_banner')
-    ->register();
-
-// Admin area + specific page
-Rules::create('posts_admin_page')
-    ->when()
-        ->is_admin()
-        ->is_page('edit.php')
-    ->then()->custom('customize_posts_list')
+        ->is_user_logged_in()
+        ->is_post_type_archive('product')
+    ->then()->custom('show_orders')
     ->register();
 ```
 
@@ -646,13 +595,11 @@ Supported operators:
 ```php
 <?php
 // Calls is_tax('genre', 'sci-fi') and compares result != TRUE
-->is_tax('genre', 'sci-fi', '!=');
-
-// Check for taxonomy term with operator
-Rules::create('exclude_scifi')
+// Check for multiple taxonomy terms with IN operator
+Rules::create('action_or_drama')
     ->when()
-        ->is_tax('genre', 'sci-fi', '!=')  // NOT sci-fi genre
-    ->then()->custom('show_general_recommendations')
+        ->is_tax('genre', 'sci-fi', '!=');
+    ->then()->custom('show_newsletter_cta')
     ->register();
 
 // Check for multiple taxonomy terms with IN operator

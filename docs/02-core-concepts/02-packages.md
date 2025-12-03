@@ -189,11 +189,6 @@ The **WordPress Package** provides WordPress-specific functionality.
 ],
 ```
 
-> [!NOTE]
-> The 'query' context provides WordPress query variables (like post_type, paged, s).
-> WordPress query conditionals (like is_singular, is_home) are accessed via dedicated
-> `is_*` conditions rather than context placeholders.
-
 **Availability Check**:
 ```php
 <?php

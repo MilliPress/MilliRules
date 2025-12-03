@@ -207,11 +207,6 @@ Access WordPress query variables from `$wp_query->query_vars`:
 | `{query.tag}`       | Tag slug              | `'news'`           |
 | `{query.author}`    | Author ID or name     | `'1'`              |
 
-> [!NOTE]
-> For WordPress query conditionals (is_singular, is_home, etc.), use dedicated `is_*`
-> conditions instead of placeholders. Example: `->when()->is_singular()` instead of checking
-> `{query.is_singular}`.
-
 #### Examples
 
 ```php
