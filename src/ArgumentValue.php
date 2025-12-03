@@ -35,7 +35,7 @@ class ArgumentValue
 	 * @since 0.4.0
 	 * @var PlaceholderResolver
 	 */
-	private $resolver;
+	private PlaceholderResolver $resolver;
 
 	/**
 	 * The resolved value after placeholder resolution (cached).
@@ -51,7 +51,7 @@ class ArgumentValue
 	 * @since 0.4.0
 	 * @var bool
 	 */
-	private $is_resolved = false;
+	private bool $is_resolved = false;
 
 	/**
 	 * Constructor.
