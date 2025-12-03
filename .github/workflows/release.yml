@@ -1,0 +1,187 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 0.4.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Publish as prerelease?'
+        required: false
+        default: false
+        type: boolean
+      draft:
+        description: 'Publish as draft?'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+
+      - name: Validate version format
+        run: |
+          if ! [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Version must be in format X.Y.Z (e.g., 1.2.0)"
+            exit 1
+          fi
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Update version in code
+        run: |
+          VERSION="${{ inputs.version }}"
+
+          # Update Rules.php VERSION constant
+          sed -i "s/public const VERSION = '[0-9]\+\.[0-9]\+\.[0-9]\+';/public const VERSION = '$VERSION';/" src/Rules.php
+
+          echo "Updated version to $VERSION"
+          git diff src/Rules.php
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-dev
+
+      - name: Run tests
+        run: composer test
+
+      - name: Get previous tag
+        id: previous_tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "previous_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+          echo "Previous tag: $PREV_TAG"
+
+      - name: Determine release type
+        id: release_type
+        run: |
+          NEW_VERSION="${{ inputs.version }}"
+          PREV_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "release_type=initial" >> $GITHUB_OUTPUT
+            echo "Release type: initial release"
+            exit 0
+          fi
+
+          # Remove 'v' prefix from tag if present
+          PREV_VERSION="${PREV_TAG#v}"
+
+          # Split versions into major.minor.patch
+          IFS='.' read -r PREV_MAJOR PREV_MINOR PREV_PATCH <<< "$PREV_VERSION"
+          IFS='.' read -r NEW_MAJOR NEW_MINOR NEW_PATCH <<< "$NEW_VERSION"
+
+          # Determine release type
+          if [ "$NEW_MAJOR" != "$PREV_MAJOR" ]; then
+            RELEASE_TYPE="major"
+          elif [ "$NEW_MINOR" != "$PREV_MINOR" ]; then
+            RELEASE_TYPE="minor"
+          elif [ "$NEW_PATCH" != "$PREV_PATCH" ]; then
+            RELEASE_TYPE="patch"
+          else
+            RELEASE_TYPE="unknown"
+          fi
+
+          echo "release_type=$RELEASE_TYPE" >> $GITHUB_OUTPUT
+          echo "Release type: $RELEASE_TYPE ($PREV_VERSION -> $NEW_VERSION)"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION="${{ inputs.version }}"
+          PREV_TAG="${{ steps.previous_tag.outputs.previous_tag }}"
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found, generating full changelog"
+            COMMITS=$(git log --pretty=format:"- %s" --no-merges)
+          else
+            echo "Generating changelog from $PREV_TAG to HEAD"
+            COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+          fi
+
+          # Categorize commits
+          FEATURES=$(echo "$COMMITS" | grep -E "^- (feat|feature)" || true)
+          FIXES=$(echo "$COMMITS" | grep -E "^- fix" || true)
+          DOCS=$(echo "$COMMITS" | grep -E "^- docs?" || true)
+          CHORE=$(echo "$COMMITS" | grep -E "^- (chore|refactor)" || true)
+
+          # Build changelog
+          CHANGELOG="## What's Changed\n\n"
+
+          if [ -n "$FEATURES" ]; then
+            CHANGELOG="${CHANGELOG}### 🚀 Features\n$FEATURES\n\n"
+          fi
+
+          if [ -n "$FIXES" ]; then
+            CHANGELOG="${CHANGELOG}### 🐛 Bug Fixes\n$FIXES\n\n"
+          fi
+
+          if [ -n "$DOCS" ]; then
+            CHANGELOG="${CHANGELOG}### 📝 Documentation\n$DOCS\n\n"
+          fi
+
+          if [ -n "$CHORE" ]; then
+            CHANGELOG="${CHANGELOG}### 🔧 Maintenance\n$CHORE\n\n"
+          fi
+
+          if [ -n "$PREV_TAG" ]; then
+            CHANGELOG="${CHANGELOG}\n**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...v${VERSION}"
+          fi
+
+          echo "$CHANGELOG" > /tmp/changelog.md
+          cat /tmp/changelog.md
+
+      - name: Commit version changes
+        run: |
+          VERSION="${{ inputs.version }}"
+          git add src/Rules.php
+          git commit -m "chore: Bump version to $VERSION" || echo "No changes to commit"
+          git push origin main
+
+      - name: Create and push tag
+        run: |
+          VERSION="${{ inputs.version }}"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ inputs.version }}
+          name: v${{ inputs.version }}
+          body_path: /tmp/changelog.md
+          draft: ${{ inputs.draft }}
+          prerelease: ${{ inputs.prerelease }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release Summary
+        run: |
+          echo "## ✅ Release v${{ inputs.version }} Created Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Type**: ${{ steps.release_type.outputs.release_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: v${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release URL**: https://github.com/${{ github.repository }}/releases/tag/v${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
