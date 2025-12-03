@@ -33,9 +33,9 @@ use MilliRules\Packages\PHP\PlaceholderResolver as PhpPlaceholderResolver;
  * - {wp.user.login} - User login name
  * - {wp.user.email} - User email
  * - {wp.user.display_name} - User display name
- * - {wp.query.is_singular} - Query conditional
- * - {wp.query.is_home} - Query conditional
- * - {wp.query.is_archive} - Query conditional
+ * - {query.post_type} - Query variable (post type)
+ * - {query.paged} - Query variable (pagination)
+ * - {query.s} - Query variable (search term)
  * - {wp.constants.WP_DEBUG} - Constant value
  * - {wp.constants.WP_CACHE} - Constant value
  *

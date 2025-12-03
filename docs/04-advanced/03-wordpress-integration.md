@@ -222,7 +222,7 @@ $context = [
     'wp' => [
         'post' => [...],
         'user' => [...],
-        'query' => [...],
+        'query' => [...],            // Query variables (post_type, paged, s, etc.)
         'constants' => [...],
         'hook' => [
             'name' => 'save_post',      // The hook name
@@ -235,6 +235,11 @@ $context = [
     ],
 ];
 ```
+
+> [!NOTE]
+> The 'query' context contains WordPress query variables from `$wp_query->query_vars`.
+> For query conditionals (is_singular, is_home, etc.), use the dedicated `is_*` condition
+> methods instead of checking context values.
 
 ### Common Hook Signatures
 

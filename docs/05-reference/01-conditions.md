@@ -504,219 +504,170 @@ Rules::create('php_version_check')
 
 WordPress package conditions are available only when WordPress is detected. They provide access to WordPress-specific functionality and query information.
 
-### is_user_logged_in
+### Generic WordPress is_* Conditions
 
-Check if a user is logged in to WordPress.
+MilliRules supports any WordPress conditional tag function through the `IsConditional` class. Any function starting with `is_` (like `is_singular()`, `is_home()`, `is_archive()`, `is_category()`, etc.) can be used as a condition.
 
-**Namespace**: `MilliRules\Packages\WordPress\Conditions\IsUserLoggedIn`
+**How It Works**:
+- The `IsConditional` class acts as a bridge between MilliRules and WordPress conditional tags
+- Supports all WordPress conditional tags: [WordPress Conditional Tags](https://developer.wordpress.org/themes/basics/conditional-tags/)
+- Arguments passed to the condition are forwarded to the WordPress function
+- Operates in two modes: Boolean Mode (no arguments) or Function Call Mode (with arguments)
 
-**Signature**:
+#### Basic Usage (Boolean Mode)
+
+When used without arguments, `is_*` conditions behave as simple boolean checks:
+
 ```php
 <?php
-->is_user_logged_in($value = true, $operator = '=')
+// Fluent builder
+Rules::create('rule-1')
+    ->when()->is_404()->then()->register();
+
+// Array configuration
+[
+    'id'         => 'rule-1',
+    'conditions' => [
+        [ 'type' => 'is_404' ], // is_404() IS TRUE
+    ],
+    'actions'    => [],
+];
 ```
 
-**Parameters**:
-- `$value` (bool): Expected login state (default: `true`)
-- `$operator` (string): Comparison operator (default: `'='`)
+In this mode:
+- The underlying WordPress function is called with **no arguments**
+- The boolean result is compared to the configured `value` (default: `true`) using the configured `operator` (default: `IS`)
 
-**Supported Operators**: =, !=, IS, IS NOT
+Examples:
+- `->is_404()` → `is_404() IS true`
+- `->is_user_logged_in(false)` → `is_user_logged_in() IS false`
 
-**Context Data Used**: `$context->get('user.id', 0)` (0 = not logged in)
-
-#### Examples
-
-**Check if logged in**:
+**Basic conditionals**:
 ```php
 <?php
-Rules::create('authenticated_users')
+// Check if singular post/page
+Rules::create('singular_content')
     ->when()
-        ->is_user_logged_in()  // User is logged in
-    ->then()->custom('show_dashboard')
-    ->register();
-```
-
-**Check if NOT logged in**:
-```php
-<?php
-Rules::create('guest_users')
-    ->when()
-        ->is_user_logged_in(false)  // User is NOT logged in
-    ->then()->custom('show_login_prompt')
-    ->register();
-```
-
----
-
-### is_singular
-
-Check if the current page is a singular post, page, or custom post type.
-
-**Namespace**: `MilliRules\Packages\WordPress\Conditions\IsSingular`
-
-**Signature**:
-```php
-<?php
-->is_singular($post_types = null, $operator = '=')
-```
-
-**Parameters**:
-- `$post_types` (string|array|null): Post type(s) to check (null = any singular)
-- `$operator` (string): Comparison operator (default: `'='`)
-
-**Supported Operators**: =, !=, IN, NOT IN, EXISTS
-
-**Context Data Used**: `$context['wp']['query']['is_singular']`
-
-#### Examples
-
-**Any singular post**:
-```php
-<?php
-Rules::create('any_singular')
-    ->when()
-        ->is_singular()  // Any single post/page
+        ->is_singular()
     ->then()->custom('show_related_content')
     ->register();
-```
 
-**Specific post type**:
-```php
-<?php
-Rules::create('single_post')
-    ->when()
-        ->is_singular('post')  // Only blog posts
-    ->then()->custom('show_post_metadata')
-    ->register();
-```
-
-**Multiple post types**:
-```php
-<?php
-Rules::create('content_pages')
-    ->when()
-        ->is_singular(['post', 'page'], 'IN')
-    ->then()->custom('enable_comments')
-    ->register();
-
-// Auto-detected IN operator
-Rules::create('content_pages_auto')
-    ->when()
-        ->is_singular(['post', 'page'])  // IN auto-detected
-    ->then()->custom('enable_comments')
-    ->register();
-```
-
-**Exclude post types**:
-```php
-<?php
-Rules::create('non_page_singular')
-    ->when()
-        ->is_singular('page', '!=')  // Not a page
-    ->then()->custom('show_blog_sidebar')
-    ->register();
-```
-
----
-
-### is_home
-
-Check if the current page is the blog home/posts page.
-
-**Namespace**: `MilliRules\Packages\WordPress\Conditions\IsHome`
-
-**Signature**:
-```php
-<?php
-->is_home($value = true, $operator = '=')
-```
-
-**Parameters**:
-- `$value` (bool): Expected state (default: `true`)
-- `$operator` (string): Comparison operator (default: `'='`)
-
-**Supported Operators**: =, !=, IS, IS NOT
-
-**Context Data Used**: `$context['wp']['query']['is_home']`
-
-#### Examples
-
-**Is home page**:
-```php
-<?php
+// Check if blog home page
 Rules::create('blog_home')
     ->when()
-        ->is_home()  // Is blog home page
+        ->is_home()
     ->then()->custom('show_featured_posts')
     ->register();
-```
 
-**Not home page**:
-```php
-<?php
-Rules::create('not_home')
+// Check if any archive page
+Rules::create('archive_pages')
     ->when()
-        ->is_home(false)  // Not blog home
-    ->then()->custom('show_breadcrumbs')
-    ->register();
-```
-
-> [!NOTE]
-> `is_home()` checks for the blog posts index page, which may be different from the site's front page if a static page is set as the homepage.
-
----
-
-### is_archive
-
-Check if the current page is an archive page (category, tag, date, author, etc.).
-
-**Namespace**: `MilliRules\Packages\WordPress\Conditions\IsArchive`
-
-**Signature**:
-```php
-<?php
-->is_archive($archive_type = null, $operator = '=')
-```
-
-**Parameters**:
-- `$archive_type` (string|array|null): Archive type(s) to check (null = any archive)
-- `$operator` (string): Comparison operator (default: `'='`)
-
-**Supported Operators**: =, !=, IN, NOT IN, EXISTS
-
-**Context Data Used**: `$context['wp']['query']['is_archive']`
-
-#### Examples
-
-**Any archive**:
-```php
-<?php
-Rules::create('any_archive')
-    ->when()
-        ->is_archive()  // Any archive page
+        ->is_archive()
     ->then()->custom('show_archive_sidebar')
     ->register();
 ```
 
-**Specific archive type**:
+#### Function Call Mode (With Arguments)
+
+For conditionals that accept arguments, you can pass them directly to the builder. `IsConditional` will call the underlying `is_*` function with those arguments and compare the result to `true`.
+
+In this mode:
+- All non-boolean arguments are treated as **function arguments** for the underlying `is_*` function
+- The condition always checks whether the function result is `true` (using `value = true` internally)
+
+**With arguments**:
 ```php
 <?php
-Rules::create('category_archives')
+// Single-argument conditional
+->is_singular('page')           // is_singular('page') IS TRUE
+
+// Multi-argument conditional
+->is_tax('genre', 'sci-fi')     // is_tax('genre', 'sci-fi') IS TRUE
+
+// Check for specific post type
+Rules::create('single_post')
     ->when()
-        ->is_archive('category')  // Category archives only
-    ->then()->custom('show_category_description')
+        ->is_singular('post')
+    ->then()->custom('show_post_metadata')
+    ->register();
+
+// Check for specific page by slug
+Rules::create('about_page')
+    ->when()
+        ->is_page('about')
+    ->then()->custom('show_team_info')
+    ->register();
+
+// Check for 404 page
+Rules::create('not_found')
+    ->when()
+        ->is_404()
+    ->then()->custom('show_search_widget')
     ->register();
 ```
 
-**Multiple archive types**:
+**Combining conditions**:
 ```php
 <?php
-Rules::create('taxonomy_archives')
+// Category archives only (combine is_archive + is_category)
+Rules::create('category_archives')
     ->when()
-        ->is_archive(['category', 'tag'], 'IN')
-    ->then()->custom('show_taxonomy_cloud')
+        ->is_archive()
+        ->is_category()
+    ->then()->custom('show_category_description')
+    ->register();
+
+// Specific category archive
+Rules::create('news_category')
+    ->when()
+        ->is_category('news')
+    ->then()->custom('show_news_banner')
+    ->register();
+
+// Admin area + specific page
+Rules::create('posts_admin_page')
+    ->when()
+        ->is_admin()
+        ->is_page('edit.php')
+    ->then()->custom('customize_posts_list')
     ->register();
 ```
+
+#### Using Operators with WordPress Conditionals
+
+You can optionally pass a comparison operator as the **last argument** when using function call mode. This operator controls how the boolean result of the `is_*` function is compared to `true`.
+
+Supported operators:
+- `=`
+- `!=`
+- `IS`
+- `IS NOT`
+
+```php
+<?php
+// Calls is_tax('genre', 'sci-fi') and compares result != TRUE
+->is_tax('genre', 'sci-fi', '!=');
+
+// Check for taxonomy term with operator
+Rules::create('exclude_scifi')
+    ->when()
+        ->is_tax('genre', 'sci-fi', '!=')  // NOT sci-fi genre
+    ->then()->custom('show_general_recommendations')
+    ->register();
+
+// Check for multiple taxonomy terms with IN operator
+Rules::create('action_or_drama')
+    ->when()
+        ->is_tax('genre', ['action', 'drama'], 'IN')
+    ->then()->custom('show_intense_content_warning')
+    ->register();
+```
+
+#### Implementation Notes
+
+- The builder records all raw method arguments in a generic `args` key in the condition config
+- The WordPress `IsConditional` class interprets `args` to determine whether to operate in boolean mode or function-call mode
+- Other packages can reuse the `args` convention in their own condition classes without any changes to core engine or base condition logic
 
 ---
 
@@ -771,89 +722,6 @@ Rules::create('non_page_content')
     ->then()->custom('show_author_bio')
     ->register();
 ```
-
----
-
-### Generic WordPress `is_*` Conditions
-
-MilliRules provides a generic WordPress condition class `IsConditional` that acts as a fallback for all WordPress `is_*` conditional functions when no more specific condition class exists.
-
-#### Basic Usage (Boolean Mode)
-
-When used without arguments, `is_*` conditions behave as simple boolean checks:
-
-```php
-<?php
-// Fluent builder
-Rules::create('rule-1')
-    ->when()->is_404()->then()->register();
-
-// Array configuration
-[
-    'id'         => 'rule-1',
-    'conditions' => [
-        [ 'type' => 'is_404' ], // is_404() IS TRUE
-    ],
-    'actions'    => [],
-];
-```
-
-In this mode:
-
-- The underlying WordPress function is called with **no arguments**.
-- The boolean result is compared to the configured `value` (default: `true`) using the configured `operator` (default: `IS`).
-
-Examples:
-
-- `->is_404()` → `is_404() IS true`
-- `->is_user_logged_in(false)` → `is_user_logged_in() IS false`
-
-#### Function Call Mode (Arguments)
-
-For conditionals that accept arguments, you can pass them directly to the builder. `IsConditional` will call the underlying `is_*` function with those arguments and compare the result to `true`.
-
-Examples:
-
-```php
-<?php
-// Single-argument conditional
-->is_singular('page')           // is_singular('page') IS TRUE
-
-// Multi-argument conditional
-->is_tax('genre', 'sci-fi')     // is_tax('genre', 'sci-fi') IS TRUE
-```
-
-In this mode:
-
-- All non-boolean arguments are treated as **function arguments** for the underlying `is_*` function.
-- The condition always checks whether the function result is `true` (using `value = true` internally).
-
-#### Optional Operator from the Last Argument
-
-You can optionally pass a comparison operator as the **last argument** when using function call mode. This operator controls how the boolean result of the `is_*` function is compared to `true`.
-
-Supported operators:
-
-- `=`
-- `!=`
-- `IS`
-- `IS NOT`
-
-Example:
-
-```php
-<?php
-// Calls is_tax('genre', 'sci-fi') and compares result != TRUE
-->is_tax('genre', 'sci-fi', '!=');
-```
-
-This is useful to express "NOT this conditional" while still using the function-call form.
-
-#### Implementation Notes
-
-- The builder records all raw method arguments in a generic `args` key in the condition config.
-- The WordPress `IsConditional` class interprets `args` to determine whether to operate in boolean mode or function-call mode.
-- Other packages can reuse the `args` convention in their own condition classes without any changes to core engine or base condition logic.
 
 ---
 

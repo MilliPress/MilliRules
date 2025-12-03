@@ -193,14 +193,24 @@ Access WordPress-specific data (available only when WordPress package is loaded)
 | `{post.status}` | Post status  | `publish`, `draft` |
 | `{post.author}` | Author ID    | `123`              |
 
-#### Query Placeholders
+#### Query Variable Placeholders
 
-| Placeholder           | Description      | Example Value   |
-|-----------------------|------------------|-----------------|
-| `{query.is_singular}` | Is singular post | `true`, `false` |
-| `{query.is_home}`     | Is home page     | `true`, `false` |
-| `{query.is_archive}`  | Is archive page  | `true`, `false` |
-| `{query.is_admin}`    | Is admin area    | `true`, `false` |
+Access WordPress query variables from `$wp_query->query_vars`:
+
+| Placeholder         | Description           | Example Value      |
+|---------------------|-----------------------|--------------------|
+| `{query.post_type}` | Current post type     | `'post'`, `'page'` |
+| `{query.paged}`     | Current page number   | `1`, `2`, `3`      |
+| `{query.s}`         | Search query          | `'search term'`    |
+| `{query.m}`         | Month/year archive    | `'202312'`         |
+| `{query.cat}`       | Category ID           | `'5'`              |
+| `{query.tag}`       | Tag slug              | `'news'`           |
+| `{query.author}`    | Author ID or name     | `'1'`              |
+
+> [!NOTE]
+> For WordPress query conditionals (is_singular, is_home, etc.), use dedicated `is_*`
+> conditions instead of placeholders. Example: `->when()->is_singular()` instead of checking
+> `{query.is_singular}`.
 
 #### Examples
 
@@ -212,17 +222,17 @@ Rules::register_action('log_user_action', function($args, Context $context) {
     error_log($args['message'] ?? '');
 });
 
-Rules::create('log_post_edit')
+Rules::create('log_search')
     ->when()
-        ->request_url('/wp-admin/post.php')
-        ->is_user_logged_in()
+        ->request_url('/search')
+        ->is_search()
     ->then()
         ->custom('log_user_action', [
-            'message' => 'User {user.login} (ID: {user.id}) editing post {post.id}'
+            'message' => 'User {user.login} searched for "{query.s}" on {request.uri}'
         ])
     ->register();
 
-// Logs: "User john_doe (ID: 123) editing post 456"
+// Logs: "User john_doe searched for "wordpress plugins" on /somewhere"
 ```
 
 ---

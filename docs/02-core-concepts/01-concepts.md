@@ -381,8 +381,7 @@ use MilliRules\Context;
     'param' => [...],        // Request parameters (GET/POST)
     'post' => [...],         // WordPress post data
     'user' => [...],         // WordPress user data
-    'query' => [...],        // WordPress query conditionals
-    'query_vars' => [...],   // WordPress query variables
+    'query' => [...],        // WordPress query variables (post_type, paged, s, etc.)
     'term' => [...],         // WordPress taxonomy terms
     // Custom package data...
 ]

@@ -177,21 +177,22 @@ The **WordPress Package** provides WordPress-specific functionality.
 ],
 
 'query' => [
-    'is_singular' => true,
-    'is_home' => false,
-    'is_archive' => false,
-    'is_admin' => false,
-    // ... WordPress conditional query flags
-],
-
-'query_vars' => [
-    // WordPress query variables
+    'post_type' => 'post',
+    'paged' => 1,
+    's' => '',
+    'm' => '',
+    // ... WordPress query variables from $wp_query->query_vars
 ],
 
 'term' => [
     // Taxonomy term data (when applicable)
 ],
 ```
+
+> [!NOTE]
+> The 'query' context provides WordPress query variables (like post_type, paged, s).
+> WordPress query conditionals (like is_singular, is_home) are accessed via dedicated
+> `is_*` conditions rather than context placeholders.
 
 **Availability Check**:
 ```php
