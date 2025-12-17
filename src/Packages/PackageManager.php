@@ -510,6 +510,40 @@ class PackageManager
     }
 
     /**
+     * Unregister a rule by its ID from all packages.
+     *
+     * Iterates through all registered packages and removes the rule with the
+     * given ID. Also removes the rule from the pending rules queue if present.
+     *
+     * @since 0.5.0
+     *
+     * @param string $rule_id The ID of the rule to unregister.
+     * @return bool True if a rule was found and removed from at least one package, false otherwise.
+     */
+    public static function unregister_rule(string $rule_id): bool
+    {
+        $found = false;
+
+        // Remove from all packages.
+        foreach (self::$packages as $package) {
+            if ($package->unregister_rule($rule_id)) {
+                $found = true;
+            }
+        }
+
+        // Also remove from pending rules queue.
+        foreach (self::$pending_rules as $index => $pending) {
+            if (($pending['rule']['id'] ?? null) === $rule_id) {
+                array_splice(self::$pending_rules, $index, 1);
+                $found = true;
+                break;
+            }
+        }
+
+        return $found;
+    }
+
+    /**
      * Process pending rules and register those whose packages are now loaded.
      *
      * Iterates through the pending rules queue and attempts to register each rule

@@ -269,7 +269,8 @@ abstract class BasePackage implements PackageInterface
     /**
      * Register a rule with this package.
      *
-     * Stores rule in flat array with metadata merged in.
+     * Stores rule in a flat array with metadata merged in.
+     * If a rule with the same ID already exists, it will be replaced.
      * Subclasses can override for hook-based or other registration patterns.
      *
      * @since 0.1.0
@@ -282,7 +283,41 @@ abstract class BasePackage implements PackageInterface
     {
         // Merge metadata into rule for convenience.
         $rule['_metadata'] = $metadata;
-        $this->rules[]     = $rule;
+        $rule_id = $rule['id'] ?? null;
+
+        // Replace existing rule with same ID.
+        if (null !== $rule_id) {
+            foreach ($this->rules as $index => $existing) {
+                if (($existing['id'] ?? null) === $rule_id) {
+                    $this->rules[$index] = $rule;
+                    return;
+                }
+            }
+        }
+
+        $this->rules[] = $rule;
+    }
+
+    /**
+     * Unregister a rule by its ID.
+     *
+     * Removes a rule from this package's storage.
+     *
+     * @since 0.5.0
+     *
+     * @param string $rule_id The ID of the rule to unregister.
+     * @return bool True if rule was found and removed, false otherwise.
+     */
+    public function unregister_rule(string $rule_id): bool
+    {
+        foreach ($this->rules as $index => $rule) {
+            if (($rule['id'] ?? null) === $rule_id) {
+                array_splice($this->rules, $index, 1);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
