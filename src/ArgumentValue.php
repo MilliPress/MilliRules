@@ -231,7 +231,7 @@ class ArgumentValue
 			return $value;
 		}
 
-		// Try JSON decode for strings
+		// Try to decode JSON for strings
 		if ( is_string( $value ) && ! empty( $value ) ) {
 			$decoded = json_decode( $value, true );
 			if ( is_array( $decoded ) ) {

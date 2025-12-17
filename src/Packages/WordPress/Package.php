@@ -442,26 +442,44 @@ class Package extends BasePackage
      * Resolve WordPress-specific class names with fallback logic.
      *
      * Handles is_* conditionals using IsConditional fallback class.
+     * Handles has_* conditionals using HasConditional fallback class.
      *
      * @since 0.1.0
      *
-     * @param string $type      The type string (e.g., 'is_user_logged_in').
+     * @param string $type      The type string (e.g., 'is_user_logged_in', 'has_post_thumbnail').
      * @param string $category  The category: 'Conditions' or 'Actions'.
      * @return string|null Fully-qualified class name or null if not resolved.
      */
     public function resolve_class_name(string $type, string $category): ?string
     {
-        if ('Conditions' === $category && 0 === strpos($type, 'is_')) {
-            // Check if a specific class exists first
-            $class_base = str_replace('_', '', ucwords($type, '_'));
-            $specific_class = 'MilliRules\\Packages\\WordPress\\Conditions\\' . $class_base;
+        if ('Conditions' === $category) {
+            // Handle is_* conditionals
+            if (0 === strpos($type, 'is_')) {
+                // Check if a specific class exists first
+                $class_base = str_replace('_', '', ucwords($type, '_'));
+                $specific_class = 'MilliRules\\Packages\\WordPress\\Conditions\\' . $class_base;
 
-            if (class_exists($specific_class)) {
-                return $specific_class;
+                if (class_exists($specific_class)) {
+                    return $specific_class;
+                }
+
+                // Fallback to IsConditional for generic is_* functions
+                return 'MilliRules\\Packages\\WordPress\\Conditions\\IsConditional';
             }
 
-            // Fallback to IsConditional for generic is_* functions
-            return 'MilliRules\\Packages\\WordPress\\Conditions\\IsConditional';
+            // Handle has_* conditionals
+            if (0 === strpos($type, 'has_')) {
+                // Check if a specific class exists first
+                $class_base = str_replace('_', '', ucwords($type, '_'));
+                $specific_class = 'MilliRules\\Packages\\WordPress\\Conditions\\' . $class_base;
+
+                if (class_exists($specific_class)) {
+                    return $specific_class;
+                }
+
+                // Fallback to HasConditional for generic has_* functions
+                return 'MilliRules\\Packages\\WordPress\\Conditions\\HasConditional';
+            }
         }
 
         return null;
