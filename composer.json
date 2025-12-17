@@ -1,6 +1,6 @@
 {
   "name": "millipress/millirules",
-  "description": "A flexible, framework-agnostic rule evaluation engine for PHP 7.4+",
+  "description": "A declarative rule engine for PHP that turns complex conditional logic into readable when-then rules. Features a fluent builder API, lazy-loaded context for performance, smart operator inference, and works seamlessly in pure PHP or WordPress.",
   "type": "library",
   "license": "GPL-2.0-or-later",
   "authors": [
