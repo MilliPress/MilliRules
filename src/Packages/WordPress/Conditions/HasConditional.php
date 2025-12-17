@@ -98,7 +98,7 @@ class HasConditional extends BaseCondition
                     $config['operator'] = $raw_args[1];
                 } else {
                     // Infer operator for boolean values (IS / IS NOT).
-                    $config['operator'] = self::normalize_operator($config['operator'], $first);
+                    $config['operator'] = self::normalize_boolean_operator($config['operator'], $first);
                 }
             } else {
                 // Mode B: function-call mode (arguments for the has_* function).
@@ -198,14 +198,17 @@ class HasConditional extends BaseCondition
      *
      * For now, this simply uppercases known operators and falls back to 'IS'
      * if the provided operator is not recognized.
-	 *
-	 * @since 0.1.0
+     *
+     * Note: This method is named differently from BaseCondition::normalize_operator()
+     * to avoid PHP 7.4 incompatibility issues (cannot make non-static method static).
+     *
+     * @since 0.1.0
      *
      * @param string $operator Provided operator.
      * @param bool   $value    The boolean value (currently unused, but may be used in future).
      * @return string
      */
-    private static function normalize_operator(string $operator, bool $value): string
+    private static function normalize_boolean_operator(string $operator, bool $value): string
     {
         $upper = strtoupper(trim($operator));
         if (self::looks_like_operator($upper)) {
