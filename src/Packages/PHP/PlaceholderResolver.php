@@ -136,7 +136,7 @@ class PlaceholderResolver extends BasePlaceholderResolver
      * @param array<int, string> $parts The remaining parts after the category.
      * @return mixed|null The resolved value or null if not found.
      */
-    protected function resolve_builtin_placeholder(string $category, array $parts): mixed
+    protected function resolve_builtin_placeholder(string $category, array $parts)
     {
         // Handle request category with nested paths.
         if ('request' === $category && ! empty($parts)) {
