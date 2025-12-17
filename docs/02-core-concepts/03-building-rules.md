@@ -52,55 +52,6 @@ $rule = Rules::create('rule_id', 'php'); // PHP rule
 > [!IMPORTANT]
 > Rule IDs must be unique across your entire application. Consider using a prefix to avoid conflicts: `'my_plugin_rule_id'` or `'company_feature_rule'`.
 
-### Replacing and Removing Rules
-
-#### Rule Replacement
-
-Registering a rule with an existing ID **replaces** the previous rule:
-
-```php
-<?php
-// Original rule
-Rules::create('api_cache')
-    ->when()->request_url('/api/*')
-    ->then()->custom('cache_response', ['ttl' => 3600])
-    ->register();
-
-// Later: Replace with updated version (same ID)
-Rules::create('api_cache')
-    ->when()->request_url('/api/*')
-    ->then()->custom('cache_response', ['ttl' => 7200])  // Different TTL
-    ->register();
-
-// Only the second rule exists - the first was replaced
-```
-
-This is useful for:
-- Child themes overriding parent theme rules
-- Plugins modifying default rules
-- Environment-specific rule customization
-
-#### Removing Rules
-
-To completely remove a rule, use `Rules::unregister()`:
-
-```php
-<?php
-// Remove a rule by ID
-Rules::unregister('unwanted_rule');
-
-// Example: Child theme disables parent's rule
-Rules::unregister('parent_theme_sidebar_rule');
-
-// Example: Conditionally disable rules
-if (wp_get_environment_type() === 'production') {
-    Rules::unregister('debug_logging_rule');
-}
-```
-
-> [!TIP]
-> `Rules::unregister()` returns `true` if the rule was found and removed, `false` otherwise.
-
 ### Rule Metadata
 
 Add descriptive information to your rules:
@@ -642,20 +593,19 @@ Rules::create('condition_group_2')->order(10)
 
 ### Rule Builder Methods
 
-| Method        | Parameters                    | Returns            | Description                              |
-|---------------|-------------------------------|--------------------|------------------------------------------|
-| `create()`    | `string $id, ?string $type`   | `Rules`            | Create new rule                          |
-| `title()`     | `string $title`               | `Rules`            | Set rule title                           |
-| `order()`     | `int $order`                  | `Rules`            | Set execution order                      |
-| `enabled()`   | `bool $enabled`               | `Rules`            | Enable/disable rule                      |
-| `when()`      | -                             | `ConditionBuilder` | Start condition builder                  |
-| `when_all()`  | -                             | `ConditionBuilder` | Start with AND logic                     |
-| `when_any()`  | -                             | `ConditionBuilder` | Start with OR logic                      |
-| `when_none()` | -                             | `ConditionBuilder` | Start with NOT logic                     |
-| `then()`      | `?array $actions`             | `ActionBuilder`    | Start action builder                     |
-| `on()`        | `string $hook, int $priority` | `Rules`            | Set WordPress hook                       |
-| `register()`  | -                             | `bool`             | Register rule (replaces if ID exists)    |
-| `unregister()`| `string $rule_id`             | `bool`             | Remove rule by ID (static method)        |
+| Method        | Parameters                    | Returns            | Description               |
+|---------------|-------------------------------|--------------------|---------------------------|
+| `create()`    | `string $id, ?string $type`   | `Rules`            | Create new rule           |
+| `title()`     | `string $title`               | `Rules`            | Set rule title            |
+| `order()`     | `int $order`                  | `Rules`            | Set execution order       |
+| `enabled()`   | `bool $enabled`               | `Rules`            | Enable/disable rule       |
+| `when()`      | -                             | `ConditionBuilder` | Start condition builder   |
+| `when_all()`  | -                             | `ConditionBuilder` | Start with AND logic      |
+| `when_any()`  | -                             | `ConditionBuilder` | Start with OR logic       |
+| `when_none()` | -                             | `ConditionBuilder` | Start with NOT logic      |
+| `then()`      | `?array $actions`             | `ActionBuilder`    | Start action builder      |
+| `on()`        | `string $hook, int $priority` | `Rules`            | Set WordPress hook        |
+| `register()`  | -                             | `void`             | Register rule with engine |
 
 ### Condition Builder Methods
 

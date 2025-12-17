@@ -180,16 +180,4 @@ interface PackageInterface
      * @return string|null Fully-qualified class name or null if not resolved.
      */
     public function resolve_class_name(string $type, string $category): ?string;
-
-    /**
-     * Unregister a rule by its ID.
-     *
-     * Removes a rule from this package's storage.
-     *
-     * @since 0.6.0
-     *
-     * @param string $rule_id The ID of the rule to unregister.
-     * @return bool True if a rule was found and removed, false otherwise.
-     */
-    public function unregister_rule(string $rule_id): bool;
 }

@@ -182,13 +182,12 @@ class Package extends BasePackage
     /**
      * Register a rule with this package using hook-based storage.
      *
-     * Groups rule by their WordPress hook for execution when the hook fires.
-     * If a rule with the same ID already exists, it will be replaced.
+     * Groups rules by their WordPress hook for execution when the hook fires.
      * If WordPress is not available yet (add_action() doesn't exist), stores the rule
      * and adds the hook to pending_hooks for later registration.
      *
      * When WordPress becomes available, pending hooks are automatically registered
-     * on the next register_rule() call or can be manually registered via
+     * on the next register_rule() call, or can be manually registered via
      * register_pending_hooks().
      *
      * @since 0.1.0
@@ -210,12 +209,6 @@ class Package extends BasePackage
 
         // Ensure metadata is in rule for consistency.
         $rule['_metadata'] = $metadata;
-        $rule_id = $rule['id'] ?? null;
-
-        // Check for existing rule with same ID and remove it first.
-        if (null !== $rule_id) {
-            $this->remove_rule_by_id($rule_id);
-        }
 
         // Group by hook.
         if (! isset($this->rules_by_hook[ $hook ])) {
@@ -245,59 +238,6 @@ class Package extends BasePackage
             $this->register_hook($hook, $priority);
             $this->hooks_registered[ $hook ] = true;
         }
-    }
-
-    /**
-     * Remove a rule by ID from all internal storage.
-     *
-     * Helper method to remove a rule from both the flat rules array
-     * and the rules_by_hook grouped array.
-     *
-     * @since 0.5.0
-     *
-     * @param string $rule_id The ID of the rule to remove.
-     * @return bool True if rule was found and removed, false otherwise.
-     */
-    private function remove_rule_by_id(string $rule_id): bool
-    {
-        $found = false;
-
-        // Remove from flat rules array.
-        foreach ($this->rules as $index => $rule) {
-            if (($rule['id'] ?? null) === $rule_id) {
-                array_splice($this->rules, $index, 1);
-                $found = true;
-                break;
-            }
-        }
-
-        // Remove from rules_by_hook array.
-        foreach ($this->rules_by_hook as $hook => &$rules) {
-            foreach ($rules as $index => $rule) {
-                if (($rule['id'] ?? null) === $rule_id) {
-                    array_splice($rules, $index, 1);
-                    $found = true;
-                    break 2;
-                }
-            }
-        }
-
-        return $found;
-    }
-
-    /**
-     * Unregister a rule by its ID.
-     *
-     * Removes a rule from both the flat storage and hook-based storage.
-     *
-     * @since 0.5.0
-     *
-     * @param string $rule_id The ID of the rule to unregister.
-     * @return bool True if rule was found and removed, false otherwise.
-     */
-    public function unregister_rule(string $rule_id): bool
-    {
-        return $this->remove_rule_by_id($rule_id);
     }
 
     /**

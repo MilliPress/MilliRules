@@ -278,25 +278,6 @@ class Rules
     }
 
     /**
-     * Unregister a rule by its ID.
-     *
-     * Removes a rule from all packages. Use this to completely disable a rule
-     * that was previously registered.
-     *
-     * Example:
-     * Rules::unregister('my_rule');
-     *
-     * @since 0.6.0
-     *
-     * @param string $rule_id The ID of the rule to unregister.
-     * @return bool True if a rule was found and removed, false otherwise.
-     */
-    public static function unregister(string $rule_id): bool
-    {
-        return PackageManager::unregister_rule($rule_id);
-    }
-
-    /**
      * Check if a custom condition is registered.
      *
      * @since 0.1.0

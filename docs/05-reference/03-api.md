@@ -332,8 +332,6 @@ Rules::create('my_rule', 'wp')
 
 Register rule with MilliRules.
 
-If a rule with the same ID already exists, it will be **replaced**.
-
 **Returns**: `void`
 
 **Example**:
@@ -343,45 +341,6 @@ Rules::create('my_rule')
     ->when()->request_url('*')
     ->then()->custom('action')
     ->register(); // Must call to activate rule
-
-// Registering again with same ID replaces the rule
-Rules::create('my_rule')
-    ->when()->request_url('/api/*')
-    ->then()->custom('different_action')
-    ->register(); // Replaces previous 'my_rule'
-```
-
----
-
-##### `unregister(string $rule_id): bool`
-
-Remove a rule by its ID.
-
-**Parameters**:
-- `$rule_id` (string): The ID of the rule to remove
-
-**Returns**: `bool` - True if rule was found and removed, false otherwise
-
-**Example**:
-```php
-<?php
-// Remove a rule
-$removed = Rules::unregister('my_rule');
-
-// Check if removal was successful
-if ($removed) {
-    error_log('Rule was removed');
-} else {
-    error_log('Rule not found');
-}
-
-// Use case: Child theme disabling parent rule
-Rules::unregister('parent_theme_cache_rule');
-
-// Use case: Environment-specific disabling
-if (wp_get_environment_type() === 'production') {
-    Rules::unregister('debug_logging_rule');
-}
 ```
 
 ---

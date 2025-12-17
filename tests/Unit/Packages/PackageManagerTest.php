@@ -109,17 +109,6 @@ class PackageManagerTest extends TestCase
                 return null;
             }
 
-            public function unregister_rule(string $rule_id): bool
-            {
-                foreach ($this->rules as $index => $rule) {
-                    if (($rule['id'] ?? null) === $rule_id) {
-                        array_splice($this->rules, $index, 1);
-                        return true;
-                    }
-                }
-                return false;
-            }
-
             public function wasNamespacesRegisteredCalled(): bool
             {
                 return $this->namespacesRegistered;
@@ -538,10 +527,6 @@ class PackageManagerTest extends TestCase
             {
                 return null;
             }
-            public function unregister_rule(string $rule_id): bool
-            {
-                return false;
-            }
         };
 
         $pkg2 = new class ('Pkg2') implements PackageInterface {
@@ -598,10 +583,6 @@ class PackageManagerTest extends TestCase
             public function resolve_class_name(string $type, string $category): ?string
             {
                 return null;
-            }
-            public function unregister_rule(string $rule_id): bool
-            {
-                return false;
             }
         };
 
@@ -815,10 +796,6 @@ class PackageManagerTest extends TestCase
             {
                 return null;
             }
-            public function unregister_rule(string $rule_id): bool
-            {
-                return false;
-            }
         };
 
         $phpPackage = new class ('PHP', $phpResolver) implements PackageInterface {
@@ -876,10 +853,6 @@ class PackageManagerTest extends TestCase
             public function resolve_class_name(string $type, string $category): ?string
             {
                 return null;
-            }
-            public function unregister_rule(string $rule_id): bool
-            {
-                return false;
             }
         };
 
