@@ -24,7 +24,6 @@ MilliRules allows you to define rules that automatically execute actions when sp
 Instead of scattering conditional logic throughout your codebase:
 
 ```php
-<?php
 // Traditional approach - logic mixed with implementation
 if (is_admin() && is_user_logged_in() && $_SERVER['REQUEST_URI'] === '/wp-admin/settings.php') {
     if (current_user_can('manage_options')) {
@@ -38,7 +37,6 @@ if (is_admin() && is_user_logged_in() && $_SERVER['REQUEST_URI'] === '/wp-admin/
 With MilliRules, you define rules declaratively:
 
 ```php
-<?php
 // MilliRules approach - clean and declarative
 Rules::create('log_settings_access', 'wp')
     ->title('Log Settings Page Access')

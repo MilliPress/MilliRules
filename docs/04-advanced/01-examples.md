@@ -26,7 +26,6 @@ This guide provides complete, working examples of MilliRules implementations for
 A complete page caching implementation using early execution.
 
 ```php
-<?php
 /**
  * Plugin Name: MilliRules Page Cache
  * Description: Intelligent page caching with MilliRules
@@ -119,7 +118,6 @@ add_action('save_post', function($post_id) {
 Protect pages and redirect unauthorized users.
 
 ```php
-<?php
 /**
  * Plugin Name: MilliRules Access Control
  * Description: Rule-based access control
@@ -233,7 +231,6 @@ add_action('init', function() {
 Dynamically modify WordPress content based on conditions.
 
 ```php
-<?php
 /**
  * Plugin Name: MilliRules Content Modifier
  * Description: Conditional content modification
@@ -355,7 +352,6 @@ add_action('init', function() {
 Track user behavior and log analytics events.
 
 ```php
-<?php
 /**
  * Plugin Name: MilliRules Analytics
  * Description: User tracking and analytics
@@ -505,7 +501,6 @@ register_activation_hook(__FILE__, function() {
 Implement rate limiting for API endpoints.
 
 ```php
-<?php
 /**
  * Plugin Name: MilliRules API Rate Limiter
  * Description: Rate limiting for API endpoints
@@ -590,7 +585,6 @@ add_action('init', function() {
 Implement dynamic feature flags.
 
 ```php
-<?php
 /**
  * Plugin Name: MilliRules Feature Flags
  * Description: Dynamic feature flag system
@@ -675,7 +669,6 @@ function is_feature_enabled($feature) {
 Complete WooCommerce conditional logic example.
 
 ```php
-<?php
 /**
  * Plugin Name: MilliRules WooCommerce Integration
  * Description: Advanced WooCommerce rules
@@ -799,7 +792,6 @@ add_action('init', function() {
 Complete membership system with tiers and access control.
 
 ```php
-<?php
 /**
  * Plugin Name: MilliRules Membership System
  * Description: Complete membership tier system

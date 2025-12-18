@@ -42,7 +42,6 @@ MyCustomPackage/
 All packages must implement `PackageInterface`:
 
 ```php
-<?php
 namespace MilliRules\Packages;
 
 use MilliRules\Context;
@@ -66,7 +65,6 @@ interface PackageInterface {
 ### Minimal Package Implementation
 
 ```php
-<?php
 namespace MyPlugin\Packages;
 
 use MilliRules\Packages\BasePackage;
@@ -102,7 +100,6 @@ class MyCustomPackage extends BasePackage {
 ### Registering the Package
 
 ```php
-<?php
 use MilliRules\MilliRules;
 use MyPlugin\Packages\MyCustomPackage;
 
@@ -123,7 +120,6 @@ Packages register context providers that load data lazily when needed. This impr
 ### Simple Context Provider
 
 ```php
-<?php
 use MilliRules\Context;
 
 public function register_providers(Context $context): void {
@@ -145,7 +141,6 @@ public function register_providers(Context $context): void {
 ### Dynamic Context Provider
 
 ```php
-<?php
 use MilliRules\Context;
 
 public function register_providers(Context $context): void {
@@ -191,7 +186,6 @@ private function get_user_purchases($user_id) {
 ### Context Provider with External API
 
 ```php
-<?php
 use MilliRules\Context;
 
 public function register_providers(Context $context): void {
@@ -235,7 +229,6 @@ Package conditions extend the available condition types.
 ### Simple Package Condition
 
 ```php
-<?php
 namespace MyPlugin\Packages\MyCustom\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
@@ -262,7 +255,6 @@ class UserLevelCondition extends BaseCondition {
 
 **Usage**:
 ```php
-<?php
 Rules::create('premium_users')
     ->when()
         ->custom('user_level', ['value' => 5, 'operator' => '>='])
@@ -274,7 +266,6 @@ Rules::create('premium_users')
 ### Condition Using Package Context
 
 ```php
-<?php
 namespace MyPlugin\Packages\MyCustom\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
@@ -305,7 +296,6 @@ Package actions provide functionality specific to your package's domain.
 ### Simple Package Action
 
 ```php
-<?php
 namespace MyPlugin\Packages\MyCustom\Actions;
 
 use MilliRules\Actions\BaseAction;
@@ -335,7 +325,6 @@ class UpdateUserLevelAction extends BaseAction {
 ### Action with Placeholder Support
 
 ```php
-<?php
 namespace MyPlugin\Packages\MyCustom\Actions;
 
 use MilliRules\Actions\BaseAction;
@@ -371,7 +360,6 @@ Placeholder resolvers enable dynamic values in rules.
 ### Basic Placeholder Resolver
 
 ```php
-<?php
 use MilliRules\Context;
 
 public function get_placeholder_resolver(Context $context) {
@@ -399,7 +387,6 @@ public function get_placeholder_resolver(Context $context) {
 
 **Usage**:
 ```php
-<?php
 Rules::create('use_custom_placeholder')
     ->when()->request_url('/api/*')
     ->then()
@@ -412,7 +399,6 @@ Rules::create('use_custom_placeholder')
 ### Advanced Placeholder Resolver
 
 ```php
-<?php
 use MilliRules\Context;
 
 public function get_placeholder_resolver(Context $context) {
@@ -464,7 +450,6 @@ Packages can require other packages.
 ### Simple Dependency
 
 ```php
-<?php
 public function get_required_packages(): array {
     return ['PHP']; // Requires PHP package
 }
@@ -473,7 +458,6 @@ public function get_required_packages(): array {
 ### Multiple Dependencies
 
 ```php
-<?php
 public function get_required_packages(): array {
     return ['PHP', 'WP']; // Requires both PHP and WordPress packages
 }
@@ -489,7 +473,6 @@ public function get_required_packages(): array {
 Here's a complete example of a custom package for a membership system:
 
 ```php
-<?php
 namespace MyPlugin\Packages;
 
 use MilliRules\Packages\BasePackage;
@@ -578,7 +561,6 @@ class MembershipPackage extends BasePackage {
 **Membership Condition Example**:
 
 ```php
-<?php
 namespace MyPlugin\Packages\Membership\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
@@ -599,7 +581,6 @@ class MembershipLevelCondition extends BaseCondition {
 **Membership Action Example**:
 
 ```php
-<?php
 namespace MyPlugin\Packages\Membership\Actions;
 
 use MilliRules\Actions\BaseAction;
@@ -635,7 +616,6 @@ class UpgradeMembershipAction extends BaseAction {
 **Using the Custom Package**:
 
 ```php
-<?php
 use MilliRules\MilliRules;
 use MyPlugin\Packages\MembershipPackage;
 
@@ -664,7 +644,6 @@ Rules::create('auto_upgrade_frequent_buyers')
 ### 1. Use Descriptive Package Names
 
 ```php
-<?php
 // ✅ Good - clear and specific
 public function get_name(): string {
     return 'WooCommerce';
@@ -679,7 +658,6 @@ public function get_name(): string {
 ### 2. Validate Environment in is_available()
 
 ```php
-<?php
 // ✅ Good - comprehensive checks
 public function is_available(): bool {
     return class_exists('WooCommerce')
@@ -696,7 +674,6 @@ public function is_available(): bool {
 ### 3. Cache Expensive Context Data
 
 ```php
-<?php
 use MilliRules\Context;
 
 // ✅ Good - caches API calls in lazy provider
@@ -719,7 +696,6 @@ public function register_providers(Context $context): void {
 ### 4. Document Your Package
 
 ```php
-<?php
 /**
  * Membership Package
  *
@@ -756,7 +732,6 @@ class MembershipPackage extends BasePackage {
 ### 1. Circular Dependencies
 
 ```php
-<?php
 // ❌ Wrong - circular dependency
 class PackageA extends BasePackage {
     public function get_required_packages(): array {
@@ -774,7 +749,6 @@ class PackageB extends BasePackage {
 ### 2. Accessing Unavailable Context
 
 ```php
-<?php
 use MilliRules\Context;
 
 // ❌ Wrong - doesn't check availability
@@ -793,7 +767,6 @@ protected function get_actual_value(Context $context) {
 ### 3. Expensive Provider Registration
 
 ```php
-<?php
 use MilliRules\Context;
 
 // ❌ Wrong - executes expensive operation during registration

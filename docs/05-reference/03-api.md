@@ -39,7 +39,6 @@ Initialize MilliRules and load packages.
 
 **Example**:
 ```php
-<?php
 // Auto-load available packages
 MilliRules::init();
 
@@ -75,7 +74,6 @@ Execute all registered rules.
 
 **Example**:
 ```php
-<?php
 // Execute all rules
 $result = MilliRules::execute_rules();
 
@@ -96,7 +94,6 @@ Get names of all loaded packages.
 
 **Example**:
 ```php
-<?php
 $packages = MilliRules::get_loaded_packages();
 // ['PHP', 'WP']
 ```
@@ -111,7 +108,6 @@ Build context from all loaded packages.
 
 **Example**:
 ```php
-<?php
 $context = MilliRules::build_context();
 /*
 [
@@ -143,7 +139,6 @@ Create a new rule.
 
 **Example**:
 ```php
-<?php
 $rule = Rules::create('my_rule');
 $rule = Rules::create('wp_rule', 'wp');
 ```
@@ -161,7 +156,6 @@ Set rule title.
 
 **Example**:
 ```php
-<?php
 Rules::create('my_rule')
     ->title('My Custom Rule')
     ->register();
@@ -180,7 +174,6 @@ Set execution order.
 
 **Example**:
 ```php
-<?php
 Rules::create('my_rule')
     ->order(10) // Execute at priority 10
     ->register();
@@ -199,7 +192,6 @@ Enable or disable rule.
 
 **Example**:
 ```php
-<?php
 Rules::create('my_rule')
     ->enabled(false) // Disable rule
     ->register();
@@ -215,7 +207,6 @@ Start building conditions with match_all logic.
 
 **Example**:
 ```php
-<?php
 Rules::create('my_rule')
     ->when()
         ->request_url('/api/*')
@@ -235,7 +226,6 @@ Start building conditions with ALL logic (AND).
 
 **Example**:
 ```php
-<?php
 Rules::create('my_rule')
     ->when_all()
         ->condition1()
@@ -254,7 +244,6 @@ Start building conditions with ANY logic (OR).
 
 **Example**:
 ```php
-<?php
 Rules::create('my_rule')
     ->when_any()
         ->condition1()
@@ -273,7 +262,6 @@ Start building conditions with NONE logic (NOT).
 
 **Example**:
 ```php
-<?php
 Rules::create('my_rule')
     ->when_none()
         ->condition1()
@@ -295,7 +283,6 @@ Start building actions.
 
 **Example**:
 ```php
-<?php
 Rules::create('my_rule')
     ->when()->request_url('*')
     ->then()
@@ -318,7 +305,6 @@ Register rule on WordPress hook.
 
 **Example**:
 ```php
-<?php
 Rules::create('my_rule', 'wp')
     ->on('init', 10)
     ->when()->is_user_logged_in()
@@ -338,7 +324,6 @@ If a rule with the same ID already exists, it will be **replaced**.
 
 **Example**:
 ```php
-<?php
 Rules::create('my_rule')
     ->when()->request_url('*')
     ->then()->custom('action')
@@ -364,7 +349,6 @@ Remove a rule by its ID.
 
 **Example**:
 ```php
-<?php
 // Remove a rule
 $removed = Rules::unregister('my_rule');
 
@@ -398,7 +382,6 @@ Register custom condition callback.
 
 **Example**:
 ```php
-<?php
 Rules::register_condition('is_weekend', function(Context $context) {
     return date('N') >= 6;
 });
@@ -418,7 +401,6 @@ Register custom action callback.
 
 **Example**:
 ```php
-<?php
 Rules::register_action('log', function($args, Context $context) {
     error_log($args['value'] ?? '');
 });
@@ -438,7 +420,6 @@ Register custom placeholder resolver.
 
 **Example**:
 ```php
-<?php
 Rules::register_placeholder('custom', function($context, $parts) {
     return $context['custom'][$parts[0]] ?? '';
 });
@@ -492,7 +473,6 @@ Add custom condition.
 
 **Example**:
 ```php
-<?php
 ->when()
     ->custom('is_weekend')
     ->custom('time_range', ['start' => 9, 'end' => 17])
@@ -541,7 +521,6 @@ Add custom action.
 
 **Example**:
 ```php
-<?php
 ->then()
     ->custom('log', ['value' => 'message'])
     ->custom('send_email', ['to' => 'admin@example.com'])
@@ -559,7 +538,6 @@ Locked actions prevent subsequent actions **of the same type** from executing in
 
 **Example**:
 ```php
-<?php
 // Rule 1 (order: 10) - Disable cache for logged-in users
 Rules::create('no-cache-logged-in')->order(10)
     ->when()->is_user_logged_in()

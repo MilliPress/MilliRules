@@ -13,7 +13,6 @@ MilliRules provides an elegant, fluent API that makes building rules intuitive a
 The fluent interface allows you to chain methods together to build rules in a natural, readable way:
 
 ```php
-<?php
 use MilliRules\Rules;
 
 Rules::create('my_rule')
@@ -38,7 +37,6 @@ Each method returns the builder object, allowing you to continue chaining.
 The `create()` method is your starting point:
 
 ```php
-<?php
 use MilliRules\Rules;
 
 // Minimal rule with auto-detected type
@@ -59,7 +57,6 @@ $rule = Rules::create('rule_id', 'php'); // PHP rule
 Registering a rule with an existing ID **replaces** the previous rule:
 
 ```php
-<?php
 // Original rule
 Rules::create('api_cache')
     ->when()->request_url('/api/*')
@@ -85,7 +82,6 @@ This is useful for:
 To completely remove a rule, use `Rules::unregister()`:
 
 ```php
-<?php
 // Remove a rule by ID
 Rules::unregister('unwanted_rule');
 
@@ -106,7 +102,6 @@ if (wp_get_environment_type() === 'production') {
 Add descriptive information to your rules:
 
 ```php
-<?php
 Rules::create('api_cache_control')
     ->title('Control API Response Caching')   // Human-readable title
     ->order(15)                               // Execution sequence
@@ -119,7 +114,6 @@ Rules::create('api_cache_control')
 The `order()` method controls when rules execute (lower numbers execute first):
 
 ```php
-<?php
 // These execute in sequence: security → cache → logging
 Rules::create('security_check')->order(5)->when()->then()->register();
 Rules::create('cache_control')->order(10)->when()->then()->register();
@@ -132,7 +126,6 @@ Rules::create('request_logging')->order(15)->when()->then()->register();
 #### Enabling/Disabling Rules
 
 ```php
-<?php
 // Enable rule
 Rules::create('my_rule')->enabled(true)->when()->then()->register();
 
@@ -152,7 +145,6 @@ Conditions determine when a rule should execute. The `when()` method starts the 
 ### Basic Conditions
 
 ```php
-<?php
 Rules::create('check_request')
     ->when()
         ->request_url('/api/users')       // Check URL
@@ -167,7 +159,6 @@ Rules::create('check_request')
 Chain multiple conditions together:
 
 ```php
-<?php
 Rules::create('secure_api')
     ->when()
         ->request_url('/api/*')                               // URL pattern
@@ -190,7 +181,6 @@ MilliRules supports three match types that control how conditions are evaluated:
 All conditions must be true:
 
 ```php
-<?php
 Rules::create('strict_validation')
     ->when()  // Implicitly uses match_all()
         ->request_url('/api/secure')
@@ -208,7 +198,6 @@ Rules::create('strict_validation')
 At least one condition must be true:
 
 ```php
-<?php
 Rules::create('flexible_access')
     ->when()
         ->match_any()  // Use OR logic
@@ -227,7 +216,6 @@ Rules::create('flexible_access')
 All conditions must be false:
 
 ```php
-<?php
 Rules::create('production_only')
     ->when()
         ->match_none()  // Use NOT logic
@@ -245,7 +233,6 @@ Rules::create('production_only')
 You can also use dedicated methods to start condition building with a specific match type:
 
 ```php
-<?php
 // These are equivalent:
 ->when()->match_all()
 ->when_all()
@@ -260,7 +247,6 @@ You can also use dedicated methods to start condition building with a specific m
 **Example with alternative syntax**:
 
 ```php
-<?php
 Rules::create('development_environments')
     ->when_any()  // Start with OR logic
         ->constant('WP_DEBUG', true)
@@ -279,7 +265,6 @@ Rules::create('development_environments')
 The fluent API allows seamless transitions between builders:
 
 ```php
-<?php
 Rules::create('wordpress_admin_check')
     ->when()
         ->request_url('/wp-admin/*')
@@ -302,7 +287,6 @@ This works because:
 For more control, you can manually manage builder instances:
 
 ```php
-<?php
 $rule = Rules::create('complex_rule');
 
 $conditions = $rule->when();
@@ -323,7 +307,6 @@ Actions execute when conditions are satisfied. The `then()` method starts the ac
 ### Basic Actions
 
 ```php
-<?php
 Rules::create('process_request')
     ->when()
         ->request_url('/api/process')
@@ -342,7 +325,6 @@ Actions execute **sequentially** in the order they're defined.
 Pass configuration to actions using arrays:
 
 ```php
-<?php
 Rules::create('send_notification')
     ->when()
         ->request_url('/api/notify')
@@ -363,7 +345,6 @@ Rules::create('send_notification')
 For simple operations, define actions inline:
 
 ```php
-<?php
 use MilliRules\Context;
 
 Rules::register_action('inline_log', function($args, Context $context) {
@@ -384,7 +365,6 @@ Operators control how condition values are compared. While MilliRules auto-detec
 ### Explicit Operator Specification
 
 ```php
-<?php
 Rules::create('operator_examples')
     ->when()
         // Equality
@@ -420,7 +400,6 @@ Rules::create('operator_examples')
 MilliRules automatically infers operators from values:
 
 ```php
-<?php
 Rules::create('auto_operators')
     ->when()
         // String → '=' operator
@@ -457,7 +436,6 @@ When built-in conditions aren't enough, use custom conditions.
 ### Inline Custom Conditions
 
 ```php
-<?php
 use MilliRules\Context;
 
 Rules::register_condition('is_weekend', function(Context $context) {
@@ -477,7 +455,6 @@ Rules::create('weekend_special')
 ### Parameterized Custom Conditions
 
 ```php
-<?php
 use MilliRules\Context;
 
 Rules::register_condition('time_range', function($args, Context $context) {
@@ -503,7 +480,6 @@ See [Creating Custom Conditions](../03-customization/01-custom-conditions.md) fo
 WordPress rules can execute on specific hooks:
 
 ```php
-<?php
 Rules::create('admin_notice', 'wp')
     ->on('admin_notices', 10)  // Hook name and priority
     ->when()
@@ -517,7 +493,6 @@ Rules::create('admin_notice', 'wp')
 ### Common WordPress Hooks
 
 ```php
-<?php
 // Initialization
 ->on('init', 10)
 ->on('plugins_loaded', 10)
@@ -551,7 +526,6 @@ Rules::create('admin_notice', 'wp')
 Register rules only when needed:
 
 ```php
-<?php
 if (is_admin()) {
     Rules::create('admin_only_rule')
         ->when()->is_user_logged_in()
@@ -572,7 +546,6 @@ if (defined('WP_CLI') && WP_CLI) {
 Generate rules programmatically:
 
 ```php
-<?php
 $protected_urls = ['/admin', '/dashboard', '/settings'];
 
 foreach ($protected_urls as $url) {
@@ -591,7 +564,6 @@ foreach ($protected_urls as $url) {
 Create related rules with shared settings:
 
 ```php
-<?php
 $api_rules_config = [
     'order' => 10,
     'type' => 'php',
@@ -616,7 +588,6 @@ foreach ($api_endpoints as $endpoint) {
 While MilliRules doesn't support nested conditions directly, you can simulate them with multiple rules:
 
 ```php
-<?php
 // Simulate: (A AND B) OR (C AND D)
 
 // Rule 1: A AND B
@@ -681,7 +652,6 @@ Rules::create('condition_group_2')->order(10)
 ### 1. Use Descriptive Rule IDs
 
 ```php
-<?php
 // ✅ Good - clear and descriptive
 Rules::create('block_non_authenticated_api_access')
 Rules::create('cache_public_api_responses')
@@ -696,7 +666,6 @@ Rules::create('x')
 ### 2. Add Titles to All Rules
 
 ```php
-<?php
 // ✅ Good - includes helpful title
 Rules::create('api_authentication')
     ->title('Enforce API Authentication')
@@ -714,7 +683,6 @@ Rules::create('api_authentication')
 ### 3. Keep Condition Groups Logical
 
 ```php
-<?php
 // ✅ Good - logical grouping
 Rules::create('secure_api_access')
     ->when()
@@ -737,7 +705,6 @@ Rules::create('random_checks')
 ### 4. Use Comments for Complex Logic
 
 ```php
-<?php
 Rules::create('complex_caching_logic')
     ->order(15)
     ->when()
@@ -758,7 +725,6 @@ Rules::create('complex_caching_logic')
 ### 5. Test Rules Incrementally
 
 ```php
-<?php
 // Start simple
 Rules::create('test_rule')
     ->when()->request_url('/test')
@@ -780,7 +746,6 @@ Rules::create('test_rule')
 ### 1. Forgetting to Register
 
 ```php
-<?php
 // ❌ Wrong - rule never registered
 Rules::create('my_rule')
     ->when()->request_url('/test')
@@ -797,7 +762,6 @@ Rules::create('my_rule')
 ### 2. Mixing Match Types
 
 ```php
-<?php
 // ❌ Wrong - cannot switch match types mid-chain
 Rules::create('mixed_logic')
     ->when()
@@ -816,7 +780,6 @@ Rules::create('consistent_logic')
 ### 3. Incorrect Hook Timing
 
 ```php
-<?php
 // ❌ Wrong - registering rules too late
 add_action('wp_footer', function() {
     MilliRules::init();
@@ -837,7 +800,6 @@ add_action('plugins_loaded', function() {
 
 **Check initialization**:
 ```php
-<?php
 // Verify MilliRules is initialized
 $packages = MilliRules::get_loaded_packages();
 error_log('Loaded packages: ' . print_r($packages, true));
@@ -845,7 +807,6 @@ error_log('Loaded packages: ' . print_r($packages, true));
 
 **Verify rule registration**:
 ```php
-<?php
 Rules::create('debug_rule')
     ->title('Debug Rule')
     ->when()->request_url('*')
@@ -857,7 +818,6 @@ error_log('Rule registered');
 
 **Check execution statistics**:
 ```php
-<?php
 $result = MilliRules::execute_rules();
 error_log('Execution stats: ' . print_r($result, true));
 ```
@@ -867,7 +827,6 @@ error_log('Execution stats: ' . print_r($result, true));
 Add debugging to your conditions:
 
 ```php
-<?php
 use MilliRules\Context;
 
 Rules::register_condition('debug_condition', function(Context $context) {

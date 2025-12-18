@@ -11,7 +11,6 @@ Custom conditions define the "when" logic that determines if a rule should execu
 ## Quick Start
 
 ```php
-<?php
 
 use MilliRules\Rules;
 use MilliRules\Context;
@@ -66,7 +65,6 @@ MilliRules offers four ways to define custom conditions. Choose based on your ne
 Define the condition directly in the rule using a callback:
 
 ```php
-<?php
 use MilliRules\Rules;
 use MilliRules\Context;
 
@@ -87,7 +85,6 @@ Rules::create('business_hours_only')
 **Example with context access:**
 
 ```php
-<?php
 Rules::create('premium_user_check')
     ->when()
         ->custom('is_premium', function(Context $context) {
@@ -121,7 +118,6 @@ Rules::create('premium_user_check')
 Register once, use everywhere:
 
 ```php
-<?php
 use MilliRules\Rules;
 use MilliRules\Context;
 
@@ -153,7 +149,6 @@ Rules::register_condition('user_has_role', function($args, Context $context) {
 **Then use in any rule:**
 
 ```php
-<?php
 Rules::create('weekend_special')
     ->when()
         ->is_weekend()
@@ -182,7 +177,6 @@ Rules::create('weekend_special')
 Register an entire namespace once and all condition classes are auto-discovered:
 
 ```php
-<?php
 use MilliRules\Rules;
 
 // One-time registration at plugin initialization
@@ -192,7 +186,6 @@ Rules::register_namespace('Conditions', 'MyPlugin\Conditions');
 **Create your condition class:**
 
 ```php
-<?php
 namespace MyPlugin\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
@@ -234,7 +227,6 @@ class UserPurchaseCount extends BaseCondition
 
 **Usage:**
 ```php
-<?php
 Rules::create('vip_customers')
     ->when()
         // Both calling styles work identically
@@ -253,7 +245,6 @@ Rules::create('vip_customers')
 **Only use when:** Namespace registration isn't suitable (dynamic class names, runtime conditions, etc.)
 
 ```php
-<?php
 use MilliRules\Rules;
 
 // ⚠️ Avoid this if possible - creates type duplication
@@ -278,7 +269,6 @@ Rules::register_condition('user_purchase_count', function($args, Context $contex
 Once registered, conditions can be used via **dynamic method calls**:
 
 ```php
-<?php
 Rules::create('special_offer')
     ->when()
         ->is_weekend()                      // Dynamic method
@@ -295,7 +285,6 @@ Both `->condition_name()` and `->custom()` accept identical argument formats:
 
 **No parameters (boolean check):**
 ```php
-<?php
 ->is_weekend()
 ->custom('is_weekend')
 // Both result in: ['type' => 'is_weekend']
@@ -303,7 +292,6 @@ Both `->condition_name()` and `->custom()` accept identical argument formats:
 
 **Single value (equality check):**
 ```php
-<?php
 ->user_role('administrator')
 ->custom('user_role', 'administrator')
 // Both result in: ['type' => 'user_role', 'value' => 'administrator', 'operator' => '=']
@@ -311,7 +299,6 @@ Both `->condition_name()` and `->custom()` accept identical argument formats:
 
 **Value with operator:**
 ```php
-<?php
 ->user_age(18, '>=')
 ->custom('user_age', ['value' => 18, 'operator' => '>='])
 // Both result in: ['type' => 'user_age', 'value' => 18, 'operator' => '>=']
@@ -319,7 +306,6 @@ Both `->condition_name()` and `->custom()` accept identical argument formats:
 
 **Multiple positional arguments:**
 ```php
-<?php
 ->time_in_range(9, 17)
 // Result in: ['type' => 'time_in_range', 0 => 9, 1 => 17]
 // Access via: $args[0], $args[1]

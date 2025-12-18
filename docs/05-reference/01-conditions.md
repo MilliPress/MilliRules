@@ -27,7 +27,6 @@ Check the request URL or URI path against a pattern or value.
 
 **Signature**:
 ```php
-<?php
 ->request_url($value, $operator = '=')
 ```
 
@@ -43,7 +42,6 @@ Check the request URL or URI path against a pattern or value.
 
 **Exact match**:
 ```php
-<?php
 Rules::create('exact_url')
     ->when()
         ->request_url('/wp-admin/edit.php')  // Exact URL match
@@ -53,7 +51,6 @@ Rules::create('exact_url')
 
 **Wildcard pattern matching**:
 ```php
-<?php
 Rules::create('admin_urls')
     ->when()
         ->request_url('/wp-admin/*', 'LIKE')  // Matches any admin URL
@@ -70,7 +67,6 @@ Rules::create('api_urls')
 
 **Multiple URL patterns**:
 ```php
-<?php
 Rules::create('protected_areas')
     ->when()
         ->request_url([
@@ -84,7 +80,6 @@ Rules::create('protected_areas')
 
 **Regex matching**:
 ```php
-<?php
 Rules::create('api_versioned')
     ->when()
         // Matches /api/v1/, /api/v2/, etc.
@@ -95,7 +90,6 @@ Rules::create('api_versioned')
 
 **Exclude patterns**:
 ```php
-<?php
 Rules::create('non_admin_urls')
     ->when()
         ->request_url('/wp-admin/*', 'NOT LIKE')  // Not admin URLs
@@ -116,7 +110,6 @@ Check the HTTP request method (GET, POST, PUT, DELETE, etc.).
 
 **Signature**:
 ```php
-<?php
 ->request_method($value, $operator = '=')
 ```
 
@@ -132,7 +125,6 @@ Check the HTTP request method (GET, POST, PUT, DELETE, etc.).
 
 **Single method**:
 ```php
-<?php
 Rules::create('post_requests')
     ->when()
         ->request_method('POST')  // Only POST requests
@@ -142,7 +134,6 @@ Rules::create('post_requests')
 
 **Multiple methods** (OR logic):
 ```php
-<?php
 Rules::create('safe_methods')
     ->when()
         ->request_method(['GET', 'HEAD'], 'IN')  // GET or HEAD
@@ -159,7 +150,6 @@ Rules::create('safe_methods_auto')
 
 **Exclude methods**:
 ```php
-<?php
 Rules::create('non_post_requests')
     ->when()
         ->request_method('POST', '!=')
@@ -186,7 +176,6 @@ Check request headers against expected values.
 
 **Signature**:
 ```php
-<?php
 ->request_header($header_name, $value = null, $operator = '=')
 ```
 
@@ -203,7 +192,6 @@ Check request headers against expected values.
 
 **Check header existence**:
 ```php
-<?php
 Rules::create('has_auth_header')
     ->when()
         ->request_header('Authorization')  // Header exists
@@ -213,7 +201,6 @@ Rules::create('has_auth_header')
 
 **Check header value**:
 ```php
-<?php
 Rules::create('json_requests')
     ->when()
         ->request_header('Content-Type', 'application/json')
@@ -223,7 +210,6 @@ Rules::create('json_requests')
 
 **Pattern matching headers**:
 ```php
-<?php
 Rules::create('bearer_token')
     ->when()
         ->request_header('Authorization', 'Bearer *', 'LIKE')
@@ -233,7 +219,6 @@ Rules::create('bearer_token')
 
 **Multiple accepted values**:
 ```php
-<?php
 Rules::create('json_or_xml')
     ->when()
         ->request_header('Content-Type', [
@@ -247,7 +232,6 @@ Rules::create('json_or_xml')
 
 **Regex for complex matching**:
 ```php
-<?php
 Rules::create('api_key_format')
     ->when()
         ->request_header('X-API-Key', '/^[A-Za-z0-9]{32}$/', 'REGEXP')
@@ -268,7 +252,6 @@ Check URL query parameters or form POST data.
 
 **Signature**:
 ```php
-<?php
 ->request_param($param_name, $value = null, $operator = '=')
 ```
 
@@ -285,7 +268,6 @@ Check URL query parameters or form POST data.
 
 **Check parameter existence**:
 ```php
-<?php
 Rules::create('has_action_param')
     ->when()
         ->request_param('action')  // Parameter exists
@@ -295,7 +277,6 @@ Rules::create('has_action_param')
 
 **Check parameter value**:
 ```php
-<?php
 Rules::create('delete_action')
     ->when()
         ->request_param('action', 'delete')
@@ -305,7 +286,6 @@ Rules::create('delete_action')
 
 **Numeric comparison**:
 ```php
-<?php
 Rules::create('pagination')
     ->when()
         ->request_param('page', '1', '>')  // Page > 1
@@ -315,7 +295,6 @@ Rules::create('pagination')
 
 **Multiple accepted values**:
 ```php
-<?php
 Rules::create('list_actions')
     ->when()
         ->request_param('view', ['list', 'grid', 'table'], 'IN')
@@ -325,7 +304,6 @@ Rules::create('list_actions')
 
 **Pattern matching**:
 ```php
-<?php
 Rules::create('search_query')
     ->when()
         ->request_param('s', '*product*', 'LIKE')  // Contains "product"
@@ -346,7 +324,6 @@ Check for cookie existence or value.
 
 **Signature**:
 ```php
-<?php
 ->cookie($cookie_name, $value = null, $operator = '=')
 ```
 
@@ -363,7 +340,6 @@ Check for cookie existence or value.
 
 **Check cookie existence**:
 ```php
-<?php
 Rules::create('has_session')
     ->when()
         ->cookie('session_id')  // Cookie exists
@@ -373,7 +349,6 @@ Rules::create('has_session')
 
 **Check cookie value**:
 ```php
-<?php
 Rules::create('theme_preference')
     ->when()
         ->cookie('theme', 'dark')
@@ -383,7 +358,6 @@ Rules::create('theme_preference')
 
 **Cookie doesn't exist**:
 ```php
-<?php
 Rules::create('first_time_visitor')
     ->when()
         ->cookie('visited_before', null, 'NOT EXISTS')
@@ -393,7 +367,6 @@ Rules::create('first_time_visitor')
 
 **Multiple cookie values**:
 ```php
-<?php
 Rules::create('preferred_languages')
     ->when()
         ->cookie('lang', ['en', 'en-US', 'en-GB'], 'IN')
@@ -403,7 +376,6 @@ Rules::create('preferred_languages')
 
 **Pattern matching cookies**:
 ```php
-<?php
 Rules::create('tracking_cookies')
     ->when()
         ->cookie('_ga', 'GA*', 'LIKE')  // Google Analytics cookie
@@ -424,7 +396,6 @@ Check PHP or WordPress constants.
 
 **Signature**:
 ```php
-<?php
 ->constant($constant_name, $value = null, $operator = '=')
 ```
 
@@ -441,7 +412,6 @@ Check PHP or WordPress constants.
 
 **Check constant existence**:
 ```php
-<?php
 Rules::create('has_debug_constant')
     ->when()
         ->constant('WP_DEBUG')  // Constant is defined
@@ -451,7 +421,6 @@ Rules::create('has_debug_constant')
 
 **Check boolean constants**:
 ```php
-<?php
 Rules::create('debug_enabled')
     ->when()
         ->constant('WP_DEBUG', true)  // Debug is ON
@@ -467,7 +436,6 @@ Rules::create('debug_disabled')
 
 **Check string constants**:
 ```php
-<?php
 Rules::create('local_environment')
     ->when()
         ->constant('WP_ENVIRONMENT_TYPE', 'local')
@@ -477,7 +445,6 @@ Rules::create('local_environment')
 
 **Multiple environment types**:
 ```php
-<?php
 Rules::create('non_production')
     ->when()
         ->constant('WP_ENVIRONMENT_TYPE', ['local', 'development'], 'IN')
@@ -487,7 +454,6 @@ Rules::create('non_production')
 
 **Version checking**:
 ```php
-<?php
 Rules::create('php_version_check')
     ->when()
         ->constant('PHP_VERSION', '8.0', '>=')
@@ -519,7 +485,6 @@ MilliRules supports any WordPress conditional tag function through the `IsCondit
 When used without arguments, `is_*` conditions behave as simple boolean checks:
 
 ```php
-<?php
 // Fluent builder
 Rules::create('rule-1')
     ->when()->is_404()->then()->register();
@@ -544,7 +509,6 @@ Examples:
 
 **Basic conditionals**:
 ```php
-<?php
 // Check if any archive page
 Rules::create('archive_pages')
     ->when()
@@ -572,7 +536,6 @@ In this mode:
 
 **Combining conditions**:
 ```php
-<?php
 // Check if user is logged in and viewing a product archive
 Rules::create('archive_list_user_orders')
     ->when()
@@ -593,7 +556,6 @@ Supported operators:
 - `IS NOT`
 
 ```php
-<?php
 // Calls is_tax('genre', 'sci-fi') and compares result != TRUE
 // Check for multiple taxonomy terms with IN operator
 Rules::create('action_or_drama')
@@ -626,7 +588,6 @@ Check the current post type.
 
 **Signature**:
 ```php
-<?php
 ->post_type($post_types, $operator = '=')
 ```
 
@@ -642,7 +603,6 @@ Check the current post type.
 
 **Single post type**:
 ```php
-<?php
 Rules::create('product_pages')
     ->when()
         ->post_type('product')
@@ -652,7 +612,6 @@ Rules::create('product_pages')
 
 **Multiple post types**:
 ```php
-<?php
 Rules::create('content_types')
     ->when()
         ->post_type(['post', 'page', 'article'], 'IN')
@@ -662,7 +621,6 @@ Rules::create('content_types')
 
 **Exclude post type**:
 ```php
-<?php
 Rules::create('non_page_content')
     ->when()
         ->post_type('page', '!=')
@@ -677,7 +635,6 @@ Rules::create('non_page_content')
 ### PHP Conditions Only
 
 ```php
-<?php
 Rules::create('api_authentication', 'php')
     ->when()
         ->request_url('/api/*')
@@ -691,7 +648,6 @@ Rules::create('api_authentication', 'php')
 ### WordPress Conditions Only
 
 ```php
-<?php
 Rules::create('admin_users_posts', 'wp')
     ->when()
         ->is_user_logged_in()
@@ -704,7 +660,6 @@ Rules::create('admin_users_posts', 'wp')
 ### Mixed PHP and WordPress Conditions
 
 ```php
-<?php
 Rules::create('secure_admin_area', 'wp')
     ->when()
         ->request_url('/wp-admin/*')      // PHP condition
@@ -722,7 +677,6 @@ Rules::create('secure_admin_area', 'wp')
 Conditions are evaluated in the order they're defined:
 
 ```php
-<?php
 Rules::create('sequential_checks')
     ->when()
         ->request_url('/api/*')        // Checked first
@@ -735,7 +689,6 @@ Rules::create('sequential_checks')
 For performance, place the **most restrictive or fastest conditions first**:
 
 ```php
-<?php
 // ✅ Good - quick checks first
 Rules::create('optimized')
     ->when()
@@ -763,7 +716,6 @@ Rules::create('unoptimized')
 When built-in conditions aren't sufficient, create custom conditions:
 
 ```php
-<?php
 // Register custom condition
 Rules::register_condition('is_weekend', function(Context $context) {
     return date('N') >= 6; // Saturday or Sunday
@@ -785,7 +737,6 @@ See [Creating Custom Conditions](../03-customization/01-custom-conditions.md) fo
 ### 1. Use Specific Conditions
 
 ```php
-<?php
 // ✅ Good - specific conditions
 ->when()
     ->request_url('/api/users')
@@ -799,7 +750,6 @@ See [Creating Custom Conditions](../03-customization/01-custom-conditions.md) fo
 ### 2. Leverage Auto-Detection
 
 ```php
-<?php
 // ✅ Good - let MilliRules detect operators
 ->request_url('/admin/*')           // LIKE auto-detected
 ->request_method(['GET', 'HEAD'])   // IN auto-detected
@@ -814,7 +764,6 @@ See [Creating Custom Conditions](../03-customization/01-custom-conditions.md) fo
 ### 3. Group Related Conditions
 
 ```php
-<?php
 // ✅ Good - logical grouping
 Rules::create('api_security')
     ->when()
@@ -832,7 +781,6 @@ Rules::create('api_security')
 ### 4. Use Comments for Complex Logic
 
 ```php
-<?php
 Rules::create('complex_caching')
     ->when()
         // Cacheable request types

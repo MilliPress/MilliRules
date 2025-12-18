@@ -13,7 +13,6 @@ Placeholders allow you to inject dynamic runtime values into your rules. Instead
 Placeholders are special tokens enclosed in curly braces that get replaced with actual values from the execution context:
 
 ```php
-<?php
 // Static value
 'value' => 'Fixed string'
 
@@ -39,7 +38,6 @@ The placeholder syntax uses colon-separated parts to navigate the context hierar
 ### Examples
 
 ```php
-<?php
 '{request.uri}'              // $context['request']['uri']
 '{request.method}'           // $context['request']['method']
 '{request:headers:host}'     // $context['request']['headers']['host']
@@ -71,7 +69,6 @@ Access HTTP request data from the PHP package context.
 #### Request Headers
 
 ```php
-<?php
 '{request:headers:content-type}'    // Content-Type header
 '{request:headers:authorization}'   // Authorization header
 '{request:headers:accept}'          // Accept header
@@ -84,7 +81,6 @@ Access HTTP request data from the PHP package context.
 #### Examples
 
 ```php
-<?php
 Rules::register_action('log_request', function($args, Context $context) {
     $message = $args['value'] ?? '';
     error_log($message);
@@ -108,7 +104,6 @@ Rules::create('log_requests')
 Access cookie values.
 
 ```php
-<?php
 '{cookie.session_id}'        // $_COOKIE['session_id']
 '{cookie.user_preference}'   // $_COOKIE['user_preference']
 '{cookie.theme}'             // $_COOKIE['theme']
@@ -117,7 +112,6 @@ Access cookie values.
 #### Examples
 
 ```php
-<?php
 Rules::register_action('personalize', function($args, Context $context) {
     $theme = $args['theme'] ?? 'default';
     apply_theme($theme);
@@ -139,7 +133,6 @@ Rules::create('apply_user_theme')
 Access query and form parameters.
 
 ```php
-<?php
 '{param.action}'         // $_GET['action'] or $_POST['action']
 '{param.id}'            // $_GET['id'] or $_POST['id']
 '{param.page}'          // $_GET['page'] or $_POST['page']
@@ -148,7 +141,6 @@ Access query and form parameters.
 #### Examples
 
 ```php
-<?php
 Rules::register_action('process_action', function($args, Context $context) {
     $action = $args['action'] ?? '';
     $id = $args['id'] ?? 0;
@@ -210,7 +202,6 @@ Access WordPress query variables from `$wp_query->query_vars`:
 #### Examples
 
 ```php
-<?php
 use MilliRules\Context;
 
 Rules::register_action('log_user_action', function($args, Context $context) {
@@ -239,7 +230,6 @@ Placeholders are primarily used in action configurations to inject dynamic value
 ### Basic Usage
 
 ```php
-<?php
 Rules::register_action('send_notification', function($args, Context $context) {
     $to = $args['to'] ?? '';
     $subject = $args['subject'] ?? '';
@@ -265,7 +255,6 @@ Rules::create('notify_on_login')
 ### Multiple Placeholders
 
 ```php
-<?php
 Rules::register_action('log_detailed', function($args, Context $context) {
     error_log($args['message'] ?? '');
 });
@@ -283,7 +272,6 @@ Rules::create('detailed_logging')
 ### Nested Placeholders
 
 ```php
-<?php
 Rules::register_action('set_header', function($args, Context $context) {
     $name = $args['name'] ?? '';
     $value = $args['value'] ?? '';
@@ -312,7 +300,6 @@ Rules::create('custom_header')
 Actions extending `BaseAction` automatically get placeholder resolution:
 
 ```php
-<?php
 namespace MyPlugin\Actions;
 
 use MilliRules\Actions\BaseAction;
@@ -338,7 +325,6 @@ class CustomNotificationAction extends BaseAction {
 Callback actions need to manually resolve placeholders:
 
 ```php
-<?php
 use MilliRules\PlaceholderResolver;
 
 Rules::register_action('manual_resolution', function($args, Context $context) {
@@ -369,7 +355,6 @@ Register custom placeholder categories for your own data sources.
 ### Registering Custom Resolvers
 
 ```php
-<?php
 use MilliRules\Rules;
 
 // Register custom placeholder category
@@ -399,7 +384,6 @@ Rules::register_placeholder('custom', function($context, $parts) {
 ### Using Custom Placeholders
 
 ```php
-<?php
 Rules::register_action('log_custom', function($args, Context $context) {
     error_log($args['message'] ?? '');
 });
@@ -425,7 +409,6 @@ Rules::create('use_option_placeholder')
 ### Complex Custom Resolvers
 
 ```php
-<?php
 Rules::register_placeholder('env', function($context, $parts) {
     $key = $parts[0] ?? '';
 
@@ -465,7 +448,6 @@ Rules::register_placeholder('env', function($context, $parts) {
 Use placeholders with fallback values:
 
 ```php
-<?php
 Rules::register_action('log_with_fallback', function($args, Context $context) {
     $resolver = new PlaceholderResolver($context);
 
@@ -490,7 +472,6 @@ Rules::create('log_with_defaults')
 Transform placeholder values:
 
 ```php
-<?php
 Rules::register_action('transform_placeholder', function($args, Context $context) {
     $resolver = new PlaceholderResolver($context);
     $value = $resolver->resolve($args['value'] ?? '');
@@ -508,7 +489,6 @@ Rules::register_action('transform_placeholder', function($args, Context $context
 Access array values:
 
 ```php
-<?php
 // Access first role
 '{user:roles:0}'        // First role
 
@@ -521,7 +501,6 @@ Access array values:
 Access public properties and magic properties on objects using dot notation:
 
 ```php
-<?php
 // Access public object properties
 '{hook:args:0:ID}'           // WP_Post object's ID property
 '{hook:args:0:post_title}'   // WP_Post object's post_title property
@@ -539,7 +518,6 @@ Access public properties and magic properties on objects using dot notation:
 WordPress hooks often pass objects as arguments. You can now access their properties directly:
 
 ```php
-<?php
 use MilliRules\Context;
 
 // Example: transition_post_status hook passes (new_status, old_status, $post)
@@ -565,7 +543,6 @@ Rules::create('clear_on_publish')
 Combine array and object access for complex data structures:
 
 ```php
-<?php
 // WordPress comment object in an array
 '{comments:0:comment_author}'       // First comment's author
 '{comments:0:comment_content}'      // First comment's content
@@ -616,7 +593,6 @@ Understanding how placeholders are resolved:
 ### 1. Use Descriptive Placeholder Names
 
 ```php
-<?php
 // ✅ Good - clear what data is being used
 'message' => 'User {user.login} accessed {request.uri}'
 
@@ -627,7 +603,6 @@ Understanding how placeholders are resolved:
 ### 2. Provide Fallback Values
 
 ```php
-<?php
 Rules::register_action('safe_action', function($args, Context $context) {
     $resolver = new PlaceholderResolver($context);
 
@@ -642,7 +617,6 @@ Rules::register_action('safe_action', function($args, Context $context) {
 ### 3. Validate Resolved Values
 
 ```php
-<?php
 Rules::register_action('validated_action', function($args, Context $context) {
     $resolver = new PlaceholderResolver($context);
     $email = $resolver->resolve($args['email'] ?? '');
@@ -661,7 +635,6 @@ Rules::register_action('validated_action', function($args, Context $context) {
 ### 4. Document Custom Placeholders
 
 ```php
-<?php
 /**
  * Custom Placeholder: {payment.gateway}
  * Returns the active payment gateway name
@@ -683,7 +656,6 @@ Rules::register_placeholder('payment', function($context, $parts) {
 ### 1. Missing Context Data
 
 ```php
-<?php
 // ❌ Wrong - WordPress placeholders in PHP-only context
 Rules::create('php_rule', 'php')
     ->when()->request_url('/api/*')
@@ -709,7 +681,6 @@ Rules::register_action('safe_wp_action', function($args, Context $context) {
 ### 2. Incorrect Placeholder Syntax
 
 ```php
-<?php
 // ❌ Wrong - missing braces
 'value' => 'request:uri'
 
@@ -723,7 +694,6 @@ Rules::register_action('safe_wp_action', function($args, Context $context) {
 ### 3. Case Sensitivity
 
 ```php
-<?php
 // Context keys are case-sensitive
 // ✅ Correct
 '{request.uri}'

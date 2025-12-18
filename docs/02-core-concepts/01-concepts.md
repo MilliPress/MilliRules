@@ -42,7 +42,6 @@ A **rule** is a self-contained unit of logic that:
 Every rule consists of:
 
 ```php
-<?php
 use MilliRules\Rules;
 
 Rules::create('rule_id')           // Unique identifier
@@ -79,7 +78,6 @@ Rules::create('rule_id')           // Unique identifier
 Rules execute in sequence based on their `order` value:
 
 ```php
-<?php
 Rules::create('second_rule')->order(10)->when()->request_url('/test')->then()->register();
 Rules::create('first_rule')->order(5)->when()->request_url('/test')->then()->register();
 Rules::create('third_rule')->order(20)->when()->request_url('/test')->then()->register();
@@ -100,7 +98,6 @@ Rules::create('third_rule')->order(20)->when()->request_url('/test')->then()->re
 When multiple rules modify the same value or state:
 
 ```php
-<?php
 // Rule 1 (order: 10) sets cache to 3600 seconds
 Rules::create('cache_short')->order(10)
     ->when()->request_url('/api/*')
@@ -125,7 +122,6 @@ For URL `/api/stable/users`:
 Sometimes you want to **prevent** later rules from overriding values. Use `->lock()` to lock an action, preventing subsequent actions of the same type from executing:
 
 ```php
-<?php
 // Rule 1 (order: 10) sets cache and LOCKS it
 Rules::create('cache_short')->order(10)
     ->when()->request_url('/api/*')
@@ -164,7 +160,6 @@ MilliRules provides two categories of conditions:
 Available in any PHP environment:
 
 ```php
-<?php
 ->when()
     ->request_url('/api/*')           // URL pattern matching
     ->request_method('POST')          // HTTP method
@@ -179,7 +174,6 @@ Available in any PHP environment:
 Available only in WordPress environments. MilliRules supports **all** WordPress `is_*` conditional tags (like `is_single()`, `is_tax()`, `is_404()`, etc.):
 
 ```php
-<?php
 ->when()
     ->is_user_logged_in()             // User authentication
     ->is_singular('post')             // Singular post/page
@@ -202,7 +196,6 @@ MilliRules supports three evaluation strategies:
 **All conditions must be true** for the rule to execute. This is the default behavior.
 
 ```php
-<?php
 Rules::create('secure_api_access')
     ->when()  // Implicitly uses match_all()
         ->request_url('/api/*')
@@ -220,7 +213,6 @@ Rules::create('secure_api_access')
 **At least one condition must be true** for the rule to execute.
 
 ```php
-<?php
 Rules::create('development_environments')
     ->when()
         ->match_any()  // Explicit OR logic
@@ -239,7 +231,6 @@ Rules::create('development_environments')
 **All conditions must be false** for the rule to execute.
 
 ```php
-<?php
 Rules::create('production_only')
     ->when()
         ->match_none()  // Explicit NOT logic
@@ -264,7 +255,6 @@ Rules::create('production_only')
 Actions execute **immediately and sequentially** when their rule's conditions match:
 
 ```php
-<?php
 Rules::create('api_request_handler')
     ->when()
         ->request_url('/api/process')
@@ -285,7 +275,6 @@ MilliRules supports various action types:
 Define actions inline using callbacks:
 
 ```php
-<?php
 Rules::register_action('send_email', function($args, Context $context) {
     $to = $args['to'] ?? '';
     $subject = $args['subject'] ?? 'Notification';
@@ -305,7 +294,6 @@ Rules::register_action('send_email', function($args, Context $context) {
 Create reusable action classes:
 
 ```php
-<?php
 use MilliRules\Actions\ActionInterface;
 use MilliRules\Context;
 
@@ -334,7 +322,6 @@ class SendEmailAction implements ActionInterface {
 Trigger WordPress actions or filters with inlined callback:
 
 ```php
-<?php
 ->on('wp_mail', 10) // Registers with WordPress hook
 ->then()
     ->log_sent_mail(function($args, Context $context) {
@@ -360,7 +347,6 @@ The **context** is an object that provides lazy-loaded access to all the data av
 Context provides a flat, organized structure:
 
 ```php
-<?php
 use MilliRules\Context;
 
 // Context sections (loaded on-demand):
@@ -392,7 +378,6 @@ use MilliRules\Context;
 Context data is loaded **only when needed**. This provides significant performance benefits by avoiding unnecessary data retrieval:
 
 ```php
-<?php
 use MilliRules\MilliRules;
 use MilliRules\Context;
 
@@ -420,7 +405,6 @@ $userId = $context->get('user.id', 0);  // Triggers 'user' provider loading
 Callback actions and conditions receive the Context object, which provides methods to access data:
 
 ```php
-<?php
 use MilliRules\Context;
 
 Rules::register_action('log_context', function($args, Context $context) {
@@ -435,7 +419,6 @@ Rules::register_action('log_context', function($args, Context $context) {
 You can also explicitly load context sections for clarity:
 
 ```php
-<?php
 use MilliRules\Context;
 
 Rules::register_action('log_context', function($args, Context $context) {
@@ -455,7 +438,6 @@ Rules::register_action('log_context', function($args, Context $context) {
 The Context class provides several useful methods:
 
 ```php
-<?php
 // Get a value using dot notation (automatically loads the section if needed)
 $value = $context->get('post.type', 'post');
 // ↑ Internally calls $context->load('post') if not already loaded
@@ -496,7 +478,6 @@ $array = $context->to_array();
 - Cookie and header management
 
 ```php
-<?php
 // PHP package is always loaded
 MilliRules::init();
 ```
@@ -509,7 +490,6 @@ MilliRules::init();
 - WordPress data in context
 
 ```php
-<?php
 // Automatically loads WordPress package if WordPress is detected
 MilliRules::init();
 ```
@@ -519,7 +499,6 @@ MilliRules::init();
 Packages can depend on other packages:
 
 ```php
-<?php
 // WordPress package requires PHP package
 class WordPressPackage extends BasePackage {
     public function get_required_packages(): array {
@@ -548,7 +527,6 @@ MilliRules supports two rule types that determine execution strategy:
 - Framework-agnostic
 
 ```php
-<?php
 Rules::create('cache_check', 'php')
     ->when()->request_url('/api/*')
     ->then()->custom('check_cache')
@@ -566,7 +544,6 @@ MilliRules::execute_rules(['PHP']);
 - Default type when WordPress is detected
 
 ```php
-<?php
 Rules::create('admin_notice', 'wp')
     ->on('admin_notices', 10)  // Registers with WordPress hook
     ->when()->is_user_logged_in()
@@ -585,7 +562,6 @@ MilliRules auto-detects rule type based on:
 4. Default to `php` if ambiguous
 
 ```php
-<?php
 // Auto-detected as 'wp' due to WordPress condition
 Rules::create('wp_rule_auto')
     ->when()->is_user_logged_in()
@@ -627,7 +603,6 @@ Understanding the execution flow helps debug issues and optimize performance:
 Every execution returns detailed statistics:
 
 ```php
-<?php
 $result = MilliRules::execute_rules();
 
 /*
@@ -649,7 +624,6 @@ $result = MilliRules::execute_rules();
 ### 1. Keep Rules Focused
 
 ```php
-<?php
 // ✅ Good - focused, single purpose
 Rules::create('cache_api_responses')
     ->when()->request_url('/api/*')
@@ -671,7 +645,6 @@ Rules::create('do_everything')
 ### 2. Use Descriptive Names
 
 ```php
-<?php
 // ✅ Good - clear purpose
 Rules::create('block_non_authenticated_api_access')
     ->title('Block API Access for Non-Authenticated Users')
@@ -684,7 +657,6 @@ Rules::create('rule1')
 ### 3. Order Rules Logically
 
 ```php
-<?php
 // ✅ Good - logical ordering
 Rules::create('set_default_cache')->order(10)  // Set defaults first
 Rules::create('override_api_cache')->order(20) // Override for specific cases
@@ -694,7 +666,6 @@ Rules::create('disable_cache_dev')->order(30)  // Development override last
 ### 4. Leverage Context
 
 ```php
-<?php
 use MilliRules\Context;
 
 // ✅ Good - uses context effectively
@@ -713,7 +684,6 @@ Rules::register_action('log_user_action', function($args, Context $context) {
 Layer features based on availability:
 
 ```php
-<?php
 // Base rule for all environments
 Rules::create('base_security')->order(10)
     ->when()->request_url('*')
@@ -732,7 +702,6 @@ Rules::create('wp_security')->order(20)
 Allow specific rules to override general rules:
 
 ```php
-<?php
 // General rule
 Rules::create('default_cache')->order(10)
     ->when()->request_url('*')

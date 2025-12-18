@@ -48,7 +48,6 @@ The simplest way to create actions is using callback functions.
 #### Registering Callback Actions
 
 ```php
-<?php
 use MilliRules\Rules;
 use MilliRules\Context;
 
@@ -70,7 +69,6 @@ Rules::register_action('log_user_action', function($args, Context $context) {
 #### Using Callback Actions in Rules
 
 ```php
-<?php
 Rules::create('log_admin_access')
     ->when()
         ->request_url('/wp-admin/*')
@@ -97,7 +95,6 @@ For complex operations, create action classes implementing `ActionInterface`.
 #### Action Interface
 
 ```php
-<?php
 namespace MilliRules\Interfaces;
 
 interface ActionInterface {
@@ -109,7 +106,6 @@ interface ActionInterface {
 #### Creating an Action Class
 
 ```php
-<?php
 namespace MyPlugin\Actions;
 
 use MilliRules\Interfaces\ActionInterface;
@@ -143,7 +139,6 @@ class SendEmailAction implements ActionInterface {
 #### Registering the Namespace
 
 ```php
-<?php
 use MilliRules\RuleEngine;
 
 // Register action namespace so MilliRules can find your action classes
@@ -153,7 +148,6 @@ RuleEngine::register_namespace('Actions', 'MyPlugin\Actions');
 #### Using Class-Based Actions
 
 ```php
-<?php
 Rules::create('user_registration_notification')
     ->when()
         ->request_url('/wp-admin/user-new.php')
@@ -177,7 +171,6 @@ Rules::create('user_registration_notification')
 MilliRules provides a `BaseAction` abstract class that includes placeholder resolution.
 
 ```php
-<?php
 namespace MyPlugin\Actions;
 
 use MilliRules\Actions\BaseAction;
@@ -200,7 +193,6 @@ class CustomAction extends BaseAction {
 **Using placeholder resolution**:
 
 ```php
-<?php
 Rules::create('dynamic_logging')
     ->when()
         ->request_url('/api/*')
@@ -222,7 +214,6 @@ See [Dynamic Placeholders](../02-core-concepts/05-placeholders.md) for complete 
 ### 1. Logging Actions
 
 ```php
-<?php
 // Simple logging
 Rules::register_action('log', function($args, Context $context) {
     error_log($args['value'] ?? '');
@@ -253,7 +244,6 @@ Rules::create('log_actions')
 ### 2. Redirect Actions
 
 ```php
-<?php
 Rules::register_action('redirect', function($args, Context $context) {
     $url = $args['url'] ?? home_url();
     $status = $args['status'] ?? 302;
@@ -285,7 +275,6 @@ Rules::create('redirect_logged_out_users')
 ### 3. Cache Control Actions
 
 ```php
-<?php
 Rules::register_action('set_cache_headers', function($args, Context $context) {
     $duration = $args['duration'] ?? 3600;
 
@@ -310,7 +299,6 @@ Rules::create('cache_api_responses')
 ### 4. Database Operations
 
 ```php
-<?php
 Rules::register_action('log_to_database', function($args, Context $context) {
     global $wpdb;
 
@@ -337,7 +325,6 @@ Rules::create('track_premium_access')
 ### 5. WordPress Hook Triggers
 
 ```php
-<?php
 // Trigger WordPress actions
 Rules::register_action('do_action', function($args, Context $context) {
     $hook = $args['value'] ?? '';
@@ -375,7 +362,6 @@ Rules::create('trigger_custom_hooks')
 ### 6. Content Modification
 
 ```php
-<?php
 Rules::register_action('modify_content', function($args, Context $context) {
     add_filter('the_content', function($content) use ($config) {
         $prepend = $args['prepend'] ?? '';
@@ -403,7 +389,6 @@ Rules::create('add_disclaimer')
 ### 7. Conditional Execution
 
 ```php
-<?php
 Rules::register_action('execute_if', function($args, Context $context) {
     $condition = $args['condition'] ?? null;
     $callback = $args['callback'] ?? null;
@@ -437,7 +422,6 @@ Rules::create('conditional_action')
 Actions receive configuration through the `$config` array:
 
 ```php
-<?php
 Rules::register_action('flexible_action', function($args, Context $context) {
     // Common configuration keys
     $value = $args['value'] ?? '';           // Primary value
@@ -477,7 +461,6 @@ Rules::create('configured_action')
 The context provides access to all available data:
 
 ```php
-<?php
 Rules::register_action('context_aware_action', function($args, Context $context) {
     // Request data
     $url = $context->get('request.uri', '') ?? '';
@@ -503,7 +486,6 @@ Rules::register_action('context_aware_action', function($args, Context $context)
 
 **Full context structure**:
 ```php
-<?php
 [
     'request' => [
         'method' => 'GET',
@@ -535,7 +517,6 @@ Rules::register_action('context_aware_action', function($args, Context $context)
 MilliRules catches action exceptions and continues execution:
 
 ```php
-<?php
 Rules::register_action('safe_action', function($args, Context $context) {
     try {
         // Risky operation
@@ -561,7 +542,6 @@ Rules::register_action('safe_action', function($args, Context $context) {
 Actions execute sequentially in definition order:
 
 ```php
-<?php
 Rules::create('multi_step_process')
     ->when()->request_url('/process')
     ->then()
@@ -591,7 +571,6 @@ Rules::create('multi_step_process')
 ### 1. Keep Actions Focused
 
 ```php
-<?php
 // ✅ Good - single responsibility
 Rules::register_action('log_access', function($args, Context $context) {
     error_log('Access logged');
@@ -614,7 +593,6 @@ Rules::register_action('do_everything', function($args, Context $context) {
 ### 2. Use Descriptive Action Names
 
 ```php
-<?php
 // ✅ Good
 Rules::register_action('send_admin_notification_email', ...);
 Rules::register_action('log_security_event', ...);
@@ -629,7 +607,6 @@ Rules::register_action('update', ...);
 ### 3. Validate Configuration
 
 ```php
-<?php
 Rules::register_action('safe_action', function($args, Context $context) {
     // Validate required configuration
     if (empty($args['required_value'])) {
@@ -649,7 +626,6 @@ Rules::register_action('safe_action', function($args, Context $context) {
 ### 4. Check Prerequisites
 
 ```php
-<?php
 Rules::register_action('wordpress_dependent', function($args, Context $context) {
     // Check if WordPress functions are available
     if (!function_exists('wp_mail')) {
@@ -664,7 +640,6 @@ Rules::register_action('wordpress_dependent', function($args, Context $context) 
 ### 5. Use Constants for Configuration
 
 ```php
-<?php
 // Define action configuration constants
 define('DEFAULT_EMAIL_RECIPIENT', 'admin@example.com');
 define('DEFAULT_LOG_LEVEL', 'info');
@@ -684,7 +659,6 @@ Rules::register_action('send_notification', function($args, Context $context) {
 ### 1. Modifying Context
 
 ```php
-<?php
 // ❌ Wrong - context modifications don't persist
 Rules::register_action('modify_context', function($args, Context $context) {
     $context['custom_value'] = 'modified';
@@ -703,7 +677,6 @@ Rules::register_action('store_value', function($args, Context $context) {
 ### 2. Assuming Action Order Across Rules
 
 ```php
-<?php
 // ❌ Wrong - different rules, no guaranteed order
 Rules::create('rule1')->order(10)->when()->then()->custom('action1')->register();
 Rules::create('rule2')->order(20)->when()->then()->custom('action2')->register();
@@ -721,7 +694,6 @@ Rules::create('rule')->order(10)
 ### 3. Using Exit/Die in Actions
 
 ```php
-<?php
 // ❌ Wrong - prevents subsequent actions
 Rules::register_action('early_exit', function($args, Context $context) {
     echo 'Response';

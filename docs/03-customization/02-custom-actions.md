@@ -11,7 +11,6 @@ Custom actions define the "then" and implement the actual business logic when ru
 ## Quick Start
 
 ```php
-<?php
 
 use MilliRules\Rules;
 use MilliRules\Context;
@@ -65,7 +64,6 @@ MilliRules offers four ways to define custom actions. Choose based on your needs
 Define the action directly in the rule using a callback:
 
 ```php
-<?php
 use MilliRules\Rules;
 use MilliRules\Context;
 
@@ -84,7 +82,6 @@ Rules::create('log_important_access')
 **Example with context access:**
 
 ```php
-<?php
 Rules::create('send_notification')
     ->when()->user_role('administrator')
     ->then()
@@ -121,7 +118,6 @@ Rules::create('send_notification')
 Register once, use everywhere:
 
 ```php
-<?php
 use MilliRules\Rules;
 use MilliRules\Context;
 
@@ -149,7 +145,6 @@ Rules::register_action('log_message', function($args, Context $context) {
 **Then use in any rule:**
 
 ```php
-<?php
 Rules::create('log_important_requests')
     ->when()->request_url('/important/*')
     ->then()
@@ -174,7 +169,6 @@ Rules::create('log_important_requests')
 Register an entire namespace once and all action classes are auto-discovered:
 
 ```php
-<?php
 use MilliRules\Rules;
 
 // One-time registration at plugin initialization
@@ -184,7 +178,6 @@ Rules::register_namespace('Actions', 'MyPlugin\Actions');
 **Create your action class:**
 
 ```php
-<?php
 namespace MyPlugin\Actions;
 
 use MilliRules\Actions\BaseAction;
@@ -222,7 +215,6 @@ class NotifyMail extends BaseAction
 
 **Usage:**
 ```php
-<?php
 Rules::create('notify_on_login')
     ->when()->is_user_logged_in()
     ->then()
@@ -244,7 +236,6 @@ When creating custom action classes (using namespace or manual registration), yo
 Access action arguments using the `get_arg()` method in your action classes:
 
 ```php
-<?php
 namespace MyPlugin\Actions;
 
 use MilliRules\Actions\BaseAction;
@@ -288,7 +279,6 @@ The `get_arg()` method returns an `ArgumentValue` object that provides fluent ty
 Placeholders like `{user.email}` are automatically resolved when you call any type method:
 
 ```php
-<?php
 // Rule definition
 Rules::create('welcome_email')
     ->when()->is_user_logged_in()
@@ -312,7 +302,6 @@ $subject = $this->get_arg('subject')->string();
 Works with both named and positional arguments:
 
 ```php
-<?php
 class LogMessage extends BaseAction
 {
     public function execute(Context $context): void
@@ -339,7 +328,6 @@ class LogMessage extends BaseAction
 **Only use when:** Namespace registration isn't suitable (dynamic class names, runtime actions, etc.)
 
 ```php
-<?php
 use MilliRules\Rules;
 
 // ⚠️ Avoid this if possible - creates type duplication
@@ -364,7 +352,6 @@ Rules::register_action('notify', function($args, Context $context) {
 Once registered, actions can be used via **dynamic method calls**:
 
 ```php
-<?php
 Rules::create('notify_admin')
     ->when()->request_url('/important/*')
     ->then()
@@ -379,7 +366,6 @@ Both `->action_name()` and `->custom()` accept identical argument formats:
 
 **Named parameters (recommended):**
 ```php
-<?php
 ->send_email(['to' => 'admin@example.com', 'subject' => 'Alert'])
 ->custom('send_email', ['to' => 'admin@example.com', 'subject' => 'Alert'])
 // Both result in: $this->args['to'], $this->args['subject']
@@ -387,7 +373,6 @@ Both `->action_name()` and `->custom()` accept identical argument formats:
 
 **Positional array:**
 ```php
-<?php
 ->send_email(['admin@example.com', 'Alert', 'Body'])
 ->custom('send_email', ['admin@example.com', 'Alert', 'Body'])
 // Both result in: $this->args[0], $this->args[1], $this->args[2]
@@ -395,7 +380,6 @@ Both `->action_name()` and `->custom()` accept identical argument formats:
 
 **Single value:**
 ```php
-<?php
 ->log_message('Important event occurred')
 ->custom('log_message', 'Important event occurred')
 // Both result in: $this->args[0]

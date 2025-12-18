@@ -29,7 +29,6 @@ MilliRules supports 13 operators organized into five categories:
 MilliRules intelligently detects the appropriate operator based on the value type:
 
 ```php
-<?php
 // String value → '=' operator
 ->request_method('GET')
 
@@ -62,7 +61,6 @@ MilliRules intelligently detects the appropriate operator based on the value typ
 
 #### Syntax
 ```php
-<?php
 ->condition($value)           // Auto-detected
 ->condition($value, '=')      // Explicit
 ```
@@ -71,7 +69,6 @@ MilliRules intelligently detects the appropriate operator based on the value typ
 
 **String comparison**:
 ```php
-<?php
 Rules::create('exact_match')
     ->when()
         ->request_method('POST')              // Exact match
@@ -83,7 +80,6 @@ Rules::create('exact_match')
 
 **Numeric comparison**:
 ```php
-<?php
 Rules::create('exact_number')
     ->when()
         ->request_param('page', '1', '=')     // Page equals 1
@@ -94,7 +90,6 @@ Rules::create('exact_number')
 
 **Boolean comparison** (prefer `IS` operator):
 ```php
-<?php
 // Works but not recommended
 ->constant('WP_DEBUG', true, '=')
 
@@ -113,7 +108,6 @@ Rules::create('exact_number')
 
 #### Syntax
 ```php
-<?php
 ->condition($value, '!=')
 ```
 
@@ -121,7 +115,6 @@ Rules::create('exact_number')
 
 **Exclude values**:
 ```php
-<?php
 Rules::create('not_post_method')
     ->when()
         ->request_method('POST', '!=')        // Not POST
@@ -132,7 +125,6 @@ Rules::create('not_post_method')
 
 **Exclude status**:
 ```php
-<?php
 Rules::create('not_debug_mode')
     ->when()
         ->constant('WP_DEBUG', true, '!=')    // Debug not enabled
@@ -152,14 +144,12 @@ Matches when actual value is greater than expected value.
 
 #### Syntax
 ```php
-<?php
 ->condition($value, '>')
 ```
 
 #### Examples
 
 ```php
-<?php
 Rules::create('pagination')
     ->when()
         ->request_param('page', '1', '>')     // Page > 1
@@ -176,14 +166,12 @@ Matches when actual value is greater than or equal to expected value.
 
 #### Syntax
 ```php
-<?php
 ->condition($value, '>=')
 ```
 
 #### Examples
 
 ```php
-<?php
 Rules::create('php_version_check')
     ->when()
         ->constant('PHP_VERSION', '7.4', '>=')  // PHP 7.4+
@@ -199,14 +187,12 @@ Matches when actual value is less than expected value.
 
 #### Syntax
 ```php
-<?php
 ->condition($value, '<')
 ```
 
 #### Examples
 
 ```php
-<?php
 Rules::create('early_pagination')
     ->when()
         ->request_param('page', '5', '<')     // First 4 pages
@@ -222,14 +208,12 @@ Matches when actual value is less than or equal to expected value.
 
 #### Syntax
 ```php
-<?php
 ->condition($value, '<=')
 ```
 
 #### Examples
 
 ```php
-<?php
 Rules::create('legacy_php')
     ->when()
         ->constant('PHP_VERSION', '7.3', '<=')  // PHP 7.3 or older
@@ -252,7 +236,6 @@ Pattern matching operators allow flexible string matching using wildcards or reg
 
 #### Syntax
 ```php
-<?php
 ->condition($pattern, 'LIKE')   // Explicit
 ->condition($pattern)            // Auto-detected if pattern contains * or ?
 ```
@@ -268,7 +251,6 @@ Pattern matching operators allow flexible string matching using wildcards or reg
 
 **Prefix matching**:
 ```php
-<?php
 Rules::create('admin_urls')
     ->when()
         ->request_url('/wp-admin/*')  // Matches /wp-admin/anything
@@ -278,7 +260,6 @@ Rules::create('admin_urls')
 
 **Suffix matching**:
 ```php
-<?php
 Rules::create('api_endpoints')
     ->when()
         ->request_url('*/api')        // Matches anything/api
@@ -288,7 +269,6 @@ Rules::create('api_endpoints')
 
 **Contains matching**:
 ```php
-<?php
 Rules::create('search_pages')
     ->when()
         ->request_url('*search*')     // Contains "search" anywhere
@@ -298,7 +278,6 @@ Rules::create('search_pages')
 
 **Single character wildcard**:
 ```php
-<?php
 Rules::create('version_urls')
     ->when()
         ->request_url('/v?/*')        // Matches /v1/, /v2/, /va/, etc.
@@ -308,7 +287,6 @@ Rules::create('version_urls')
 
 **Header patterns**:
 ```php
-<?php
 Rules::create('bearer_tokens')
     ->when()
         ->request_header('Authorization', 'Bearer *', 'LIKE')
@@ -318,7 +296,6 @@ Rules::create('bearer_tokens')
 
 **Complex patterns**:
 ```php
-<?php
 Rules::create('complex_pattern')
     ->when()
         ->request_url('/api/v?/users/*')  // /api/v1/users/123, /api/v2/users/abc
@@ -337,7 +314,6 @@ Rules::create('complex_pattern')
 
 #### Syntax
 ```php
-<?php
 ->condition($pattern, 'NOT LIKE')
 ```
 
@@ -345,7 +321,6 @@ Rules::create('complex_pattern')
 
 **Exclude admin areas**:
 ```php
-<?php
 Rules::create('non_admin')
     ->when()
         ->request_url('/wp-admin/*', 'NOT LIKE')
@@ -356,7 +331,6 @@ Rules::create('non_admin')
 
 **Exclude API endpoints**:
 ```php
-<?php
 Rules::create('non_api')
     ->when()
         ->request_url('/api/*', 'NOT LIKE')
@@ -372,7 +346,6 @@ Rules::create('non_api')
 
 #### Syntax
 ```php
-<?php
 ->condition($regex_pattern, 'REGEXP')  // Explicit
 ->condition('/pattern/')                // Auto-detected (starts with /)
 ```
@@ -382,7 +355,6 @@ Rules::create('non_api')
 Regex patterns must be valid PHP regex with delimiters:
 
 ```php
-<?php
 '/pattern/'           // Basic pattern
 '/pattern/i'          // Case-insensitive
 '/pattern/u'          // UTF-8
@@ -396,7 +368,6 @@ Regex patterns must be valid PHP regex with delimiters:
 
 **API version matching**:
 ```php
-<?php
 Rules::create('api_versions')
     ->when()
         // Matches /api/v1/, /api/v2/, /api/v123/
@@ -407,7 +378,6 @@ Rules::create('api_versions')
 
 **Email validation**:
 ```php
-<?php
 Rules::create('email_param')
     ->when()
         ->request_param('email', '/^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$/i', 'REGEXP')
@@ -417,7 +387,6 @@ Rules::create('email_param')
 
 **Complex URL patterns**:
 ```php
-<?php
 Rules::create('product_urls')
     ->when()
         // Matches /product/abc-123, /product/xyz-456
@@ -428,7 +397,6 @@ Rules::create('product_urls')
 
 **Date patterns**:
 ```php
-<?php
 Rules::create('date_urls')
     ->when()
         // Matches /2024/01/15, /2023/12/31
@@ -439,7 +407,6 @@ Rules::create('date_urls')
 
 **Case-insensitive matching**:
 ```php
-<?php
 Rules::create('case_insensitive')
     ->when()
         ->request_url('/\\/admin/i', 'REGEXP')  // Matches /admin, /ADMIN, /Admin
@@ -473,7 +440,6 @@ Matches when actual value is **in** the array of expected values.
 
 #### Syntax
 ```php
-<?php
 ->condition([$val1, $val2, ...], 'IN')  // Explicit
 ->condition([$val1, $val2, ...])         // Auto-detected
 ```
@@ -482,7 +448,6 @@ Matches when actual value is **in** the array of expected values.
 
 **Multiple HTTP methods**:
 ```php
-<?php
 Rules::create('safe_methods')
     ->when()
         ->request_method(['GET', 'HEAD', 'OPTIONS'], 'IN')
@@ -499,7 +464,6 @@ Rules::create('safe_methods_auto')
 
 **Multiple URLs**:
 ```php
-<?php
 Rules::create('protected_pages')
     ->when()
         ->request_url([
@@ -513,7 +477,6 @@ Rules::create('protected_pages')
 
 **Environment types**:
 ```php
-<?php
 Rules::create('non_production')
     ->when()
         ->constant('WP_ENVIRONMENT_TYPE', ['local', 'development', 'staging'], 'IN')
@@ -523,7 +486,6 @@ Rules::create('non_production')
 
 **Post types**:
 ```php
-<?php
 Rules::create('content_types')
     ->when()
         ->post_type(['post', 'page', 'article'], 'IN')
@@ -539,7 +501,6 @@ Matches when actual value is **not in** the array of expected values.
 
 #### Syntax
 ```php
-<?php
 ->condition([$val1, $val2, ...], 'NOT IN')
 ```
 
@@ -547,7 +508,6 @@ Matches when actual value is **not in** the array of expected values.
 
 **Exclude methods**:
 ```php
-<?php
 Rules::create('non_modifying')
     ->when()
         ->request_method(['POST', 'PUT', 'DELETE', 'PATCH'], 'NOT IN')
@@ -557,7 +517,6 @@ Rules::create('non_modifying')
 
 **Exclude URLs**:
 ```php
-<?php
 Rules::create('non_admin_urls')
     ->when()
         ->request_url([
@@ -580,7 +539,6 @@ Matches when a value **exists and is not empty**.
 
 #### Syntax
 ```php
-<?php
 ->condition(null, 'EXISTS')   // Explicit
 ->condition()                 // Auto-detected (no value parameter)
 ```
@@ -597,7 +555,6 @@ These values are considered "non-existent":
 
 **Cookie existence**:
 ```php
-<?php
 Rules::create('has_session')
     ->when()
         ->cookie('session_id', null, 'EXISTS')  // Cookie exists
@@ -614,7 +571,6 @@ Rules::create('has_session_short')
 
 **Parameter existence**:
 ```php
-<?php
 Rules::create('has_action_param')
     ->when()
         ->request_param('action')  // Parameter exists with any value
@@ -624,7 +580,6 @@ Rules::create('has_action_param')
 
 **Header existence**:
 ```php
-<?php
 Rules::create('has_auth_header')
     ->when()
         ->request_header('Authorization')  // Header exists
@@ -640,7 +595,6 @@ Matches when a value **does not exist or is empty**.
 
 #### Syntax
 ```php
-<?php
 ->condition(null, 'NOT EXISTS')
 ```
 
@@ -648,7 +602,6 @@ Matches when a value **does not exist or is empty**.
 
 **New visitor detection**:
 ```php
-<?php
 Rules::create('first_visit')
     ->when()
         ->cookie('visited_before', null, 'NOT EXISTS')
@@ -658,7 +611,6 @@ Rules::create('first_visit')
 
 **Missing parameters**:
 ```php
-<?php
 Rules::create('no_page_param')
     ->when()
         ->request_param('page', null, 'NOT EXISTS')
@@ -668,7 +620,6 @@ Rules::create('no_page_param')
 
 **Opt-out detection**:
 ```php
-<?php
 Rules::create('analytics_allowed')
     ->when()
         ->cookie('analytics_opt_out', null, 'NOT EXISTS')
@@ -688,7 +639,6 @@ Matches when value **strictly equals** true or false.
 
 #### Syntax
 ```php
-<?php
 ->condition(true, 'IS')    // Explicit
 ->condition(true)           // Auto-detected
 ```
@@ -697,7 +647,6 @@ Matches when value **strictly equals** true or false.
 
 **Debug mode**:
 ```php
-<?php
 Rules::create('debug_enabled')
     ->when()
         ->constant('WP_DEBUG', true, 'IS')
@@ -714,7 +663,6 @@ Rules::create('debug_enabled_auto')
 
 **Feature flags**:
 ```php
-<?php
 Rules::create('feature_enabled')
     ->when()
         ->constant('FEATURE_ENABLED', true)
@@ -724,7 +672,6 @@ Rules::create('feature_enabled')
 
 **Boolean states**:
 ```php
-<?php
 Rules::create('user_logged_in')
     ->when()
         ->is_user_logged_in()  // Returns boolean, uses IS
@@ -740,7 +687,6 @@ Matches when value **does not strictly equal** true or false.
 
 #### Syntax
 ```php
-<?php
 ->condition(true, 'IS NOT')
 ->condition(false, 'IS NOT')
 ```
@@ -749,7 +695,6 @@ Matches when value **does not strictly equal** true or false.
 
 **Debug disabled**:
 ```php
-<?php
 Rules::create('production_mode')
     ->when()
         ->constant('WP_DEBUG', true, 'IS NOT')  // Not true (false or undefined)
@@ -759,7 +704,6 @@ Rules::create('production_mode')
 
 **Feature disabled**:
 ```php
-<?php
 Rules::create('legacy_mode')
     ->when()
         ->constant('NEW_FEATURE', true, 'IS NOT')
@@ -777,7 +721,6 @@ Rules::create('legacy_mode')
 When using multiple conditions with different operators, all conditions are evaluated independently. There's no operator precedence since conditions are combined using match types (all/any/none).
 
 ```php
-<?php
 Rules::create('multiple_operators')
     ->when()  // match_all by default
         ->request_url('/api/*', 'LIKE')           // Pattern
@@ -805,7 +748,6 @@ MilliRules uses these rules for operator auto-detection:
 | Other | Any other value | `=` | `'POST'` → `=` |
 
 ```php
-<?php
 // Auto-detection examples
 ->request_method('GET')                    // = (string, no wildcard)
 ->request_method(['GET', 'HEAD'])          // IN (array)
@@ -822,7 +764,6 @@ MilliRules uses these rules for operator auto-detection:
 ### 1. Let Auto-Detection Work
 
 ```php
-<?php
 // ✅ Good - clean and readable
 ->request_url('/api/*')
 ->request_method(['GET', 'HEAD'])
@@ -837,7 +778,6 @@ MilliRules uses these rules for operator auto-detection:
 ### 2. Use LIKE for Simple Patterns
 
 ```php
-<?php
 // ✅ Good - simple and fast
 ->request_url('/api/*')
 ->request_url('/product-*')
@@ -850,7 +790,6 @@ MilliRules uses these rules for operator auto-detection:
 ### 3. Validate Regex Patterns
 
 ```php
-<?php
 // ✅ Good - valid regex with delimiters
 ->request_url('/^\\/api\\/v[0-9]+\\//i', 'REGEXP')
 
@@ -864,7 +803,6 @@ MilliRules uses these rules for operator auto-detection:
 ### 4. Use Appropriate Operators
 
 ```php
-<?php
 // ✅ Good - right operator for the job
 ->request_method(['GET', 'HEAD'], 'IN')      // Multiple values
 ->request_url('/admin/*', 'LIKE')            // Pattern match
@@ -889,7 +827,6 @@ MilliRules uses these rules for operator auto-detection:
 7. `REGEXP` (regex - slowest)
 
 ```php
-<?php
 // ✅ Good - fast checks first
 ->when()
     ->request_method('POST')              // Fast equality
@@ -910,7 +847,6 @@ MilliRules uses these rules for operator auto-detection:
 ### 1. Case Sensitivity
 
 ```php
-<?php
 // ❌ Wrong - case mismatch
 ->request_method('post')  // Won't match 'POST'
 
@@ -924,7 +860,6 @@ MilliRules uses these rules for operator auto-detection:
 ### 2. Wildcard Escaping
 
 ```php
-<?php
 // ❌ Wrong - literal asterisk not treated as wildcard
 ->request_url('\\*')
 
@@ -938,7 +873,6 @@ MilliRules uses these rules for operator auto-detection:
 ### 3. Regex Delimiters
 
 ```php
-<?php
 // ❌ Wrong - no delimiters
 ->request_url('^/api/', 'REGEXP')
 
@@ -949,7 +883,6 @@ MilliRules uses these rules for operator auto-detection:
 ### 4. Empty Arrays
 
 ```php
-<?php
 // ❌ Wrong - empty array always fails
 ->request_method([], 'IN')
 

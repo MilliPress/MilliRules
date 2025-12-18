@@ -22,7 +22,6 @@ The WordPress package extends MilliRules with WordPress-specific functionality:
 ### Basic Initialization
 
 ```php
-<?php
 /**
  * Plugin Name: My MilliRules Plugin
  * Description: Custom rules for WordPress
@@ -46,7 +45,6 @@ add_action('init', function() {
 ### Theme Integration
 
 ```php
-<?php
 // functions.php
 
 require_once get_template_directory() . '/vendor/autoload.php';
@@ -75,7 +73,6 @@ WordPress rules can execute on specific hooks.
 #### Initialization Hooks
 
 ```php
-<?php
 // plugins_loaded - Very early, plugins just loaded
 Rules::create('early_setup')
     ->on('plugins_loaded', 10)
@@ -101,7 +98,6 @@ Rules::create('late_setup')
 #### Frontend Hooks
 
 ```php
-<?php
 // wp - Main query has been executed
 Rules::create('after_query')
     ->on('wp', 10)
@@ -130,7 +126,6 @@ Rules::create('conditional_assets')
 #### Admin Hooks
 
 ```php
-<?php
 // admin_init - Admin initialization
 Rules::create('admin_setup')
     ->on('admin_init', 10)
@@ -162,7 +157,6 @@ Rules::create('warning_notice')
 #### Content Hooks
 
 ```php
-<?php
 // the_content - Filter post content
 Rules::create('add_content_disclaimer')
     ->on('the_content', 10)
@@ -187,7 +181,6 @@ Rules::create('modify_title')
 #### Save Hooks
 
 ```php
-<?php
 // save_post - After post is saved
 Rules::create('post_save_notification')
     ->on('save_post', 10)
@@ -311,7 +304,6 @@ Rules::create('publish_notification')
 Create reusable conditions or actions that access hook arguments:
 
 ```php
-<?php
 // Register a condition that checks post ID range
 Rules::register_condition('post_id_in_range', function($args, Context $context) {
     $post_id = $context['wp']['hook']['args'][0] ?? 0;
@@ -334,7 +326,6 @@ Rules::create('process_specific_posts')
 #### 1. Always Provide Defaults
 
 ```php
-<?php
 // ✅ Good - provides defaults for missing arguments
 $post_id = $context['wp']['hook']['args'][0] ?? null;
 $post    = $context['wp']['hook']['args'][1] ?? null;
@@ -351,7 +342,6 @@ $post    = $context['wp']['hook']['args'][1];
 #### 2. Check Hook Name When Arguments Are Context-Specific
 
 ```php
-<?php
 Rules::register_condition('is_post_being_published', function($args, Context $context) {
     $hook_name = $context['wp']['hook']['name'] ?? '';
 
@@ -375,7 +365,6 @@ Rules::register_condition('is_post_being_published', function($args, Context $co
 Hooks that don't pass arguments (like `init`, `template_redirect`, `wp_loaded`) will not have a `hook` key in the context:
 
 ```php
-<?php
 Rules::create('init_hook')
     ->on('init')
     ->then()->custom('check_hook', function(Context $context) {
@@ -399,7 +388,6 @@ The WordPress package provides conditions for WordPress-specific scenarios.
 ### User Conditions
 
 ```php
-<?php
 // Check if user is logged in
 Rules::create('authenticated_only')
     ->when()->is_user_logged_in()
@@ -426,7 +414,6 @@ Rules::create('admin_only')
 ### Query Conditions
 
 ```php
-<?php
 // Singular posts/pages
 Rules::create('single_post_layout')
     ->when()->is_singular('post')
@@ -455,7 +442,6 @@ Rules::create('content_enhancement')
 ### Post Conditions
 
 ```php
-<?php
 // Check post type
 Rules::create('product_features')
     ->when()->post_type('product')
@@ -488,7 +474,6 @@ Create WordPress-specific actions for common operations.
 ### Content Modification
 
 ```php
-<?php
 Rules::register_action('prepend_to_content', function($args, Context $context) {
     $text = $args['text'] ?? '';
     $priority = $args['priority'] ?? 10;
@@ -511,7 +496,6 @@ Rules::create('add_reading_time')
 ### Navigation Menu Modification
 
 ```php
-<?php
 Rules::register_action('add_menu_item', function($args, Context $context) {
     $menu_slug = $args['menu_slug'] ?? '';
     $title = $args['title'] ?? '';
@@ -540,7 +524,6 @@ Rules::create('add_tools_menu')
 ### Widget Registration
 
 ```php
-<?php
 Rules::register_action('register_sidebar', function($args, Context $context) {
     $sidebar_config = wp_parse_args($config, [
         'name' => 'Custom Sidebar',
@@ -569,7 +552,6 @@ Rules::create('conditional_sidebar')
 ### User Meta Updates
 
 ```php
-<?php
 Rules::register_action('update_user_meta', function($args, Context $context) {
     $user_id = $context->get('user.id', 0) ?? 0;
     $meta_key = $args['key'] ?? '';
@@ -600,7 +582,6 @@ Rules::create('track_login_time')
 ### WooCommerce Conditions
 
 ```php
-<?php
 Rules::register_condition('cart_total', function($args, Context $context) {
     if (!function_exists('WC')) {
         return false;
@@ -632,7 +613,6 @@ Rules::register_condition('has_product_in_cart', function($args, Context $contex
 ### WooCommerce Actions
 
 ```php
-<?php
 Rules::register_action('apply_coupon', function($args, Context $context) {
     if (!function_exists('WC')) {
         return;
@@ -661,7 +641,6 @@ Rules::create('auto_apply_coupon')
 ### Feature Flags
 
 ```php
-<?php
 // Enable/disable features based on rules
 Rules::register_action('enable_feature', function($args, Context $context) {
     $feature = $args['feature'] ?? '';
@@ -685,7 +664,6 @@ Rules::create('enable_beta_features')
 ### Access Control
 
 ```php
-<?php
 Rules::register_action('restrict_access', function($args, Context $context) {
     $message = $args['message'] ?? 'Access denied';
     $redirect = $args['redirect'] ?? home_url();
@@ -713,7 +691,6 @@ Rules::create('protect_admin_pages')
 ### Conditional Plugin Loading
 
 ```php
-<?php
 // Conditionally load plugin features
 add_action('plugins_loaded', function() {
     MilliRules::init();
@@ -746,7 +723,6 @@ add_action('plugins_loaded', function() {
 ### 1. Hook Timing
 
 ```php
-<?php
 // ✅ Good - initialize early
 add_action('init', function() {
     MilliRules::init();
@@ -763,7 +739,6 @@ add_action('wp_footer', function() {
 ### 2. WordPress Function Availability
 
 ```php
-<?php
 // ✅ Good - checks function availability
 Rules::register_condition('wp_safe_condition', function($args, Context $context) {
     if (!function_exists('get_current_user_id')) {
@@ -784,7 +759,6 @@ Rules::register_condition('unsafe_condition', function($args, Context $context) 
 ### 3. Multisite Compatibility
 
 ```php
-<?php
 Rules::register_condition('is_main_site', function($args, Context $context) {
     if (!is_multisite()) {
         return true; // Not multisite, always main site
@@ -802,7 +776,6 @@ Rules::create('main_site_only_feature')
 ### 4. Translation Ready
 
 ```php
-<?php
 Rules::register_action('show_message', function($args, Context $context) {
     $message = $args['message'] ?? '';
 
@@ -821,7 +794,6 @@ Rules::register_action('show_message', function($args, Context $context) {
 
 **Check initialization timing**:
 ```php
-<?php
 // Verify MilliRules is initialized
 add_action('init', function() {
     if (!class_exists('MilliRules\MilliRules')) {
@@ -836,7 +808,6 @@ add_action('init', function() {
 
 **Verify package loading**:
 ```php
-<?php
 $packages = MilliRules::get_loaded_packages();
 error_log('Loaded packages: ' . implode(', ', $packages));
 
@@ -848,7 +819,6 @@ if (!in_array('WP', $packages)) {
 ### Hook Conflicts
 
 ```php
-<?php
 // Check if hook has fired
 add_action('init', function() {
     error_log('Init hook fired');

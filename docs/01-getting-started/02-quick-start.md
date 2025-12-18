@@ -35,7 +35,6 @@ Before creating rules, you need to initialize MilliRules. This registers the ava
 For most installations, whether you are using WordPress or a standalone PHP application, use the simple initialization:
 
 ```php
-<?php
 use MilliRules\MilliRules;
 
 // Initialize with auto-detected packages
@@ -51,7 +50,6 @@ This automatically detects your environment:
 You can explicitly specify which packages to load:
 
 ```php
-<?php
 use MilliRules\MilliRules;
 
 // Load only the PHP package (useful for early execution)
@@ -70,7 +68,6 @@ MilliRules::init(null, [$custom_package]);
 To verify that MilliRules is properly installed and initialized, you can check the loaded packages:
 
 ```php
-<?php
 use MilliRules\MilliRules;
 
 // Initialize MilliRules
@@ -88,7 +85,6 @@ If everything is working correctly, you should see the PHP package (and WordPres
 ### 1. Forgetting to Initialize
 
 ```php
-<?php
 // ❌ Wrong - rules created before initialization
 Rules::create('my_rule')->when()->request_url('/test')->then()->register();
 MilliRules::init();
@@ -101,7 +97,6 @@ Rules::create('my_rule')->when()->request_url('/test')->then()->register();
 ### 2. Incorrect WordPress Hook Priority
 
 ```php
-<?php
 // ❌ Wrong - initializing too late
 add_action('init', function() {
     MilliRules::init();
@@ -114,7 +109,6 @@ MilliRules::init();
 ### 3. Missing Autoloader
 
 ```php
-<?php
 // ❌ Wrong - missing autoloader
 use MilliRules\MilliRules;
 MilliRules::init(); // Fatal error: Class not found

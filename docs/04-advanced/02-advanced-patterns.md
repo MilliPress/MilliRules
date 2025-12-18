@@ -15,7 +15,6 @@ Early execution runs rules before WordPress fully loads, enabling caching system
 ### MU-Plugin Early Execution
 
 ```php
-<?php
 /**
  * Plugin Name: MilliRules Early Execution
  * Description: Runs MilliRules before WordPress loads
@@ -47,7 +46,6 @@ $result = MilliRules::execute_rules(['PHP']);
 ### Custom Cache Integration
 
 ```php
-<?php
 Rules::register_action('check_cache', function($args, Context $context) {
     $cache_key = 'page_' . md5($context->get('request.uri', '') ?? '');
     $cached = get_transient($cache_key);
@@ -88,7 +86,6 @@ Rules::create('api_caching')
 ### Rule Ordering for Performance
 
 ```php
-<?php
 // Place most restrictive/fastest conditions first
 Rules::create('optimized_rule')
     ->order(10)
@@ -108,7 +105,6 @@ Rules::create('optimized_rule')
 ### Lazy Loading
 
 ```php
-<?php
 // Load rules only when needed
 add_action('init', function() {
     MilliRules::init();
@@ -137,7 +133,6 @@ add_action('init', function() {
 ### Debug Logging
 
 ```php
-<?php
 // Enable comprehensive debugging
 define('MILLIRULES_DEBUG', true);
 
@@ -174,7 +169,6 @@ Rules::create('debuggable_rule')
 ### Execution Statistics
 
 ```php
-<?php
 // Track execution statistics
 $result = MilliRules::execute_rules();
 
@@ -201,7 +195,6 @@ error_log("Memory used: " . size_format($memory_used));
 ### Debug Conditions
 
 ```php
-<?php
 Rules::register_condition('debug_context', function($args, Context $context) {
     error_log('=== Context Debug ===');
     error_log('Full context: ' . print_r($context, true));
@@ -225,7 +218,6 @@ Rules::create('debug_rule')
 ### Conditional Rule Groups
 
 ```php
-<?php
 // Environment-specific rules
 $environment = wp_get_environment_type();
 
@@ -265,7 +257,6 @@ if ($environment === 'local') {
 ### Dynamic Rule Generation
 
 ```php
-<?php
 // Generate rules from configuration
 $protected_endpoints = [
     '/api/users' => ['GET', 'POST'],
@@ -296,7 +287,6 @@ Execute rules with specific packages only.
 ### Selective Package Execution
 
 ```php
-<?php
 // Execute only PHP rules (before WordPress loads)
 $php_result = MilliRules::execute_rules(['PHP']);
 
@@ -310,7 +300,6 @@ $custom_result = MilliRules::execute_rules(['PHP', 'Custom']);
 ### Context-Aware Package Selection
 
 ```php
-<?php
 add_action('init', function() {
     MilliRules::init();
 
@@ -337,7 +326,6 @@ add_action('init', function() {
 ### Extending Context
 
 ```php
-<?php
 // Add custom data to context before execution
 add_filter('millirules_context', function(Context $context) {
     $context['custom'] = [
@@ -353,7 +341,6 @@ add_filter('millirules_context', function(Context $context) {
 ### Context Transformation
 
 ```php
-<?php
 // Transform context for specific rules
 Rules::register_action('with_transformed_context', function($args, Context $context) {
     // Add computed values
@@ -378,7 +365,6 @@ Rules::register_action('with_transformed_context', function($args, Context $cont
 ### Graceful Degradation
 
 ```php
-<?php
 Rules::register_action('safe_api_call', function($args, Context $context) {
     try {
         $response = wp_remote_post($args['url'], [
@@ -416,7 +402,6 @@ Rules::register_action('safe_api_call', function($args, Context $context) {
 ### Error Notification
 
 ```php
-<?php
 Rules::register_action('notify_on_error', function($args, Context $context) {
     try {
         // Risky operation
@@ -450,7 +435,6 @@ Rules::register_action('notify_on_error', function($args, Context $context) {
 ### Unit Testing Rules
 
 ```php
-<?php
 class MilliRulesTest extends WP_UnitTestCase {
     public function setUp(): void {
         parent::setUp();
@@ -489,7 +473,6 @@ class MilliRulesTest extends WP_UnitTestCase {
 ### Integration Testing
 
 ```php
-<?php
 function test_complete_workflow() {
     // Setup
     MilliRules::init();

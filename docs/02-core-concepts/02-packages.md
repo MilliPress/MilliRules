@@ -52,7 +52,6 @@ The `PackageManager` is a static class that coordinates all packages:
 All packages implement `PackageInterface`:
 
 ```php
-<?php
 namespace MilliRules\Packages;
 
 use MilliRules\Context;
@@ -95,7 +94,6 @@ The **PHP Package** provides framework-agnostic HTTP and request handling.
 
 **Context Providers Registered**:
 ```php
-<?php
 // PHP package registers these context providers (loaded on-demand):
 
 'request' => [
@@ -122,7 +120,6 @@ The **PHP Package** provides framework-agnostic HTTP and request handling.
 
 **Availability Check**:
 ```php
-<?php
 public function is_available(): bool {
     return true; // Always available
 }
@@ -152,7 +149,6 @@ The **WordPress Package** provides WordPress-specific functionality.
 
 **Context Providers Registered**:
 ```php
-<?php
 // WordPress package registers these context providers (loaded on-demand):
 // Note: Uses flat structure, no 'wp' namespace
 
@@ -191,7 +187,6 @@ The **WordPress Package** provides WordPress-specific functionality.
 
 **Availability Check**:
 ```php
-<?php
 public function is_available(): bool {
     return function_exists('add_action'); // Detects WordPress
 }
@@ -199,7 +194,6 @@ public function is_available(): bool {
 
 **Dependencies**:
 ```php
-<?php
 public function get_required_packages(): array {
     return ['PHP']; // Requires PHP package
 }
@@ -214,7 +208,6 @@ public function get_required_packages(): array {
 Packages are registered with `PackageManager`:
 
 ```php
-<?php
 use MilliRules\PackageManager;
 use MilliRules\Packages\PHP\PHPPackage;
 use MilliRules\Packages\WP\WordPressPackage;
@@ -232,7 +225,6 @@ PackageManager::register_package($wp_package);
 Packages are loaded during initialization:
 
 ```php
-<?php
 use MilliRules\MilliRules;
 
 // Auto-loads available packages
@@ -254,7 +246,6 @@ MilliRules::init(['PHP', 'WP']);
 Packages register context providers that load data on-demand:
 
 ```php
-<?php
 use MilliRules\Context;
 
 // During initialization, packages register their providers
@@ -288,7 +279,6 @@ class PHPPackage extends BasePackage {
 Rules execute using context from loaded packages:
 
 ```php
-<?php
 $result = MilliRules::execute_rules();
 
 /*
@@ -311,7 +301,6 @@ Packages can depend on other packages using `get_required_packages()`.
 ### Declaring Dependencies
 
 ```php
-<?php
 namespace MyPlugin\Packages;
 
 use MilliRules\Packages\BasePackage;
@@ -334,7 +323,6 @@ class CustomPackage extends BasePackage {
 PackageManager automatically resolves dependencies:
 
 ```php
-<?php
 // Request to load Custom package
 MilliRules::init(['Custom']);
 
@@ -347,7 +335,6 @@ MilliRules::init(['Custom']);
 ### Circular Dependency Detection
 
 ```php
-<?php
 // Package A requires Package B
 // Package B requires Package A
 // ↓
@@ -372,7 +359,6 @@ Packages provide namespaces for conditions and actions.
 ### Namespace Registration
 
 ```php
-<?php
 public function get_namespaces(): array {
     return [
         'MilliRules\Packages\PHP\Conditions',
@@ -386,7 +372,6 @@ public function get_namespaces(): array {
 When a condition is used, MilliRules finds the appropriate class:
 
 ```php
-<?php
 // User writes:
 ->request_url('/api/*')
 
@@ -402,7 +387,6 @@ When a condition is used, MilliRules finds the appropriate class:
 Multiple packages can provide overlapping namespaces. MilliRules uses the longest matching namespace:
 
 ```php
-<?php
 // Registered namespaces:
 // - 'MyPlugin\Conditions'
 // - 'MyPlugin\Conditions\Advanced'
@@ -421,7 +405,6 @@ You can filter which packages are used during execution.
 ### Filter by Package Name
 
 ```php
-<?php
 // Execute only with PHP package (skip WordPress)
 $result = MilliRules::execute_rules(['PHP']);
 
@@ -437,7 +420,6 @@ $result = MilliRules::execute_rules(['PHP', 'Custom']);
 **Early execution** (before WordPress loads):
 
 ```php
-<?php
 // In mu-plugins or early hook
 MilliRules::init(['PHP']);
 
@@ -448,7 +430,6 @@ $result = MilliRules::execute_rules(['PHP']);
 **Testing specific packages**:
 
 ```php
-<?php
 // Test only PHP-related rules
 $php_result = MilliRules::execute_rules(['PHP']);
 
@@ -463,7 +444,6 @@ $wp_result = MilliRules::execute_rules(['WP']);
 ### Accessing Package Context
 
 ```php
-<?php
 use MilliRules\Context;
 
 Rules::register_action('context_aware', function($args, Context $context) {
@@ -488,7 +468,6 @@ Rules::register_action('context_aware', function($args, Context $context) {
 ### Conditional Package Features
 
 ```php
-<?php
 Rules::create('flexible_rule')
     ->when_any()  // Use OR logic
         // PHP condition (always works)
@@ -508,7 +487,6 @@ Rules::create('flexible_rule')
 ### 1. Check Package Availability
 
 ```php
-<?php
 use MilliRules\Context;
 
 // ✅ Good - check before using package-specific features
@@ -534,7 +512,6 @@ Rules::register_action('unsafe_action', function($args, Context $context) {
 ### 2. Declare Dependencies Explicitly
 
 ```php
-<?php
 // ✅ Good - explicit dependencies
 class MyPackage extends BasePackage {
     public function get_required_packages(): array {
@@ -556,7 +533,6 @@ class MyPackage extends BasePackage {
 ### 3. Use Appropriate Package for Rules
 
 ```php
-<?php
 // ✅ Good - PHP rule for PHP conditions
 Rules::create('cache_check', 'php')
     ->when()->request_url('/api/*')
@@ -581,7 +557,6 @@ Rules::create('mixed_rule')  // Type will be auto-detected
 ### 4. Handle Package Unavailability Gracefully
 
 ```php
-<?php
 use MilliRules\PackageManager;
 
 // Check if package is loaded
@@ -601,7 +576,6 @@ if (PackageManager::is_package_loaded('WP')) {
 ### Get Loaded Packages
 
 ```php
-<?php
 use MilliRules\MilliRules;
 
 // Get package names
@@ -614,7 +588,6 @@ error_log('Loaded packages: ' . implode(', ', $package_names));
 ### Check Specific Package
 
 ```php
-<?php
 use MilliRules\PackageManager;
 
 if (PackageManager::is_package_loaded('WP')) {
@@ -629,7 +602,6 @@ if (PackageManager::has_packages()) {
 ### Get Package Instance
 
 ```php
-<?php
 use MilliRules\PackageManager;
 
 $php_package = PackageManager::get_package('PHP');
@@ -647,7 +619,6 @@ if ($php_package) {
 ### 1. Environment-Specific Loading
 
 ```php
-<?php
 // Load different packages based on environment
 if (defined('WP_CLI') && WP_CLI) {
     // CLI environment - PHP only
@@ -664,7 +635,6 @@ if (defined('WP_CLI') && WP_CLI) {
 ### 2. Progressive Enhancement
 
 ```php
-<?php
 // Base rules with PHP package
 MilliRules::init(['PHP']);
 
@@ -685,7 +655,6 @@ if (PackageManager::is_package_loaded('WP')) {
 ### 3. Package-Specific Rules
 
 ```php
-<?php
 // Group rules by package
 $php_rules = [
     'api_cache', 'request_logging', 'header_security'
@@ -722,7 +691,6 @@ if (PackageManager::is_package_loaded('WP')) {
 
 **Check availability**:
 ```php
-<?php
 $package = PackageManager::get_package('WP');
 if (!$package) {
     error_log('Package not registered');
@@ -735,7 +703,6 @@ if (!$package) {
 
 **Check dependencies**:
 ```php
-<?php
 $package = PackageManager::get_package('Custom');
 $required = $package->get_required_packages();
 
@@ -750,7 +717,6 @@ foreach ($required as $dep) {
 
 **Verify providers are registered**:
 ```php
-<?php
 use MilliRules\Context;
 
 $context = new Context();

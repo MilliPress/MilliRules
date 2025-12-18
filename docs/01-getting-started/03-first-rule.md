@@ -19,7 +19,6 @@ Every MilliRules rule consists of three main parts:
 Here's the basic structure:
 
 ```php
-<?php
 use MilliRules\Rules;
 
 Rules::create('rule_id')
@@ -39,7 +38,6 @@ Let's create a rule that logs a message whenever someone accesses the WordPress 
 Add this to your plugin's main file or `functions.php`:
 
 ```php
-<?php
 use MilliRules\MilliRules;
 use MilliRules\Rules;
 
@@ -50,7 +48,6 @@ MilliRules::init();
 ### Step 2: Create Your First Rule
 
 ```php
-<?php
 use MilliRules\Rules;
 
 // Create a rule that runs on WordPress 'init' hook
@@ -70,7 +67,6 @@ Rules::create('log_admin_access', 'wp')
 Since `log_message` is a custom action, let's register it:
 
 ```php
-<?php
 use MilliRules\Rules;
 use MilliRules\Context;
 
@@ -85,7 +81,6 @@ Rules::register_action('log_message', function($args, Context $context) {
 Here's everything together in a WordPress plugin context:
 
 ```php
-<?php
 /**
  * Plugin Name: My First MilliRules Plugin
  * Description: Logs admin dashboard access using MilliRules
@@ -146,7 +141,6 @@ Here are some common conditions you can use:
 ### URL Matching
 
 ```php
-<?php
 // Exact match
 ->when()->request_url('/contact')
 
@@ -162,7 +156,6 @@ Here are some common conditions you can use:
 ### HTTP Method Checking
 
 ```php
-<?php
 // Check for POST requests
 ->when()->request_method('POST')
 
@@ -173,7 +166,6 @@ Here are some common conditions you can use:
 ### User Status (WordPress)
 
 ```php
-<?php
 // User must be logged in
 ->when()->is_user_logged_in()
 
@@ -184,7 +176,6 @@ Here are some common conditions you can use:
 ### Cookie Checking
 
 ```php
-<?php
 // Check if cookie exists
 ->when()->cookie('session_id')
 
@@ -197,7 +188,6 @@ Here are some common conditions you can use:
 ### Logging
 
 ```php
-<?php
 // Register a logging action
 Rules::register_action('log', function($args, Context $context) {
     error_log('MilliRules: ' . ($args['value'] ?? ''));
@@ -210,7 +200,6 @@ Rules::register_action('log', function($args, Context $context) {
 ### Redirects
 
 ```php
-<?php
 // Register a redirect action
 Rules::register_action('redirect', function($args, Context $context) {
     $url = $args['url'] ?? '/';
@@ -225,7 +214,6 @@ Rules::register_action('redirect', function($args, Context $context) {
 ### Setting Headers
 
 ```php
-<?php
 // Register a cache header action
 Rules::register_action('set_cache', function($args, Context $context) {
     $duration = $args['duration'] ?? 3600;
@@ -243,7 +231,6 @@ By default, WordPress rules execute automatically on their specified hook. You d
 However, you can also execute rules manually:
 
 ```php
-<?php
 use MilliRules\MilliRules;
 
 // Execute all registered rules
@@ -263,7 +250,6 @@ echo 'Actions executed: ' . $result['actions_executed'] . "\n";
 ### 1. Forgetting to Call `register()`
 
 ```php
-<?php
 // ❌ Wrong - rule never registered
 Rules::create('my_rule')
     ->when()->request_url('/test')
@@ -280,7 +266,6 @@ Rules::create('my_rule')
 ### 2. Using Undefined Custom Actions
 
 ```php
-<?php
 // ❌ Wrong - 'send_email' not registered
 Rules::create('notify')
     ->when()->request_url('/contact')
@@ -301,7 +286,6 @@ Rules::create('notify')
 ### 3. Incorrect Condition Logic
 
 ```php
-<?php
 // ❌ Wrong - using when() with single condition that should be OR
 Rules::create('public_access')
     ->when()  // This uses AND logic by default
