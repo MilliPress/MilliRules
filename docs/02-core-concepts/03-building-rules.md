@@ -12,6 +12,14 @@ MilliRules provides an elegant, fluent API that makes building rules intuitive a
 
 The fluent interface allows you to chain methods together to build rules in a natural, readable way:
 
+```mermaid
+flowchart LR
+    Create["Rules::create()"] --> Meta["Metadata<br/><i> ->title(), ->order(), ->enabled() </i>"]
+    Meta --> When["when()<br/><i>+ conditions</i>"]
+    When --> Then["then()<br/><i>+ actions</i>"]
+    Then --> Register["register()"]
+```
+
 ```php
 use MilliRules\Rules;
 

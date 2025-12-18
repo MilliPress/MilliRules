@@ -22,19 +22,14 @@ Packages enable MilliRules to work across different environments (vanilla PHP, W
 
 ## Package Architecture
 
-```
-┌───────────────────────────────────┐
-│          PackageManager           │
-│       (Central Coordination)      │
-└──────────────┬────────────────────┘
-               │
-    ┌──────────┴──────────┐
-    │                     │
-┌───▼─────┐          ┌─────▼───┐
-│   PHP   │          │    WP   │
-│ Package │◄─────────┤ Package │
-│         │ requires │         │
-└─────────┘          └─────────┘
+```mermaid
+flowchart TB
+    PM["PackageManager<br/>(Central Coordination)"]
+
+    PM --> PHP["PHP Package"]
+    PM --> WP["WP Package"]
+
+    WP -->|"requires"| PHP
 ```
 
 ### PackageManager

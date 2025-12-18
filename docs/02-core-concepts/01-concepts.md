@@ -12,20 +12,21 @@ Understanding MilliRules' core concepts is essential for building powerful, main
 
 MilliRules follows a simple but powerful pattern: **When conditions are met, then actions execute**.
 
-```
-┌─────────────────────────────────────────────┐
-│              Rule Definition                │
-│                                             │
-│  ┌────────────┐         ┌─────────────┐     │
-│  │ Conditions │  ───→   │   Actions   │     │
-│  │  (When)    │         │   (Then)    │     │
-│  └────────────┘         └─────────────┘     │
-│        │                       │            │
-│        ▼                       ▼            │
-│  ┌────────────────────────────────────┐     │
-│  │         Context & Packages         │     │
-│  └────────────────────────────────────┘     │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Rule["Rule Definition"]
+        direction LR
+        Conditions["Conditions<br/>(When)"] -->|"match"| Actions["Actions<br/>(Then)"]
+    end
+
+    subgraph Foundation["Context & Packages"]
+        Context["Context Data"]
+        Packages["Package Providers"]
+    end
+
+    Conditions --> Context
+    Actions --> Context
+    Context <--> Packages
 ```
 
 ## What is a Rule?

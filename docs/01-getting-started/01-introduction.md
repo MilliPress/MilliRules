@@ -82,6 +82,30 @@ MilliRules is ideal for:
 
 MilliRules is built around four main concepts:
 
+```mermaid
+flowchart LR
+    subgraph Rules["Rules"]
+        R["Combines conditions + actions<br/>with metadata"]
+    end
+
+    subgraph Conditions["Conditions"]
+        C["Define WHEN<br/>to execute"]
+    end
+
+    subgraph Actions["Actions"]
+        A["Define WHAT<br/>happens"]
+    end
+
+    subgraph Packages["Packages"]
+        P["Provide conditions,<br/>actions & context"]
+    end
+
+    Packages --> Conditions
+    Packages --> Actions
+    Conditions --> Rules
+    Actions --> Rules
+```
+
 ### 1. Rules
 The foundation of MilliRules - a rule combines conditions and actions with metadata like title, order, and enabled status.
 
@@ -98,9 +122,18 @@ Modular functionality bundles that provide conditions, actions, context provider
 
 The MilliRules execution flow:
 
+```mermaid
+flowchart LR
+    Init["1. Initialize"] --> Register["2. Register Rules"]
+    Register --> Execute["3. Execute"]
+    Execute --> Evaluate["4. Evaluate Conditions"]
+    Evaluate -->|"match"| Actions["5. Run Actions"]
+    Evaluate -->|"no match"| Skip["Skip Rule"]
+```
+
 1. **Initialization** - `MilliRules::init()` registers and loads packages
 2. **Rule Registration** - Rules are created and registered using the fluent API
-3. **Execution** - Rules execute automatically (WordPress hooks) or manually
+3. **Execution** - Rules execute automatically (via WordPress hooks) or manually
 4. **Condition Evaluation** - Each rule's conditions are evaluated against the current context
 5. **Action Execution** - When conditions match, the rule's actions execute in sequence
 

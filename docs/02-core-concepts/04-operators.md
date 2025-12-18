@@ -12,14 +12,14 @@ Operators are the backbone of condition evaluation in MilliRules. They determine
 
 MilliRules supports 13 operators organized into five categories:
 
-| Category | Operators | Description |
-|----------|-----------|-------------|
-| **Equality** | `=`, `!=` | Exact matching and inequality |
-| **Comparison** | `>`, `>=`, `<`, `<=` | Numeric comparisons |
-| **Pattern** | `LIKE`, `NOT LIKE`, `REGEXP` | Wildcard and regex matching |
-| **Membership** | `IN`, `NOT IN` | Array membership testing |
-| **Existence** | `EXISTS`, `NOT EXISTS` | Value existence checking |
-| **Boolean** | `IS`, `IS NOT` | Boolean value comparison |
+| Category       | Operators                    | Description                   |
+|----------------|------------------------------|-------------------------------|
+| **Equality**   | `=`, `!=`                    | Exact matching and inequality |
+| **Comparison** | `>`, `>=`, `<`, `<=`         | Numeric comparisons           |
+| **Pattern**    | `LIKE`, `NOT LIKE`, `REGEXP` | Wildcard and regex matching   |
+| **Membership** | `IN`, `NOT IN`               | Array membership testing      |
+| **Existence**  | `EXISTS`, `NOT EXISTS`       | Value existence checking      |
+| **Boolean**    | `IS`, `IS NOT`               | Boolean value comparison      |
 
 > [!NOTE]
 > All operators are **case-insensitive**. `'LIKE'`, `'like'`, and `'Like'` are treated identically. MilliRules normalizes operators to uppercase internally.
@@ -27,6 +27,22 @@ MilliRules supports 13 operators organized into five categories:
 ## Auto-Detection
 
 MilliRules intelligently detects the appropriate operator based on the value type:
+
+```mermaid
+flowchart TD
+    Value["Value Type"] --> String{"String?"}
+    Value --> Array{"Array?"}
+    Value --> Bool{"Boolean?"}
+    Value --> Null{"Null?"}
+
+    String -->|"has * or ?"| LIKE["LIKE"]
+    String -->|"starts with /"| REGEXP["REGEXP"]
+    String -->|"plain"| EQUALS["="]
+
+    Array --> IN["IN"]
+    Bool --> IS["IS"]
+    Null --> EXISTS["EXISTS"]
+```
 
 ```php
 // String value → '=' operator

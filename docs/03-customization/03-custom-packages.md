@@ -19,7 +19,7 @@ Custom packages enable you to:
 - **Create reusable libraries** - Share packages across projects
 - **Maintain clean separation** - Keep code organized by concern
 
-##Package Structure
+## Package Structure
 
 A complete custom package includes:
 
