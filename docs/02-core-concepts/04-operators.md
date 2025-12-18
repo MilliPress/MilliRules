@@ -894,11 +894,11 @@ MilliRules uses these rules for operator auto-detection:
 
 ## Next Steps
 
-- **[Dynamic Placeholders](05-placeholders.md)** - Use dynamic values in conditions
+- **[Dynamic Placeholders](./05-placeholders.md)** - Use dynamic values in conditions
 - **[Built-in Conditions](../05-reference/01-conditions.md)** - See operators in action
 - **[Custom Conditions](../03-customization/01-custom-conditions.md)** - Implement custom operators
 - **[Real-World Examples](../04-advanced/01-examples.md)** - Complete working examples
 
 ---
 
-**Ready for advanced features?** Continue to [Dynamic Placeholders](05-placeholders.md) to learn about using dynamic values in your rules.
+**Ready for advanced features?** Continue to [Dynamic Placeholders](./05-placeholders.md) to learn about using dynamic values in your rules.

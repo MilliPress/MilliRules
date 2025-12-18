@@ -427,7 +427,7 @@ Rules::create('auto_operators')
 > [!TIP]
 > Let MilliRules auto-detect operators for cleaner code. Only specify operators explicitly when you need precise control or when auto-detection doesn't match your intent.
 
-For complete operator documentation, see [Operators and Pattern Matching](04-operators.md).
+For complete operator documentation, see [Operators and Pattern Matching](./04-operators.md).
 
 ## Custom Conditions
 
@@ -846,7 +846,7 @@ Rules::create('debug_rule')
 ## Next Steps
 
 - **[Built-in Conditions Reference](../05-reference/01-conditions.md)** - Explore all available conditions
-- **[Operators and Pattern Matching](04-operators.md)** - Master comparison operators
+- **[Operators and Pattern Matching](./04-operators.md)** - Master comparison operators
 - **[Custom Conditions](../03-customization/01-custom-conditions.md)** - Create your own conditions
 - **[WordPress Integration](../04-advanced/03-wordpress-integration.md)** - WordPress-specific features
 

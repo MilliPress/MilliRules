@@ -719,10 +719,10 @@ Rules::create('api_no_cache')->order(20)
 
 Now that you understand core concepts, explore these topics:
 
-- **[Building Rules](03-building-rules.md)** - Master the fluent API in depth
+- **[Building Rules](./03-building-rules.md)** - Master the fluent API in depth
 - **[Built-in Conditions Reference](../05-reference/01-conditions.md)** - Complete condition reference
-- **[Operators](04-operators.md)** - Pattern matching and comparisons
-- **[Packages](02-packages.md)** - Deep dive into the package system
+- **[Operators](./04-operators.md)** - Pattern matching and comparisons
+- **[Packages](./02-packages.md)** - Deep dive into the package system
 
 ---
 

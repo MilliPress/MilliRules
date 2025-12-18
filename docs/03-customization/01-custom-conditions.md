@@ -511,7 +511,7 @@ Rules::register_condition('should_notify', function($args, Context $context) {
 
 ## Next Steps
 
-- **[Custom Actions](02-custom-actions.md)** - Implement action logic
+- **[Custom Actions](./02-custom-actions.md)** - Implement action logic
 - **[Built-in Conditions Reference](../05-reference/01-conditions.md)** - See available conditions
 - **[Operators Reference](../02-core-concepts/04-operators.md)** - Complete operator guide
 - **[API Reference](../05-reference/03-api.md)** - Complete API documentation

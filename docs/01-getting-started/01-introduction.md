@@ -116,8 +116,8 @@ MilliRules might be overkill for:
 
 Ready to start using MilliRules? Follow these steps:
 
-1. **[Quick Start](02-quick-start.md)** - Install and initialize MilliRules in minutes
-2. **[Your First Rule](03-first-rule.md)** - Create your first rule with a hands-on tutorial
+1. **[Quick Start](./02-quick-start.md)** - Install and initialize MilliRules in minutes
+2. **[Your First Rule](./03-first-rule.md)** - Create your first rule with a hands-on tutorial
 3. **[Core Concepts](../02-core-concepts/01-concepts.md)** - Deep dive into architecture and concepts
 
 ## Learn More
@@ -139,4 +139,4 @@ Ready to start using MilliRules? Follow these steps:
 
 ---
 
-**Ready to get started?** Continue to [Quick Start Guide](02-quick-start.md) to install and initialize MilliRules.
+**Ready to get started?** Continue to [Quick Start Guide](./02-quick-start.md) to install and initialize MilliRules.

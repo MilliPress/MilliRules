@@ -153,5 +153,5 @@ If you see "Package not available" errors:
 
 Now that MilliRules is installed and initialized, you're ready to create your first rule!
 
-Continue to [Creating Your First Rule](03-first-rule.md) to start building with MilliRules.
+Continue to [Creating Your First Rule](./03-first-rule.md) to start building with MilliRules.
 
