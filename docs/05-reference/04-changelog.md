@@ -1,5 +1,5 @@
 ---
-title: 'Changelog'
+title: 'MilliRules Changelog'
 post_excerpt: 'Version-by-version breakdown of new features, bug fixes, refactoring, and API changes in MilliRules.'
 menu_order: 40
 ---
