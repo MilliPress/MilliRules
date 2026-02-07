@@ -1,4 +1,7 @@
-.*                  export-ignore
-composer.lock       export-ignore
-docs/               export-ignore
-tests/              export-ignore
+.*                              export-ignore
+composer.lock                   export-ignore
+docs/                           export-ignore
+tests/                          export-ignore
+phpunit.xml                     export-ignore
+phpstan.neon                    export-ignore
+release-please-config.json      export-ignore
