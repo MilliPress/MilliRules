@@ -6,6 +6,21 @@ menu_order: 40
 
 # Changelog
 
+## [0.6.1](https://github.com/MilliPress/MilliRules/compare/v0.6.0...v0.6.1) (2026-02-09)
+
+
+### Features
+
+* **docs:** Add changelog file for version tracking and updates ([207f41c](https://github.com/MilliPress/MilliRules/commit/207f41c660fcfc977ad7412891f5226e320ad94d))
+* **docs:** Revise package description to highlight features and improve clarity ([9612260](https://github.com/MilliPress/MilliRules/commit/961226066e4aa109e700816fa83ba5a1ee6d0c80))
+* **package-manager:** Add method to retrieve all rules with package names ([db1f732](https://github.com/MilliPress/MilliRules/commit/db1f7322e7e3312520d615028bad9607b423d915))
+
+
+### Documentation
+
+* Replace ASCII diagrams with mermaid flowcharts for better visualization ([5ef0ac5](https://github.com/MilliPress/MilliRules/commit/5ef0ac5d6940949391c7cac58387cae38b7a024e))
+* Update internal links to use relative paths for consistency ([bd20128](https://github.com/MilliPress/MilliRules/commit/bd201286ed3590bbad7a6137e0c56b8903e1a9ff))
+
 ## [0.6.0](https://github.com/MilliPress/MilliRules/compare/v0.5.0...v0.6.0) (2025-12-17)
 
 
