@@ -660,6 +660,201 @@ class PackageManagerTest extends TestCase
     }
 
     // ============================================
+    // Get All Rules Tests
+    // ============================================
+
+    public function testGetAllRulesReturnsEmptyWhenNoPackagesLoaded(): void
+    {
+        $this->assertSame([], PackageManager::get_all_rules());
+    }
+
+    public function testGetAllRulesReturnsEmptyWhenPackagesHaveNoRules(): void
+    {
+        $package = $this->createMockPackage('Pkg1');
+        PackageManager::register_package($package);
+        PackageManager::load_packages(['Pkg1']);
+
+        $this->assertSame([], PackageManager::get_all_rules());
+    }
+
+    public function testGetAllRulesAggregatesRulesFromMultiplePackages(): void
+    {
+        $pkg1 = $this->createMockPackage('Pkg1');
+        $pkg2 = $this->createMockPackage('Pkg2');
+
+        PackageManager::register_package($pkg1);
+        PackageManager::register_package($pkg2);
+        PackageManager::load_packages(['Pkg1', 'Pkg2']);
+
+        PackageManager::register_rule(
+            ['id' => 'rule-a', 'conditions' => [], 'actions' => []],
+            ['required_packages' => ['Pkg1']]
+        );
+        PackageManager::register_rule(
+            ['id' => 'rule-b', 'conditions' => [], 'actions' => []],
+            ['required_packages' => ['Pkg2']]
+        );
+
+        $all = PackageManager::get_all_rules();
+
+        $this->assertCount(2, $all);
+
+        // Each rule should be tagged with its package name.
+        $ruleA = $this->findRuleById($all, 'rule-a');
+        $ruleB = $this->findRuleById($all, 'rule-b');
+
+        $this->assertNotNull($ruleA);
+        $this->assertNotNull($ruleB);
+        $this->assertSame('Pkg1', $ruleA['_package']);
+        $this->assertSame('Pkg2', $ruleB['_package']);
+    }
+
+    public function testGetAllRulesTagsEachRuleWithPackageName(): void
+    {
+        $package = $this->createMockPackage('MyPkg');
+        PackageManager::register_package($package);
+        PackageManager::load_packages(['MyPkg']);
+
+        PackageManager::register_rule(
+            ['id' => 'tagged-rule', 'conditions' => [], 'actions' => []],
+            ['required_packages' => ['MyPkg']]
+        );
+
+        $all = PackageManager::get_all_rules();
+
+        $this->assertCount(1, $all);
+        $this->assertSame('MyPkg', $all[0]['_package']);
+        $this->assertSame('tagged-rule', $all[0]['id']);
+    }
+
+    public function testGetAllRulesFlattensGroupedRules(): void
+    {
+        // Create a package that returns grouped rules (like WordPress groups by hook).
+        $grouped = new class implements PackageInterface {
+            private array $rules = [];
+            public function get_name(): string
+            {
+                return 'Grouped';
+            }
+            public function get_namespaces(): array
+            {
+                return [];
+            }
+            public function is_available(): bool
+            {
+                return true;
+            }
+            public function get_required_packages(): array
+            {
+                return [];
+            }
+            public function register_namespaces(): void
+            {
+            }
+            public function build_context(): array
+            {
+                return [];
+            }
+            public function register_context_providers(Context $context): void
+            {
+            }
+            public function get_placeholder_resolver(Context $context)
+            {
+                return null;
+            }
+            public function register_rule(array $rule, array $metadata): void
+            {
+                $hook = $metadata['hook'] ?? 'default';
+                $rule['_metadata'] = $metadata;
+                $this->rules[$hook][] = $rule;
+            }
+            public function execute_rules(array $rules, Context $context): array
+            {
+                return [];
+            }
+            public function get_rules(): array
+            {
+                // Returns grouped structure: ['hook_name' => [rule1, ...]]
+                return $this->rules;
+            }
+            public function clear(): void
+            {
+                $this->rules = [];
+            }
+            public function resolve_class_name(string $type, string $category): ?string
+            {
+                return null;
+            }
+            public function unregister_rule(string $rule_id): bool
+            {
+                return false;
+            }
+        };
+
+        PackageManager::register_package($grouped);
+        PackageManager::load_packages(['Grouped']);
+
+        PackageManager::register_rule(
+            ['id' => 'init-rule', 'conditions' => [], 'actions' => []],
+            ['required_packages' => ['Grouped'], 'hook' => 'init']
+        );
+        PackageManager::register_rule(
+            ['id' => 'wp-rule', 'conditions' => [], 'actions' => []],
+            ['required_packages' => ['Grouped'], 'hook' => 'wp']
+        );
+
+        $all = PackageManager::get_all_rules();
+
+        // Both rules should be flattened into a single array.
+        $this->assertCount(2, $all);
+
+        $initRule = $this->findRuleById($all, 'init-rule');
+        $wpRule   = $this->findRuleById($all, 'wp-rule');
+
+        $this->assertNotNull($initRule);
+        $this->assertNotNull($wpRule);
+        $this->assertSame('Grouped', $initRule['_package']);
+        $this->assertSame('Grouped', $wpRule['_package']);
+    }
+
+    public function testGetAllRulesOnlyIncludesLoadedPackages(): void
+    {
+        $loaded   = $this->createMockPackage('Loaded');
+        $unloaded = $this->createMockPackage('Unloaded', [], [], false);
+
+        PackageManager::register_package($loaded);
+        PackageManager::register_package($unloaded);
+        PackageManager::load_packages();
+
+        PackageManager::register_rule(
+            ['id' => 'loaded-rule'],
+            ['required_packages' => ['Loaded']]
+        );
+
+        $all = PackageManager::get_all_rules();
+
+        $this->assertCount(1, $all);
+        $this->assertSame('Loaded', $all[0]['_package']);
+    }
+
+    /**
+     * Find a rule by ID in an array of rules.
+     *
+     * @param array<int, array<string, mixed>> $rules The rules to search.
+     * @param string $id The rule ID to find.
+     * @return array<string, mixed>|null The rule or null if not found.
+     */
+    private function findRuleById(array $rules, string $id): ?array
+    {
+        foreach ($rules as $rule) {
+            if (($rule['id'] ?? null) === $id) {
+                return $rule;
+            }
+        }
+        return null;
+    }
+
+    // ============================================
     // Clear and Reset Tests
     // ============================================
 

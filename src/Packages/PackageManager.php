@@ -611,6 +611,68 @@ class PackageManager
     }
 
     /**
+     * Get all rules from all loaded packages, tagged with their package name.
+     *
+     * Aggregates get_rules() across all loaded packages and adds a '_package'
+     * key to each rule identifying which package it belongs to. Handles both
+     * flat rule arrays (BasePackage) and grouped rule arrays (WordPress groups
+     * by hook name) by normalizing them into a single flat collection.
+     *
+     * @since 0.7.0
+     *
+     * @return array<int, array<string, mixed>> Flat array of rules, each with '_package' key added.
+     */
+    public static function get_all_rules(): array
+    {
+        $all_rules = array();
+
+        foreach (self::get_loaded_packages() as $package) {
+            $package_name = $package->get_name();
+
+            foreach (self::flatten_rules($package->get_rules()) as $rule) {
+                $rule['_package'] = $package_name;
+                $all_rules[]      = $rule;
+            }
+        }
+
+        return $all_rules;
+    }
+
+    /**
+     * Flatten a rules array that may be grouped (e.g., by hook name).
+     *
+     * Packages may return rules as either:
+     * - Flat array: [rule1, rule2, ...] (numeric keys)
+     * - Grouped array: ['hook_name' => [rule1, rule2, ...], ...] (string keys)
+     *
+     * This method normalizes both formats into a flat array by detecting
+     * grouped entries (string key, array value without 'id' key).
+     *
+     * @since 0.7.0
+     *
+     * @param array<int|string, mixed> $rules The rules array to flatten.
+     * @return array<int, array<string, mixed>> Flat array of rules.
+     */
+    private static function flatten_rules(array $rules): array
+    {
+        $flat = array();
+
+        foreach ($rules as $key => $value) {
+            // Grouped structure: string key (hook name) → array of rules.
+            if (is_string($key) && is_array($value) && ! isset($value['id'])) {
+                foreach ($value as $rule) {
+                    $flat[] = $rule;
+                }
+            } else {
+                // Already flat: numeric key → rule array.
+                $flat[] = $value;
+            }
+        }
+
+        return $flat;
+    }
+
+    /**
      * Clear all registered rules from packages and reset loaded state.
      *
      * This method:
@@ -679,7 +741,7 @@ class PackageManager
      */
     public static function reset(): void
     {
-        // First clear all rules from packages.
+        // First, clear all rules from packages.
         foreach (self::$packages as $package) {
             if (method_exists($package, 'clear')) {
                 $package->clear();
