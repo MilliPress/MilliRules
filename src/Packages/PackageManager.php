@@ -618,7 +618,7 @@ class PackageManager
      * flat rule arrays (BasePackage) and grouped rule arrays (WordPress groups
      * by hook name) by normalizing them into a single flat collection.
      *
-     * @since 0.7.0
+     * @since 0.6.1
      *
      * @return array<int, array<string, mixed>> Flat array of rules, each with '_package' key added.
      */
@@ -648,7 +648,7 @@ class PackageManager
      * This method normalizes both formats into a flat array by detecting
      * grouped entries (string key, array value without 'id' key).
      *
-     * @since 0.7.0
+     * @since 0.6.1
      *
      * @param array<int|string, mixed> $rules The rules array to flatten.
      * @return array<int, array<string, mixed>> Flat array of rules.
