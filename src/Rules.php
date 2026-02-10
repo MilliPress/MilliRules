@@ -771,15 +771,13 @@ class Rules
 
         // If no packages detected but explicit_type is set, map type to package.
         if (empty($packages) && null !== $this->explicit_type) {
-            // Convert type to PascalCase package name dynamically.
-            // 'php' => 'PHP', 'wp' => 'WP', 'laravel' => 'Laravel', etc.
-            $package_name = strtoupper($this->explicit_type);
-
-            // Verify package is registered before adding.
+            // Case-insensitive lookup: 'php' => 'PHP', 'wp' => 'WP', 'acorn' => 'Acorn', etc.
             if (PackageManager::has_packages()) {
-                $package = PackageManager::get_package($package_name);
-                if (null !== $package) {
-                    $packages[] = $package_name;
+                foreach (PackageManager::get_all_packages() as $package) {
+                    if (strcasecmp($package->get_name(), $this->explicit_type) === 0) {
+                        $packages[] = $package->get_name();
+                        break;
+                    }
                 }
             }
         }
