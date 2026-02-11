@@ -34,8 +34,8 @@ Rules::create('api_check')
         ->request_url('/api/*')
     ->then()
         ->custom( 'auth-check', function($context) {
-        // Your action here
-    })
+            // Your action here
+        })
     ->register();
 ```
 
