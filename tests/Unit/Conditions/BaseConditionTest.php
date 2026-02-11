@@ -17,7 +17,7 @@ class BaseConditionTest extends TestCase
     /**
      * Create a concrete implementation of BaseCondition for testing
      */
-    private function createTestCondition(array $config, Context $context = null): ConditionInterface
+    private function createTestCondition(array $config, ?Context $context = null): ConditionInterface
     {
         if ($context === null) {
             $context = new Context();
@@ -126,7 +126,7 @@ class BaseConditionTest extends TestCase
         $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
-    public function greaterThanProvider(): array
+    public static function greaterThanProvider(): array
     {
         return [
             'greater integer' => [10, 5, true],
@@ -156,7 +156,7 @@ class BaseConditionTest extends TestCase
         $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
-    public function greaterThanOrEqualProvider(): array
+    public static function greaterThanOrEqualProvider(): array
     {
         return [
             'greater' => [10, 5, true],
@@ -180,7 +180,7 @@ class BaseConditionTest extends TestCase
         $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
-    public function lessThanProvider(): array
+    public static function lessThanProvider(): array
     {
         return [
             'lesser integer' => [3, 5, true],
@@ -204,7 +204,7 @@ class BaseConditionTest extends TestCase
         $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
-    public function lessThanOrEqualProvider(): array
+    public static function lessThanOrEqualProvider(): array
     {
         return [
             'lesser' => [3, 5, true],
@@ -235,7 +235,7 @@ class BaseConditionTest extends TestCase
         );
     }
 
-    public function likePatternProvider(): array
+    public static function likePatternProvider(): array
     {
         return [
             'exact match' => ['test', 'test', true],
@@ -284,7 +284,7 @@ class BaseConditionTest extends TestCase
         $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
-    public function regexpPatternProvider(): array
+    public static function regexpPatternProvider(): array
     {
         return [
             'regex pattern' => ['test123', '/test\d+/', true],
@@ -312,7 +312,7 @@ class BaseConditionTest extends TestCase
         $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
-    public function inOperatorProvider(): array
+    public static function inOperatorProvider(): array
     {
         return [
             'string in array' => ['apple', ['apple', 'banana', 'cherry'], true],
@@ -349,7 +349,7 @@ class BaseConditionTest extends TestCase
         $this->assertEquals($shouldExist, $condition->matches(new Context()));
     }
 
-    public function existsOperatorProvider(): array
+    public static function existsOperatorProvider(): array
     {
         return [
             'non-empty string' => ['test', true],
@@ -378,7 +378,7 @@ class BaseConditionTest extends TestCase
         $this->assertEquals($shouldNotExist, $condition->matches(new Context()));
     }
 
-    public function notExistsOperatorProvider(): array
+    public static function notExistsOperatorProvider(): array
     {
         return [
             'non-empty string' => ['test', false],
@@ -407,7 +407,7 @@ class BaseConditionTest extends TestCase
         $this->assertEquals($shouldMatch, $condition->matches(new Context()));
     }
 
-    public function isOperatorProvider(): array
+    public static function isOperatorProvider(): array
     {
         return [
             'both true' => [true, true, true],
