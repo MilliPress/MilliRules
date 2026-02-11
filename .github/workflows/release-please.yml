@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   release-please:
@@ -22,3 +23,13 @@ jobs:
         uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger CI for Release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_BRANCH=$(gh pr list --repo "$GITHUB_REPOSITORY" --label "autorelease: pending" --json headRefName --jq '.[0].headRefName')
+          if [ -n "$PR_BRANCH" ]; then
+            echo "Dispatching CI on branch: $PR_BRANCH"
+            gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$PR_BRANCH"
+          fi
