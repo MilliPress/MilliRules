@@ -137,7 +137,12 @@ class HasConditional extends BaseCondition
     public function get_type(): string
     {
         $type_value = $this->config['type'] ?? '';
-        return is_string($type_value) ? $type_value : '';
+
+        if (is_string($type_value) && $type_value !== '') {
+            return $type_value;
+        }
+
+        return 'has_*';
     }
 
     /**
