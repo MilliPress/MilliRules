@@ -6,6 +6,13 @@ menu_order: 40
 
 # Changelog
 
+## [0.7.2](https://github.com/MilliPress/MilliRules/compare/v0.7.1...v0.7.2) (2026-02-11)
+
+
+### Bug Fixes
+
+* **conditions:** Return wildcard type identifiers for generic WP conditionals ([0a3b0eb](https://github.com/MilliPress/MilliRules/commit/0a3b0eb4ad131e5d77b7e66ae1b5b22ef12f87fc))
+
 ## [0.7.1](https://github.com/MilliPress/MilliRules/compare/v0.7.0...v0.7.1) (2026-02-11)
 
 
