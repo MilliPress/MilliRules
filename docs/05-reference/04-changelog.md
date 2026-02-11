@@ -9,10 +9,6 @@ menu_order: 40
 ## [0.7.0](https://github.com/MilliPress/MilliRules/compare/v0.6.2...v0.7.0) (2026-02-11)
 
 
-### ⚠ BREAKING CHANGES
-
-* **builders:** Add method normalization for camelCase and snake_case compatibility
-
 ### Features
 
 * **builders:** Add method normalization for camelCase and snake_case compatibility ([fad8f3d](https://github.com/MilliPress/MilliRules/commit/fad8f3d7ebc7cee997becb882d8f0bc1c51ec9d0))
