@@ -6,6 +6,13 @@ menu_order: 40
 
 # Changelog
 
+## [0.6.2](https://github.com/MilliPress/MilliRules/compare/v0.6.1...v0.6.2) (2026-02-11)
+
+
+### Bug Fixes
+
+* **package-manager:** Ensure case-insensitive package name mapping ([f6cc490](https://github.com/MilliPress/MilliRules/commit/f6cc490f3e8634992f2b90dc798935b8202c732b))
+
 ## [0.6.1](https://github.com/MilliPress/MilliRules/compare/v0.6.0...v0.6.1) (2026-02-09)
 
 
