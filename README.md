@@ -30,8 +30,10 @@ use MilliRules\Rules;
 
 // Simple HTTP rule
 Rules::create('api_check')
-    ->when()->request_url('/api/*')
-    ->then()->custom( 'run_check', function($context) {
+    ->when()
+        ->request_url('/api/*')
+    ->then()
+        ->custom( 'auth-check', function($context) {
         // Your action here
     })
     ->register();
@@ -39,7 +41,7 @@ Rules::create('api_check')
 
 ## Documentation
 
-See the `/docs` directory for detailed documentation.
+See the [full documentation](https://millipress.com/docs/millirules/) for detailed guides and API reference.
 
 ## License
 
