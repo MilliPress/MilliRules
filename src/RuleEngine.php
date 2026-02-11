@@ -120,6 +120,26 @@ class RuleEngine
     }
 
     /**
+     * Get registered namespaces for condition/action resolution.
+     *
+     * Returns all namespaces registered for a specific type, or all namespaces
+     * keyed by type if no type is specified.
+     *
+     * @since 0.8.0
+     *
+     * @param string|null $type Optional. 'Conditions' or 'Actions'. If null, returns all.
+     * @return array<string, array<string>>|array<string> All namespaces keyed by type, or namespaces for a specific type.
+     */
+    public static function get_registered_namespaces(?string $type = null): array
+    {
+        if (null === $type) {
+            return self::$namespaces;
+        }
+
+        return self::$namespaces[ $type ] ?? array();
+    }
+
+    /**
      * Execute rules with the provided context.
      *
      * Supports optional package filtering to execute only rules that match

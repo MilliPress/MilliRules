@@ -352,6 +352,30 @@ class Rules
     }
 
     /**
+     * Get all registered custom condition callbacks.
+     *
+     * @since 0.8.0
+     *
+     * @return array<string, callable> Array of type => callback pairs.
+     */
+    public static function get_custom_conditions(): array
+    {
+        return self::$custom_conditions;
+    }
+
+    /**
+     * Get all registered custom action callbacks.
+     *
+     * @since 0.8.0
+     *
+     * @return array<string, callable> Array of type => callback pairs.
+     */
+    public static function get_custom_actions(): array
+    {
+        return self::$custom_actions;
+    }
+
+    /**
      * Helper method to compare values using WP_Query-style operators.
      *
      * @since 0.1.0
