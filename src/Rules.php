@@ -354,7 +354,7 @@ class Rules
     /**
      * Get all registered custom condition callbacks.
      *
-     * @since 0.8.0
+     * @since 0.7.1
      *
      * @return array<string, callable> Array of type => callback pairs.
      */
@@ -366,7 +366,7 @@ class Rules
     /**
      * Get all registered custom action callbacks.
      *
-     * @since 0.8.0
+     * @since 0.7.1
      *
      * @return array<string, callable> Array of type => callback pairs.
      */

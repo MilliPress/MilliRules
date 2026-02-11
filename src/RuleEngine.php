@@ -125,7 +125,7 @@ class RuleEngine
      * Returns all namespaces registered for a specific type, or all namespaces
      * keyed by type if no type is specified.
      *
-     * @since 0.8.0
+     * @since 0.7.1
      *
      * @param string|null $type Optional. 'Conditions' or 'Actions'. If null, returns all.
      * @return array<string, array<string>>|array<string> All namespaces keyed by type, or namespaces for a specific type.
