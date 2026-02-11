@@ -6,6 +6,20 @@ menu_order: 40
 
 # Changelog
 
+## [0.7.1](https://github.com/MilliPress/MilliRules/compare/v0.7.0...v0.7.1) (2026-02-11)
+
+
+### Features
+
+* Add public getters for registered namespaces and custom types ([6d1b517](https://github.com/MilliPress/MilliRules/commit/6d1b5175a1c671ff3a03b3f25e3c786797c2eac4))
+
+
+### Bug Fixes
+
+* **ci:** Drop PHP 8.1 from CI matrix ([ab0ab6e](https://github.com/MilliPress/MilliRules/commit/ab0ab6ec06951a028a79627992a12cad3f6f8335))
+* **ci:** Loosen Pest constraint to ^2.0 for PHP 8.1 compatibility ([124d4db](https://github.com/MilliPress/MilliRules/commit/124d4dbaac1030f12cb1b8578e2188753cd2c281))
+* **docs:** Correct indentation in README example for better readability ([38b09b8](https://github.com/MilliPress/MilliRules/commit/38b09b8691d864a51054e3712b71d1098909de98))
+
 ## [0.7.0](https://github.com/MilliPress/MilliRules/compare/v0.6.2...v0.7.0) (2026-02-11)
 
 
