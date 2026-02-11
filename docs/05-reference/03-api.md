@@ -125,6 +125,9 @@ Fluent interface for creating and registering rules.
 
 **Namespace**: `MilliRules`
 
+> [!NOTE]
+> **Naming Convention**: All fluent API methods can be called in either `snake_case` or `camelCase`. For example, `->when_all()` and `->whenAll()` are equivalent, as are `->set_conditions()` and `->setConditions()`. This applies to all builder methods on `Rules`, `ConditionBuilder`, and `ActionBuilder`. The documentation uses `snake_case` throughout, but use whichever style fits your project.
+
 #### Methods
 
 ##### `create(string $id, ?string $type = null): Rules`

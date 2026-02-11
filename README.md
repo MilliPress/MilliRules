@@ -14,8 +14,8 @@ MilliRules is a powerful rule engine that allows you to define complex condition
 - **HTTP Support**: Built-in conditions for request handling
 - **WordPress Integration**: Native support for WordPress queries and context
 - **Extensible**: Easy to add custom conditions and actions
-- **snake_case Convention**: Consistent naming throughout the API
-- **PHP 7.4+ Compatible**: Works with modern PHP versions
+- **Flexible Naming**: Use snake_case or camelCase — `when_all()` and `whenAll()` both work
+- **PHP 7.4+ Compatible**: Works with PHP 7.4+, PHP 8.0+ recommended
 
 ## Installation
 

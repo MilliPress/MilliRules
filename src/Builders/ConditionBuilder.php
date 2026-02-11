@@ -87,6 +87,8 @@ use MilliRules\RuleEngine;
  */
 class ConditionBuilder
 {
+    use NormalizesMethodNames;
+
     /**
      * Collected conditions.
      *
@@ -298,6 +300,9 @@ class ConditionBuilder
      */
     public function __call(string $method, array $args)
     {
+        // Normalize camelCase to snake_case for consistent lookup.
+        $method = $this->normalize_method_name($method);
+
         // Check if this is a Rules method (auto-delegation).
         if (method_exists($this->rule_builder, $method)) {
             // Transfer collected conditions to Rules.
@@ -315,9 +320,8 @@ class ConditionBuilder
             return call_user_func_array(array( $this, $method ), $args);
         }
 
-        // Auto-resolve condition type from method name.
-        // Convert: isUserLoggedIn() → is_user_logged_in.
-        $type = $this->method_to_type($method);
+        // Auto-resolve condition type from method name (already snake_case).
+        $type = $method;
 
         // Build condition configuration from arguments.
         $config = $this->build_condition_config($type, $args);
@@ -355,24 +359,6 @@ class ConditionBuilder
     // ===========================
     // Helper Methods
     // ===========================
-
-    /**
-     * Convert the method name to a condition type.
-     *
-     * Converts camelCase method name to snake_case type.
-     * Example: isUserLoggedIn → is_user_logged_in
-     *
-     * @since 0.1.0
-     *
-     * @param string $method The method name.
-     * @return string The condition type.
-     */
-    private function method_to_type(string $method): string
-    {
-        // Convert camelCase to snake_case.
-        $replaced = preg_replace('/(?<!^)[A-Z]/', '_$0', $method);
-        return strtolower(is_string($replaced) ? $replaced : $method);
-    }
 
     /**
      * Build condition configuration from method arguments.

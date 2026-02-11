@@ -16,6 +16,7 @@ namespace MilliRules;
 use MilliRules\Logger;
 use MilliRules\Builders\ConditionBuilder;
 use MilliRules\Builders\ActionBuilder;
+use MilliRules\Builders\NormalizesMethodNames;
 use MilliRules\Packages\PackageManager;
 
 /**
@@ -56,6 +57,8 @@ use MilliRules\Packages\PackageManager;
  */
 class Rules
 {
+    use NormalizesMethodNames;
+
     /**
      * Custom condition callbacks registry.
      *
@@ -552,6 +555,31 @@ class Rules
     {
         $this->rule['actions'] = $actions;
         return $this;
+    }
+
+    /**
+     * Handle camelCase method calls by delegating to snake_case equivalents.
+     *
+     * Allows fluent API methods to be called in either naming convention:
+     * - snake_case: ->when_all(), ->set_conditions(), ->when_none()
+     * - camelCase:  ->whenAll(),  ->setConditions(),  ->whenNone()
+     *
+     * @since 0.7.0
+     *
+     * @param string            $method The method name in camelCase.
+     * @param array<int, mixed> $args   The method arguments.
+     * @return mixed
+     * @throws \BadMethodCallException If no matching snake_case method exists.
+     */
+    public function __call(string $method, array $args)
+    {
+        $snake_method = $this->normalize_method_name($method);
+
+        if ($snake_method !== $method && method_exists($this, $snake_method)) {
+            return call_user_func_array(array( $this, $snake_method ), $args);
+        }
+
+        throw new \BadMethodCallException("Method {$method} does not exist on " . static::class);
     }
 
     /**

@@ -43,6 +43,8 @@ use MilliRules\Rules;
  */
 class ActionBuilder
 {
+    use NormalizesMethodNames;
+
     /**
      * Collected actions.
      *
@@ -220,6 +222,9 @@ class ActionBuilder
      */
     public function __call(string $method, array $args)
     {
+        // Normalize camelCase to snake_case for consistent lookup.
+        $method = $this->normalize_method_name($method);
+
         // Check if this is a Rules method (auto-delegation).
         if (method_exists($this->rule_builder, $method)) {
             $this->rule_builder->set_actions($this->actions);
@@ -234,10 +239,8 @@ class ActionBuilder
             return call_user_func_array(array( $this, $method ), $args);
         }
 
-        // Auto-resolve action type and build config inline.
-        // Convert camelCase to snake_case.
-        $replaced = preg_replace('/(?<!^)[A-Z]/', '_$0', $method);
-        $type = strtolower(is_string($replaced) ? $replaced : $method);
+        // Auto-resolve action type from method name (already snake_case).
+        $type = $method;
 
         // Merge arguments directly into config.
         // This provides consistent structure with custom() method calls.
