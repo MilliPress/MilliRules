@@ -307,6 +307,39 @@ test('rule engine executes multiple rules in sequence', function () {
 });
 
 /**
+ * Namespace Getter Tests
+ */
+test('get_registered_namespaces returns all types when no argument given', function () {
+    $namespaces = RuleEngine::get_registered_namespaces();
+
+    expect($namespaces)->toHaveKeys(['Conditions', 'Actions'])
+        ->and($namespaces['Conditions'])->toContain('MilliRules\Conditions')
+        ->and($namespaces['Actions'])->toContain('MilliRules\Actions');
+});
+
+test('get_registered_namespaces filters by type', function () {
+    $conditions = RuleEngine::get_registered_namespaces('Conditions');
+    $actions = RuleEngine::get_registered_namespaces('Actions');
+
+    expect($conditions)->toContain(
+        'MilliRules\Conditions',
+        'MilliRules\Packages\PHP\Conditions',
+        'MilliRules\Packages\WordPress\Conditions',
+    )->and($actions)->toContain('MilliRules\Actions');
+});
+
+test('get_registered_namespaces returns empty array for unknown type', function () {
+    expect(RuleEngine::get_registered_namespaces('Invalid'))->toBe([]);
+});
+
+test('get_registered_namespaces reflects newly registered namespaces', function () {
+    RuleEngine::register_namespace('Conditions', 'TestPlugin\Conditions');
+
+    expect(RuleEngine::get_registered_namespaces('Conditions'))
+        ->toContain('TestPlugin\Conditions');
+});
+
+/**
  * Empty Conditions Tests
  */
 test('rule engine matches rules with empty conditions and match_type all', function () {
