@@ -6,6 +6,13 @@ menu_order: 40
 
 # Changelog
 
+## [0.7.3](https://github.com/MilliPress/MilliRules/compare/v0.7.2...v0.7.3) (2026-02-15)
+
+
+### Bug Fixes
+
+* **rules:** Always include package for set explicit type ([b2c0d23](https://github.com/MilliPress/MilliRules/commit/b2c0d233782bba937c34beffc2dbb96b167d974c))
+
 ## [0.7.2](https://github.com/MilliPress/MilliRules/compare/v0.7.1...v0.7.2) (2026-02-11)
 
 
