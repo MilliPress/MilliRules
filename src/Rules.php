@@ -821,8 +821,8 @@ class Rules
             }
         );
 
-        // If no packages detected but explicit_type is set, map type to package.
-        if (empty($packages) && null !== $this->explicit_type) {
+        // If explicit_type is set, always include the corresponding package.
+        if (null !== $this->explicit_type) {
             // Case-insensitive lookup: 'php' => 'PHP', 'wp' => 'WP', 'acorn' => 'Acorn', etc.
             if (PackageManager::has_packages()) {
                 foreach (PackageManager::get_all_packages() as $package) {
