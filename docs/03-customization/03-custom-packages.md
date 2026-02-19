@@ -639,6 +639,85 @@ Rules::create('auto_upgrade_frequent_buyers')
 
 ---
 
+## Real-World Example: Acorn MilliRules
+
+The [Acorn MilliRules](https://github.com/MilliPress/Acorn-MilliRules) package is a real-world custom package that extends MilliRules for the [Roots Acorn](https://roots.io/acorn/) framework. It's a good reference for how to structure a production package.
+
+### Package Class
+
+The Acorn package registers route-aware conditions, HTTP response actions, and a route context provider:
+
+```php
+namespace MilliRules\Acorn\Packages\Acorn;
+
+use MilliRules\Acorn\Packages\Acorn\Contexts\Route;
+use MilliRules\Packages\BasePackage;
+
+class Package extends BasePackage
+{
+    public function get_name(): string
+    {
+        return 'Acorn';
+    }
+
+    public function get_namespaces(): array
+    {
+        return [
+            'MilliRules\\Acorn\\Packages\\Acorn\\Actions',
+            'MilliRules\\Acorn\\Packages\\Acorn\\Conditions',
+            'MilliRules\\Acorn\\Packages\\Acorn\\Contexts',
+        ];
+    }
+
+    public function is_available(): bool
+    {
+        return function_exists('app');
+    }
+
+    public function get_required_packages(): array
+    {
+        return ['PHP'];
+    }
+}
+```
+
+### What It Provides
+
+| Component              | Description                                                     |
+|------------------------|-----------------------------------------------------------------|
+| **Conditions**         | `RouteName`, `RouteParameter`, `RouteController`                |
+| **Actions**            | `Redirect`, `SetHeader`                                         |
+| **Context**            | Route metadata (name, parameters, controller, URI, middleware)   |
+| **Auto-discovery**     | Rule classes in `app/Rules/` are registered automatically        |
+| **Artisan commands**   | 8 CLI commands to list, inspect, and scaffold rules              |
+
+### Usage Example
+
+```php
+// app/Rules/RedirectLegacyDocs.php
+namespace App\Rules;
+
+use MilliRules\Rules;
+
+class RedirectLegacyDocs
+{
+    public function register(): void
+    {
+        Rules::create('redirect_legacy_docs', 'Acorn')
+            ->when()
+                ->routeName('docs.*')
+                ->routeParameter('product', ['value' => 'old-product'])
+            ->then()
+                ->redirect('/docs/new-product/', ['status' => 301])
+            ->register();
+    }
+}
+```
+
+For full documentation, see the [Acorn MilliRules docs](https://millipress.com/docs/acorn-millirules/).
+
+---
+
 ## Best Practices
 
 ### 1. Use Descriptive Package Names

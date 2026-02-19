@@ -145,6 +145,14 @@ MilliRules might be overkill for:
 - **Performance-critical hot paths** - The rule engine adds minimal but measurable overhead
 - **Extremely simple applications** - If you only need 1-2 conditional checks, MilliRules might be unnecessary
 
+## Using Acorn / Roots?
+
+If you're building on the [Roots](https://roots.io/) stack with Acorn, check out the [Acorn MilliRules](https://millipress.com/docs/acorn-millirules/) companion package. It adds route-aware conditions, HTTP response actions, Artisan commands, and automatic rule discovery — everything you need to define and manage rules that react to Laravel routes.
+
+```bash
+composer require millipress/acorn-millirules
+```
+
 ## Getting Started
 
 Ready to start using MilliRules? Follow these steps:
