@@ -580,6 +580,114 @@ Rules::create('action_or_drama')
 
 ---
 
+### Generic WordPress has_* Conditions
+
+MilliRules supports any WordPress conditional tag function starting with `has_` through the `HasConditional` class. Functions like `has_post_thumbnail()`, `has_block()`, `has_term()`, `has_excerpt()`, etc. can all be used as conditions.
+
+**How It Works**:
+- The `HasConditional` class acts as a bridge between MilliRules and WordPress `has_*` conditional functions
+- Arguments passed to the condition are forwarded to the WordPress function
+- Operates in two modes: Boolean Mode (no arguments) or Function Call Mode (with arguments)
+
+#### Basic Usage (Boolean Mode)
+
+When used without arguments, `has_*` conditions behave as simple boolean checks:
+
+```php
+// Fluent builder
+Rules::create('rule-1')
+    ->when()->has_post_thumbnail()->then()->register();
+
+// Array configuration
+[
+    'id'         => 'rule-1',
+    'conditions' => [
+        [ 'type' => 'has_post_thumbnail' ], // has_post_thumbnail() IS TRUE
+    ],
+    'actions'    => [],
+];
+```
+
+In this mode:
+- The underlying WordPress function is called with **no arguments**
+- The boolean result is compared to the configured `value` (default: `true`) using the configured `operator` (default: `IS`)
+
+Examples:
+- `->has_post_thumbnail()` → `has_post_thumbnail() IS true`
+- `->has_post_thumbnail(false)` → `has_post_thumbnail() IS false`
+
+**Basic conditionals**:
+```php
+// Check if the post has an excerpt
+Rules::create('has_excerpt')
+    ->when()
+        ->has_excerpt()
+    ->then()->custom('show_custom_excerpt')
+    ->register();
+```
+
+#### Function Call Mode (With Arguments)
+
+For conditionals that accept arguments, you can pass them directly to the builder. `HasConditional` will call the underlying `has_*` function with those arguments and compare the result to `true`.
+
+In this mode:
+- All non-boolean arguments are treated as **function arguments** for the underlying `has_*` function
+- The condition always checks whether the function result is `true` (using `value = true` internally)
+
+**With arguments**:
+```php
+// Single-argument conditional
+->has_block('core/paragraph')       // has_block('core/paragraph') IS TRUE
+
+// Multi-argument conditional
+->has_term('news', 'category')      // has_term('news', 'category') IS TRUE
+```
+
+**Combining conditions**:
+```php
+// Check if a post has a featured image and a specific block
+Rules::create('rich_content')
+    ->when()
+        ->has_post_thumbnail()
+        ->has_block('core/gallery')
+    ->then()->custom('show_rich_layout')
+    ->register();
+```
+
+#### Using Operators with WordPress has_* Conditionals
+
+You can optionally pass a comparison operator as the **last argument** when using function call mode. This operator controls how the boolean result of the `has_*` function is compared to `true`.
+
+Supported operators:
+- `=`
+- `!=`
+- `IS`
+- `IS NOT`
+
+```php
+// Check that a post does NOT have a specific term
+Rules::create('not_in_news')
+    ->when()
+        ->has_term('news', 'category', '!=')
+    ->then()->custom('show_generic_sidebar')
+    ->register();
+
+// Check that a post does NOT have a featured image
+Rules::create('no_thumbnail')
+    ->when()
+        ->has_post_thumbnail(false)
+    ->then()->custom('show_placeholder_image')
+    ->register();
+```
+
+#### Implementation Notes
+
+- The builder records all raw method arguments in a generic `args` key in the condition config
+- The WordPress `HasConditional` class interprets `args` to determine whether to operate in boolean mode or function-call mode
+- Other packages can reuse the `args` convention in their own condition classes without any changes to core engine or base condition logic
+
+---
+
 ### post_type
 
 Check the current post type.
@@ -627,6 +735,281 @@ Rules::create('non_page_content')
     ->then()->custom('show_author_bio')
     ->register();
 ```
+
+---
+
+### post_status
+
+Check the current post status.
+
+**Namespace**: `MilliRules\Packages\WordPress\Conditions\PostStatus`
+
+**Signature**:
+```php
+->post_status($status, $operator = '=')
+```
+
+**Parameters**:
+- `$status` (string|array): Post status(es) to check (`publish`, `draft`, `pending`, `private`, `future`, `trash`, etc.)
+- `$operator` (string): Comparison operator (default: `'='`)
+
+**Supported Operators**: =, !=, IN, NOT IN
+
+**How it resolves**: Reads `post_status` from the queried object or global `$post`.
+
+#### Examples
+
+**Single status**:
+```php
+Rules::create('published_only')
+    ->when()
+        ->post_status('publish')
+    ->then()->custom('show_share_buttons')
+    ->register();
+```
+
+**Multiple statuses**:
+```php
+Rules::create('visible_content')
+    ->when()
+        ->post_status(['publish', 'private'], 'IN')
+    ->then()->custom('enable_comments')
+    ->register();
+```
+
+**Exclude status**:
+```php
+Rules::create('not_draft')
+    ->when()
+        ->post_status('draft', '!=')
+    ->then()->custom('index_content')
+    ->register();
+```
+
+> [!NOTE]
+> This condition reads the actual `post_status` property — there is no WordPress `is_post_status()` conditional tag, which is why this dedicated condition exists.
+
+---
+
+### post_parent
+
+Check the parent post ID of the current post.
+
+**Namespace**: `MilliRules\Packages\WordPress\Conditions\PostParent`
+
+**Signature**:
+```php
+->post_parent($parent_id, $operator = '=')
+```
+
+**Parameters**:
+- `$parent_id` (int|array): Parent post ID(s) to check
+- `$operator` (string): Comparison operator (default: `'='`)
+
+**Supported Operators**: =, !=, IN, NOT IN, >, <
+
+**How it resolves**: Reads `post_parent` from the queried object or global `$post`. Returns `0` if no post is found.
+
+#### Examples
+
+**Exact parent**:
+```php
+Rules::create('child_of_about')
+    ->when()
+        ->post_parent(10)
+    ->then()->custom('show_about_subnav')
+    ->register();
+```
+
+**Has any parent** (hierarchical post):
+```php
+Rules::create('is_child_page')
+    ->when()
+        ->post_parent(0, '>')
+    ->then()->custom('show_breadcrumbs')
+    ->register();
+```
+
+**Is top-level page** (no parent):
+```php
+Rules::create('top_level_page')
+    ->when()
+        ->post_parent(0)
+    ->then()->custom('show_child_pages_menu')
+    ->register();
+```
+
+> [!TIP]
+> Use `->post_parent(0, '>')` as an efficient way to check if a page is a child of any parent, regardless of which parent.
+
+---
+
+### user_role
+
+Check the roles of the current logged-in user.
+
+**Namespace**: `MilliRules\Packages\WordPress\Conditions\UserRole`
+
+**Signature**:
+```php
+->user_role($role, $operator = 'IN')
+```
+
+**Parameters**:
+- `$role` (string|array): Role(s) to check (`administrator`, `editor`, `author`, `contributor`, `subscriber`, or custom roles)
+- `$operator` (string): Comparison operator (default: `'IN'`)
+
+**Supported Operators**: =, !=, IN, NOT IN
+
+**How it resolves**: Loads user data from context and checks the `roles` array. Uses intersection logic — a user with multiple roles matches if *any* of their roles match any of the expected roles.
+
+#### Examples
+
+**Single role**:
+```php
+Rules::create('admin_features')
+    ->when()
+        ->user_role('administrator')
+    ->then()->custom('show_admin_toolbar')
+    ->register();
+```
+
+**Multiple roles**:
+```php
+Rules::create('editorial_features')
+    ->when()
+        ->user_role(['editor', 'administrator'], 'IN')
+    ->then()->custom('show_editorial_tools')
+    ->register();
+```
+
+**Exclude role**:
+```php
+Rules::create('non_subscribers')
+    ->when()
+        ->user_role('subscriber', '!=')
+    ->then()->custom('show_premium_content')
+    ->register();
+```
+
+> [!NOTE]
+> WordPress users can have multiple roles. This condition uses array intersection, so `->user_role('editor')` will match a user who has both `editor` and `administrator` roles.
+
+---
+
+### wp_environment
+
+Check the WordPress environment type.
+
+**Namespace**: `MilliRules\Packages\WordPress\Conditions\WpEnvironment`
+
+**Signature**:
+```php
+->wp_environment($environment, $operator = '=')
+```
+
+**Parameters**:
+- `$environment` (string|array): Environment type(s) to check (`production`, `staging`, `development`, `local`)
+- `$operator` (string): Comparison operator (default: `'='`)
+
+**Supported Operators**: =, !=, IN, NOT IN
+
+**How it resolves**: Uses `wp_get_environment_type()` (WordPress 5.5+). Falls back to `'production'` if the function is unavailable.
+
+#### Examples
+
+**Production check**:
+```php
+Rules::create('production_only')
+    ->when()
+        ->wp_environment('production')
+    ->then()->custom('enable_caching')
+    ->register();
+```
+
+**Non-production environments**:
+```php
+Rules::create('dev_tools')
+    ->when()
+        ->wp_environment(['development', 'local'], 'IN')
+    ->then()->custom('enable_debug_bar')
+    ->register();
+```
+
+**Exclude production**:
+```php
+Rules::create('not_production')
+    ->when()
+        ->wp_environment('production', '!=')
+    ->then()->custom('show_environment_banner')
+    ->register();
+```
+
+> [!TIP]
+> You can also use `->constant('WP_ENVIRONMENT_TYPE', 'local')` from the PHP package for the same effect. The `wp_environment` condition is a convenience wrapper that handles the function availability check.
+
+---
+
+### query_var
+
+Check WordPress query variables.
+
+**Namespace**: `MilliRules\Packages\WordPress\Conditions\QueryVar`
+
+**Signature**:
+```php
+->query_var($name, $value = null, $operator = '=')
+```
+
+**Parameters**:
+- `$name` (string): Query variable name (e.g., `paged`, `post_type`, `s`, `m`, `author`, etc.)
+- `$value` (mixed): Expected value (null defaults to `EXISTS` operator)
+- `$operator` (string): Comparison operator (default: `'='`, or `'EXISTS'` when no value)
+
+**Supported Operators**: =, !=, IN, NOT IN, LIKE, EXISTS, NOT EXISTS
+
+**How it resolves**: First checks the execution context, then falls back to `get_query_var()`. When no value is provided, automatically uses the `EXISTS` operator.
+
+#### Examples
+
+**Check existence**:
+```php
+Rules::create('is_search')
+    ->when()
+        ->query_var('s')  // Defaults to EXISTS
+    ->then()->custom('enhance_search')
+    ->register();
+```
+
+**Check value**:
+```php
+Rules::create('page_two')
+    ->when()
+        ->query_var('paged', 2)
+    ->then()->custom('show_pagination_notice')
+    ->register();
+```
+
+**Check post type query var**:
+```php
+Rules::create('product_archive_query')
+    ->when()
+        ->query_var('post_type', 'product')
+    ->then()->custom('show_product_filters')
+    ->register();
+```
+
+**Check non-existence**:
+```php
+Rules::create('no_search')
+    ->when()
+        ->query_var('s', null, 'NOT EXISTS')
+    ->then()->custom('show_default_content')
+    ->register();
+```
+
+> [!NOTE]
+> `query_var` is a name-based condition — the first argument is always the query variable name, not a value. This makes it unique among WordPress conditions.
 
 ---
 
