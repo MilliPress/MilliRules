@@ -11,7 +11,15 @@ menu_order: 40
 
 ### ⚠ BREAKING CHANGES
 
-* **conditions:** The following dedicated condition classes have been removed in favor of the generic `is_*` and `has_*` conditional bridges:
+**conditions:** The following dedicated condition classes have been removed in favor of the generic `is_*` and `has_*` conditional bridges:
+
+- `category` → use `is_category()` instead
+- `tag` → use `is_tag()` instead
+- `author` → use `is_author()` instead
+- `taxonomy` → use `is_tax()` instead
+- `term` → use `has_term()` instead
+- `template` → use `is_page_template()` instead
+- `post` → use `is_single()` or `is_page()` instead
 
 ### Features
 
