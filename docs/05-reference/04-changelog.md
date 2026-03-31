@@ -6,6 +6,17 @@ menu_order: 40
 
 # Changelog
 
+## [1.0.0](https://github.com/MilliPress/MilliRules/compare/v0.7.3...v1.0.0) (2026-03-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* **conditions:** The following dedicated condition classes have been removed in favor of the generic `is_*` and `has_*` conditional bridges:
+
+### Features
+
+* **conditions:** Remove redundant WordPress conditions covered by is_*/has_* ([bd7eed0](https://github.com/MilliPress/MilliRules/commit/bd7eed041ab140d17ca5bd3b0ec9972f4e65f909))
+
 ## [0.7.3](https://github.com/MilliPress/MilliRules/compare/v0.7.2...v0.7.3) (2026-02-15)
 
 
