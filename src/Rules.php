@@ -126,6 +126,14 @@ class Rules
     private int $hook_priority = 10;
 
     /**
+     * Whether condition groups are being accumulated via and().
+     *
+     * @since 1.1.0
+     * @var bool
+     */
+    private bool $has_groups = false;
+
+    /**
      * Create a new rule builder.
      *
      * Rule Order System:
@@ -534,6 +542,37 @@ class Rules
     }
 
     /**
+     * AND connector between condition groups.
+     *
+     * Finalizes the current condition group and prepares for the next one.
+     * The next when_all()/when_any()/when_none() call starts a new group.
+     * All groups are ANDed together during evaluation.
+     *
+     * @since 1.1.0
+     *
+     * @return self
+     */
+    public function and(): self
+    {
+        if (! $this->has_groups) {
+            // First and() call: wrap existing flat conditions into a group entry.
+            $existing_conditions = $this->rule['conditions'] ?? array();
+            $existing_match_type = $this->rule['match_type'] ?? 'all';
+
+            $this->rule['conditions'] = array(
+                array(
+                    'match_type' => $existing_match_type,
+                    'conditions' => $existing_conditions,
+                ),
+            );
+            $this->rule['match_type'] = 'all';
+            $this->has_groups = true;
+        }
+
+        return $this;
+    }
+
+    /**
      * Set actions to execute.
      *
      * @since 0.1.0
@@ -562,8 +601,17 @@ class Rules
      */
     public function set_conditions(array $conditions, string $match_type = 'all'): self
     {
-        $this->rule['match_type'] = $match_type;
-        $this->rule['conditions'] = $conditions;
+        if ($this->has_groups) {
+            // Wrap as a group entry and append to existing conditions.
+            $this->rule['conditions'][] = array(
+                'match_type' => $match_type,
+                'conditions' => $conditions,
+            );
+        } else {
+            $this->rule['match_type'] = $match_type;
+            $this->rule['conditions'] = $conditions;
+        }
+
         return $this;
     }
 
@@ -760,31 +808,9 @@ class Rules
     {
         $packages = array();
 
-        // Detect packages from conditions.
+        // Detect packages from conditions (supports nested groups).
         $conditions = $this->rule['conditions'] ?? array();
-        if (is_array($conditions)) {
-            foreach ($conditions as $condition) {
-                if (! is_array($condition)) {
-                    continue;
-                }
-
-                $type = $condition['type'] ?? '';
-                if (empty($type) || ! is_string($type)) {
-                    continue;
-                }
-
-                // Check if custom condition.
-                if (self::has_custom_condition($type)) {
-                    // Custom conditions are Core.
-                    continue;
-                }
-
-                // Convert type to class name and map to package.
-                $class_name = RuleEngine::type_to_class_name($type, 'Conditions');
-                $package    = $this->map_class_to_package($class_name);
-                $packages[] = $package;
-            }
-        }
+        $this->detect_condition_packages($conditions, $packages);
 
         // Detect packages from actions.
         $actions = $this->rule['actions'] ?? array();
@@ -837,6 +863,49 @@ class Rules
         // Sort and re-index.
         sort($packages);
         return array_values($packages);
+    }
+
+    /**
+     * Detect packages from a conditions array, recursing into groups.
+     *
+     * @since 1.1.0
+     *
+     * @param array<int, mixed>    $conditions The conditions array (may contain groups).
+     * @param array<int, string>   &$packages  The packages array to append to.
+     * @return void
+     */
+    private function detect_condition_packages(array $conditions, array &$packages): void
+    {
+        foreach ($conditions as $condition) {
+            if (! is_array($condition)) {
+                continue;
+            }
+
+            // Check if this is a condition group (has match_type + conditions, no type).
+            if (isset($condition['match_type'], $condition['conditions'])
+                && ! isset($condition['type'])
+            ) {
+                $group_conditions = is_array($condition['conditions']) ? $condition['conditions'] : array();
+                $this->detect_condition_packages($group_conditions, $packages);
+                continue;
+            }
+
+            $type = $condition['type'] ?? '';
+            if (empty($type) || ! is_string($type)) {
+                continue;
+            }
+
+            // Check if custom condition.
+            if (self::has_custom_condition($type)) {
+                // Custom conditions are Core.
+                continue;
+            }
+
+            // Convert type to class name and map to package.
+            $class_name = RuleEngine::type_to_class_name($type, 'Conditions');
+            $package    = $this->map_class_to_package($class_name);
+            $packages[] = $package;
+        }
     }
 
     /**

@@ -213,3 +213,125 @@ test('ConditionBuilder custom() inline condition works without type hint', funct
 
     expect($conditionPassed)->toBeTrue();
 });
+
+/**
+ * Condition Group Builder Tests (and() connector)
+ */
+test('and() connector produces grouped conditions that evaluate correctly', function () {
+    $engine = new RuleEngine();
+    $actionExecuted = false;
+
+    Rules::register_condition('cb_group_true', fn($args, Context $context) => true);
+    Rules::register_condition('cb_group_false', fn($args, Context $context) => false);
+    Rules::register_action('cb_group_action', function ($args, Context $context) use (&$actionExecuted) {
+        $actionExecuted = true;
+    });
+
+    // Build rule: (any: true OR false) AND (none: false) → should match.
+    $builder = Rules::create('test-and-connector');
+    $builder
+        ->when_any()
+            ->custom('cb_group_true', fn(Context $c) => true)
+            ->custom('cb_group_false_2', fn(Context $c) => false)
+        ->and()->when_none()
+            ->custom('cb_group_false_3', fn(Context $c) => false)
+        ->then()
+            ->custom('cb_group_action_2', function (Context $c) use (&$actionExecuted) {
+                $actionExecuted = true;
+            })
+        ->register();
+
+    // Execute the rule via engine with the generated structure.
+    // Access the rule array via reflection to test the engine directly.
+    $reflection = new ReflectionClass($builder);
+    $prop = $reflection->getProperty('rule');
+    $prop->setAccessible(true);
+    $rule = $prop->getValue($builder);
+
+    $result = $engine->execute([$rule], new Context());
+
+    expect($result['rules_matched'])->toBe(1)
+        ->and($actionExecuted)->toBeTrue();
+});
+
+test('and() connector structure wraps conditions into groups', function () {
+    $builder = Rules::create('test-and-structure');
+
+    $builder
+        ->when_any()
+            ->custom('struct_cond_a', fn(Context $c) => true)
+            ->custom('struct_cond_b', fn(Context $c) => false)
+        ->and()->when_none()
+            ->custom('struct_cond_c', fn(Context $c) => false)
+        ->then()
+            ->custom('struct_action', fn(Context $c) => null);
+
+    $reflection = new ReflectionClass($builder);
+    $prop = $reflection->getProperty('rule');
+    $prop->setAccessible(true);
+    $rule = $prop->getValue($builder);
+
+    // Should have 2 group entries in conditions.
+    expect($rule['conditions'])->toHaveCount(2);
+
+    // First group: match_type 'any' with 2 conditions.
+    expect($rule['conditions'][0]['match_type'])->toBe('any')
+        ->and($rule['conditions'][0]['conditions'])->toHaveCount(2);
+
+    // Second group: match_type 'none' with 1 condition.
+    expect($rule['conditions'][1]['match_type'])->toBe('none')
+        ->and($rule['conditions'][1]['conditions'])->toHaveCount(1);
+});
+
+test('single group without and() stays flat', function () {
+    $builder = Rules::create('test-flat-stays-flat');
+
+    $builder
+        ->when_any()
+            ->custom('flat_cond_a', fn(Context $c) => true)
+            ->custom('flat_cond_b', fn(Context $c) => false)
+        ->then()
+            ->custom('flat_action', fn(Context $c) => null);
+
+    $reflection = new ReflectionClass($builder);
+    $prop = $reflection->getProperty('rule');
+    $prop->setAccessible(true);
+    $rule = $prop->getValue($builder);
+
+    // Should be flat: conditions are direct condition entries, not groups.
+    expect($rule['match_type'])->toBe('any')
+        ->and($rule['conditions'])->toHaveCount(2)
+        ->and($rule['conditions'][0])->toHaveKey('type');
+});
+
+test('three groups chained with two and() calls', function () {
+    $engine = new RuleEngine();
+
+    $builder = Rules::create('test-three-groups');
+
+    $builder
+        ->when_any()
+            ->custom('three_a', fn(Context $c) => true)
+            ->custom('three_b', fn(Context $c) => false)
+        ->and()->when_all()
+            ->custom('three_c', fn(Context $c) => true)
+        ->and()->when_none()
+            ->custom('three_d', fn(Context $c) => false)
+        ->then()
+            ->custom('three_action', fn(Context $c) => null);
+
+    $reflection = new ReflectionClass($builder);
+    $prop = $reflection->getProperty('rule');
+    $prop->setAccessible(true);
+    $rule = $prop->getValue($builder);
+
+    // Should have 3 group entries.
+    expect($rule['conditions'])->toHaveCount(3)
+        ->and($rule['conditions'][0]['match_type'])->toBe('any')
+        ->and($rule['conditions'][1]['match_type'])->toBe('all')
+        ->and($rule['conditions'][2]['match_type'])->toBe('none');
+
+    // Execute and verify it matches.
+    $result = $engine->execute([$rule], new Context());
+    expect($result['rules_matched'])->toBe(1);
+});

@@ -398,3 +398,178 @@ test('rule engine matches rules with empty conditions and match_type none', func
     // Rules with no conditions and match_type 'none' should match (vacuous truth)
     expect($result['rules_matched'])->toBe(1);
 });
+
+/**
+ * Condition Group Tests
+ */
+test('rule engine evaluates inline condition groups - all groups pass', function () {
+    $engine = new RuleEngine();
+
+    Rules::register_condition('cg_true_a', fn($args, Context $context) => true);
+    Rules::register_condition('cg_true_b', fn($args, Context $context) => true);
+
+    $rules = [
+        [
+            'id' => 'test-groups-pass',
+            'enabled' => true,
+            'match_type' => 'all',
+            'conditions' => [
+                [
+                    'match_type' => 'any',
+                    'conditions' => [
+                        ['type' => 'cg_true_a'],
+                        ['type' => 'cg_true_b'],
+                    ],
+                ],
+                [
+                    'match_type' => 'all',
+                    'conditions' => [
+                        ['type' => 'cg_true_a'],
+                    ],
+                ],
+            ],
+            'actions' => [],
+        ],
+    ];
+
+    $result = $engine->execute($rules, new Context());
+
+    expect($result['rules_matched'])->toBe(1);
+});
+
+test('rule engine evaluates inline condition groups - one group fails', function () {
+    $engine = new RuleEngine();
+
+    Rules::register_condition('cg_pass', fn($args, Context $context) => true);
+    Rules::register_condition('cg_fail', fn($args, Context $context) => false);
+
+    $rules = [
+        [
+            'id' => 'test-groups-one-fails',
+            'enabled' => true,
+            'match_type' => 'all',
+            'conditions' => [
+                [
+                    'match_type' => 'any',
+                    'conditions' => [
+                        ['type' => 'cg_pass'],
+                    ],
+                ],
+                [
+                    'match_type' => 'all',
+                    'conditions' => [
+                        ['type' => 'cg_fail'],
+                    ],
+                ],
+            ],
+            'actions' => [],
+        ],
+    ];
+
+    $result = $engine->execute($rules, new Context());
+
+    expect($result['rules_matched'])->toBe(0);
+});
+
+test('rule engine evaluates mixed match_types across groups', function () {
+    $engine = new RuleEngine();
+
+    Rules::register_condition('cg_mixed_true', fn($args, Context $context) => true);
+    Rules::register_condition('cg_mixed_false', fn($args, Context $context) => false);
+
+    // "any of group 1" AND "none of group 2"
+    $rules = [
+        [
+            'id' => 'test-mixed-groups',
+            'enabled' => true,
+            'match_type' => 'all',
+            'conditions' => [
+                [
+                    'match_type' => 'any',
+                    'conditions' => [
+                        ['type' => 'cg_mixed_false'],
+                        ['type' => 'cg_mixed_true'],
+                    ],
+                ],
+                [
+                    'match_type' => 'none',
+                    'conditions' => [
+                        ['type' => 'cg_mixed_false'],
+                    ],
+                ],
+            ],
+            'actions' => [],
+        ],
+    ];
+
+    $result = $engine->execute($rules, new Context());
+
+    // Group 1: any → true (one is true). Group 2: none → true (none are true). AND → match.
+    expect($result['rules_matched'])->toBe(1);
+});
+
+test('rule engine supports mixed flat conditions and groups', function () {
+    $engine = new RuleEngine();
+
+    Rules::register_condition('cg_flat_true', fn($args, Context $context) => true);
+    Rules::register_condition('cg_group_true', fn($args, Context $context) => true);
+
+    $rules = [
+        [
+            'id' => 'test-mixed-flat-and-groups',
+            'enabled' => true,
+            'match_type' => 'all',
+            'conditions' => [
+                // A flat condition alongside a group.
+                ['type' => 'cg_flat_true'],
+                [
+                    'match_type' => 'any',
+                    'conditions' => [
+                        ['type' => 'cg_group_true'],
+                    ],
+                ],
+            ],
+            'actions' => [],
+        ],
+    ];
+
+    $result = $engine->execute($rules, new Context());
+
+    expect($result['rules_matched'])->toBe(1);
+});
+
+test('rule engine handles nested groups recursively', function () {
+    $engine = new RuleEngine();
+
+    Rules::register_condition('cg_nested_true', fn($args, Context $context) => true);
+    Rules::register_condition('cg_nested_false', fn($args, Context $context) => false);
+
+    $rules = [
+        [
+            'id' => 'test-nested-groups',
+            'enabled' => true,
+            'match_type' => 'all',
+            'conditions' => [
+                [
+                    'match_type' => 'any',
+                    'conditions' => [
+                        // A group within a group.
+                        [
+                            'match_type' => 'all',
+                            'conditions' => [
+                                ['type' => 'cg_nested_true'],
+                            ],
+                        ],
+                        ['type' => 'cg_nested_false'],
+                    ],
+                ],
+            ],
+            'actions' => [],
+        ],
+    ];
+
+    $result = $engine->execute($rules, new Context());
+
+    // Outer group (any): inner group (all: true) → true, OR false → true. Rule matches.
+    expect($result['rules_matched'])->toBe(1);
+});

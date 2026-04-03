@@ -16,7 +16,10 @@ The fluent interface allows you to chain methods together to build rules in a na
 flowchart LR
     Create["Rules::create()"] --> Meta["Metadata<br/><i> ->title(), ->order(), ->enabled() </i>"]
     Meta --> When["when()<br/><i>+ conditions</i>"]
+    When --> And["and()->when()<br/><i>+ more conditions</i>"]
+    And --> And
     When --> Then["then()<br/><i>+ actions</i>"]
+    And --> Then
     Then --> Register["register()"]
 ```
 
@@ -266,7 +269,92 @@ Rules::create('development_environments')
 ```
 
 > [!WARNING]
-> You cannot mix match types within a single `when()` block. Choose one match type and stick with it for that condition group.
+> You cannot mix match types within a single `when()` block. Choose one match type per condition group. To combine different match types, use `->and()` to create multiple groups (see [Condition Groups](#condition-groups) below).
+
+## Condition Groups
+
+When a single match type isn't enough, use `->and()` to chain multiple condition groups with different logic. Each group has its own match type, and **all groups must pass** for the rule to match.
+
+### Basic Condition Groups
+
+```php
+use MilliRules\Rules;
+
+// "any of these post types" AND "none of these user roles"
+Rules::create('members_only_content')
+    ->when_any()
+        ->post_type('premium_post')
+        ->post_type('members_page')
+    ->and()->when_none()
+        ->user_role('subscriber')
+        ->user_role('pending')
+    ->then()
+        ->custom('grant_premium_access')
+    ->register();
+```
+
+**Evaluates as**: `(post_type=premium_post OR post_type=members_page) AND NOT (user_role=subscriber) AND NOT (user_role=pending)`
+
+### Multiple Groups
+
+Chain as many groups as needed:
+
+```php
+Rules::create('complex_cache_rule')
+    ->when_any()                          // Group 1: URL matching (OR)
+        ->request_url('/api/*')
+        ->request_url('/feed/*')
+    ->and()->when_all()                   // Group 2: Method + auth (AND)
+        ->request_method('GET')
+        ->cookie('session_id')
+    ->and()->when_none()                  // Group 3: Exclusions (NOT)
+        ->constant('WP_DEBUG', true)
+        ->request_param('nocache')
+    ->then()
+        ->custom('enable_caching')
+    ->register();
+```
+
+**Evaluates as**: `(URL matches any) AND (method=GET AND cookie exists) AND NOT (debug OR nocache param)`
+
+### How It Works
+
+Each `->and()` call finalizes the current group and prepares for the next one:
+
+1. `->when_any()` starts the first group with OR logic
+2. `->and()` wraps the collected conditions into a group
+3. `->when_none()` starts a new group with NOT logic
+4. `->then()` finalizes the last group and transitions to actions
+
+Groups are always combined with AND logic — every group must pass for the rule to match.
+
+### Data Structure
+
+Under the hood, condition groups are stored as entries in the `conditions` array. A group entry has `match_type` + `conditions` keys, while a regular condition has a `type` key:
+
+```php
+[
+    'match_type' => 'all',
+    'conditions' => [
+        [
+            'match_type' => 'any',       // ← This is a group
+            'conditions' => [
+                ['type' => 'post_type', 'value' => 'premium_post'],
+                ['type' => 'post_type', 'value' => 'members_page'],
+            ],
+        ],
+        [
+            'match_type' => 'none',      // ← This is a group
+            'conditions' => [
+                ['type' => 'user_role', 'value' => 'subscriber'],
+            ],
+        ],
+    ],
+]
+```
+
+> [!TIP]
+> For OR logic between condition sets (e.g., "(A AND B) OR (C AND D)"), use separate rules with the same actions. Each rule represents one branch of the OR.
 
 ## Seamless Builder Transitions
 
@@ -591,31 +679,25 @@ foreach ($api_endpoints as $endpoint) {
 }
 ```
 
-### 4. Nested Condition Logic Simulation
+### 4. Condition Groups with `and()`
 
-While MilliRules doesn't support nested conditions directly, you can simulate them with multiple rules:
+Combine multiple condition groups with different match types using `->and()`:
 
 ```php
-// Simulate: (A AND B) OR (C AND D)
-
-// Rule 1: A AND B
-Rules::create('condition_group_1')->order(10)
-    ->when()
-        ->request_url('/special/*')      // A
-        ->cookie('premium_user')         // B
-    ->then()
-        ->custom('grant_access')
-    ->register();
-
-// Rule 2: C AND D
-Rules::create('condition_group_2')->order(10)
-    ->when()
-        ->is_user_logged_in()            // C
-        ->constant('EARLY_ACCESS', true) // D
+// (any of these URLs) AND (none of these roles)
+Rules::create('restricted_pages')
+    ->when_any()
+        ->request_url('/members/*')
+        ->request_url('/premium/*')
+    ->and()->when_none()
+        ->user_role('subscriber')
+        ->user_role('pending')
     ->then()
         ->custom('grant_access')
     ->register();
 ```
+
+See [Condition Groups](#condition-groups) below for full documentation.
 
 ## Method Chaining Reference
 
@@ -631,6 +713,7 @@ Rules::create('condition_group_2')->order(10)
 | `when_all()`  | -                             | `ConditionBuilder` | Start with AND logic                     |
 | `when_any()`  | -                             | `ConditionBuilder` | Start with OR logic                      |
 | `when_none()` | -                             | `ConditionBuilder` | Start with NOT logic                     |
+| `and()`       | -                             | `Rules`            | Finalize group, chain next `when_*()`    |
 | `then()`      | `?array $actions`             | `ActionBuilder`    | Start action builder                     |
 | `on()`        | `string $hook, int $priority` | `Rules`            | Set WordPress hook                       |
 | `register()`  | -                             | `bool`             | Register rule (replaces if ID exists)    |
@@ -778,11 +861,19 @@ Rules::create('mixed_logic')
         ->match_any()  // Cannot switch!
         ->condition2()
 
-// ✅ Correct - use one match type
+// ✅ Correct - use one match type per group
 Rules::create('consistent_logic')
     ->when_any()
         ->condition1()
         ->condition2()
+
+// ✅ Also correct - use and() for different match types
+Rules::create('grouped_logic')
+    ->when_any()
+        ->condition1()
+        ->condition2()
+    ->and()->when_none()
+        ->condition3()
 ```
 
 ### 3. Incorrect Hook Timing

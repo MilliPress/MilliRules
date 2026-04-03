@@ -72,6 +72,7 @@ use MilliRules\RuleEngine;
  * @method self constant(string $name, $value = null, ?string $operator = null) Check a PHP constant (including WordPress constants)
  *
  * Finalization Methods (delegated to Rules):
+ * @method Rules and() Finalize current condition group and chain the next via when_all()/when_any()/when_none()
  * @method ActionBuilder then(?array $actions = null) Start building actions or set actions directly
  *
  * Auto-delegation:

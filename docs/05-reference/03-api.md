@@ -275,6 +275,27 @@ Rules::create('my_rule')
 
 ---
 
+##### `and(): Rules`
+
+Finalize the current condition group and prepare for the next one. Used to chain multiple condition groups with different match types. All groups are combined with AND logic.
+
+**Returns**: `Rules` - Fluent interface (call `when_all()`, `when_any()`, or `when_none()` next)
+
+**Example**:
+```php
+Rules::create('my_rule')
+    ->when_any()
+        ->post_type('page')
+        ->post_type('post')
+    ->and()->when_none()
+        ->user_role('subscriber')
+    ->then()
+        ->custom('action')
+    ->register();
+```
+
+---
+
 ##### `then(?array $actions = null): ActionBuilder`
 
 Start building actions.
