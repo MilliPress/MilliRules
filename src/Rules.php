@@ -472,6 +472,30 @@ class Rules
     }
 
     /**
+     * Lock this rule to prevent overwriting or unregistering.
+     *
+     * Locked rules cannot be overwritten by another rule with the same ID,
+     * nor can they be unregistered. This guards the entire rule — conditions,
+     * actions, and metadata — from replacement.
+     *
+     * Use this for safety-critical core rules where both the conditions and
+     * actions must be preserved (e.g., "don't cache POST requests").
+     *
+     * Note: This is separate from ActionBuilder::lock() which locks individual
+     * action types from being executed by later rules. Rule-level lock()
+     * prevents the rule definition itself from being replaced.
+     *
+     * @since 1.1.0
+     *
+     * @return self
+     */
+    public function lock(): self
+    {
+        $this->rule['_locked'] = true;
+        return $this;
+    }
+
+    /**
      * Set conditions with the 'all' match type.
      *
      * @since 0.1.0

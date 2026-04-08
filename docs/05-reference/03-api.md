@@ -202,6 +202,39 @@ Rules::create('my_rule')
 
 ---
 
+##### `lock(): Rules`
+
+Lock the rule to prevent overwriting or unregistering.
+
+Locked rules cannot be overwritten by another rule with the same ID, nor can they be unregistered. This guards the entire rule — conditions, actions, and metadata — from replacement.
+
+**Returns**: `Rules` - Fluent interface
+
+**Example**:
+```php
+// Lock a safety-critical rule
+Rules::create('no-cache-post')->lock()->order(0)
+    ->when_all()->request_method('POST')
+    ->then()->set_cache(false)->lock()
+    ->register();
+
+// Attempting to overwrite is silently rejected
+Rules::create('no-cache-post')  // Same ID — rejected
+    ->when_all()
+    ->then()->set_cache(true)
+    ->register();
+
+// Attempting to unregister is also rejected
+Rules::unregister('no-cache-post');  // Returns false
+```
+
+**Key Points**:
+- Protects the rule definition (conditions + actions + metadata)
+- Separate from `ActionBuilder::lock()` which locks action *execution*
+- Use both together for maximum protection on core rules
+
+---
+
 ##### `when(): ConditionBuilder`
 
 Start building conditions with match_all logic.

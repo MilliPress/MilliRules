@@ -212,7 +212,17 @@ class Package extends BasePackage
         $rule['_metadata'] = $metadata;
         $rule_id = $rule['id'] ?? null;
 
-        // Check for existing rule with same ID and remove it first.
+        // Check for an existing rule with the same ID and remove it first.
+        // If the existing rule is locked, abort registration.
+        if (null !== $rule_id && $this->is_rule_locked($rule_id)) {
+            Logger::warning(
+                sprintf(
+                    "Cannot overwrite locked rule '%s'",
+                    $rule_id
+                )
+            );
+            return;
+        }
         if (null !== $rule_id) {
             $this->remove_rule_by_id($rule_id);
         }
@@ -286,6 +296,24 @@ class Package extends BasePackage
     }
 
     /**
+     * Check if a rule with the given ID is locked.
+     *
+     * @since 1.1.0
+     *
+     * @param string $rule_id The rule ID to check.
+     * @return bool True if the rule exists and is locked.
+     */
+    private function is_rule_locked(string $rule_id): bool
+    {
+        foreach ($this->rules as $rule) {
+            if (($rule['id'] ?? null) === $rule_id) {
+                return ! empty($rule['_locked']);
+            }
+        }
+        return false;
+    }
+
+    /**
      * Unregister a rule by its ID.
      *
      * Removes a rule from both the flat storage and hook-based storage.
@@ -297,6 +325,15 @@ class Package extends BasePackage
      */
     public function unregister_rule(string $rule_id): bool
     {
+        if ($this->is_rule_locked($rule_id)) {
+            Logger::warning(
+                sprintf(
+                    "Cannot unregister locked rule '%s'",
+                    $rule_id
+                )
+            );
+            return false;
+        }
         return $this->remove_rule_by_id($rule_id);
     }
 

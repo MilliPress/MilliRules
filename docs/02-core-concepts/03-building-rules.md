@@ -709,6 +709,7 @@ See [Condition Groups](#condition-groups) below for full documentation.
 | `title()`     | `string $title`               | `Rules`            | Set rule title                           |
 | `order()`     | `int $order`                  | `Rules`            | Set execution order                      |
 | `enabled()`   | `bool $enabled`               | `Rules`            | Enable/disable rule                      |
+| `lock()`      | -                             | `Rules`            | Lock rule (prevent overwrite/unregister) |
 | `when()`      | -                             | `ConditionBuilder` | Start condition builder                  |
 | `when_all()`  | -                             | `ConditionBuilder` | Start with AND logic                     |
 | `when_any()`  | -                             | `ConditionBuilder` | Start with OR logic                      |
@@ -735,6 +736,7 @@ See [Condition Groups](#condition-groups) below for full documentation.
 | Method            | Parameters                 | Returns         | Description            |
 |-------------------|----------------------------|-----------------|------------------------|
 | `custom()`        | `string $type, mixed $arg` | `ActionBuilder` | Add custom action      |
+| `lock()`          | -                          | `ActionBuilder` | Lock last action type  |
 | `add_namespace()` | `string $namespace`        | `ActionBuilder` | Add action namespace   |
 | `{dynamic}()`     | `mixed ...$args`           | `mixed`         | Dynamic action methods |
 

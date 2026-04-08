@@ -148,6 +148,30 @@ For URL `/api/stable/users`:
 - Different action types can still execute
 - Useful for security headers, cache TTL, access control decisions
 
+### Preventing Rule Replacement with Rule Locking
+
+Action locking prevents later rules from *executing* the same action type, but it doesn't prevent someone from *replacing* the rule itself by re-registering the same rule ID with different conditions or actions. For safety-critical rules, use `->lock()` on the rule builder to make the entire rule immutable:
+
+```php
+// This rule cannot be overwritten or unregistered
+Rules::create('no-cache-post')->lock()->order(0)
+    ->when_all()->request_method('POST')
+    ->then()->set_cache(false)->lock()  // Also lock the action type
+    ->register();
+
+// This will be silently rejected — the original rule stays intact
+Rules::create('no-cache-post')  // Same ID
+    ->when_all()  // Permissive conditions
+    ->then()->set_cache(true)  // Flipped action
+    ->register();
+```
+
+**Two levels of locking work together**:
+- **Rule-level `lock()`** — prevents the rule *definition* from being replaced or removed
+- **Action-level `lock()`** — prevents the same action *type* from executing in later rules
+
+Use both for maximum protection on core safety rules.
+
 ## Conditions: The "When" Logic
 
 **Conditions** determine whether a rule should execute. They evaluate the current context and return true or false.

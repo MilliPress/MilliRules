@@ -289,6 +289,16 @@ abstract class BasePackage implements PackageInterface
         if (null !== $rule_id) {
             foreach ($this->rules as $index => $existing) {
                 if (($existing['id'] ?? null) === $rule_id) {
+                    // Refuse to overwrite a locked rule.
+                    if (! empty($existing['_locked'])) {
+                        Logger::warning(
+                            sprintf(
+                                "Cannot overwrite locked rule '%s'",
+                                $rule_id
+                            )
+                        );
+                        return;
+                    }
                     $this->rules[$index] = $rule;
                     return;
                 }
@@ -312,6 +322,16 @@ abstract class BasePackage implements PackageInterface
     {
         foreach ($this->rules as $index => $rule) {
             if (($rule['id'] ?? null) === $rule_id) {
+                // Refuse to remove a locked rule.
+                if (! empty($rule['_locked'])) {
+                    Logger::warning(
+                        sprintf(
+                            "Cannot unregister locked rule '%s'",
+                            $rule_id
+                        )
+                    );
+                    return false;
+                }
                 array_splice($this->rules, $index, 1);
                 return true;
             }
