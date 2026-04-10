@@ -446,21 +446,77 @@ Rules::register_condition('is_weekend', function(Context $context) {
 
 ---
 
-##### `register_action(string $type, callable $callback): void`
+##### `register_action(string $type, callable $callback): ActionMeta`
 
 Register custom action callback.
+
+Returns an `ActionMeta` instance for fluent declaration of action metadata (scope, label, description, category).
 
 **Parameters**:
 - `$type` (string): Action type identifier
 - `$callback` (callable): Callback function `function($args, Context $context): void`
 
-**Returns**: `void`
+**Returns**: `ActionMeta` — fluent metadata declaration for the registered action
 
 **Example**:
 ```php
+// Simple action (return value can be ignored)
 Rules::register_action('log', function($args, Context $context) {
     error_log($args['value'] ?? '');
 });
+
+// Paired actions with shared scope (value-level locking when locked)
+Rules::register_action('add_flag', $addCallback)->scope('flag');
+Rules::register_action('remove_flag', $removeCallback)->scope('flag');
+
+// With full metadata for UI introspection
+Rules::register_action('add_flag', $addCallback)
+    ->scope('flag')
+    ->label(__('Add Flag', 'millirules'))
+    ->description(__('Tag the response with a flag for bulk invalidation.', 'millirules'))
+    ->category('flags');
+```
+
+For class-based actions, override the static `describe()` method on your `BaseAction` subclass:
+
+```php
+class AddFlag extends BaseAction {
+    public static function describe(): ActionMeta
+    {
+        return parent::describe()
+            ->scope('flag')
+            ->label(__('Add Flag', 'millirules'))
+            ->description(__('Tag the response with a flag.', 'millirules'))
+            ->category('flags');
+    }
+
+    public function execute(Context $context): void { /* ... */ }
+    public function get_type(): string { return 'add_flag'; }
+}
+```
+
+---
+
+##### `get_action_meta(string $type): ?ActionMeta`
+
+Get the metadata for a registered action type.
+
+Resolves metadata from either the callback-based registry (populated by `register_action()`) or the class-based `BaseAction::describe()` method. Results are cached per type.
+
+**Parameters**:
+- `$type` (string): Action type identifier
+
+**Returns**: `ActionMeta|null` — metadata for the action, or `null` if not found
+
+**Example**:
+```php
+$meta = Rules::get_action_meta('add_flag');
+if ($meta) {
+    $label = $meta->get_label();         // 'Add Flag'
+    $scope = $meta->get_scope();         // 'flag'
+    $category = $meta->get_category();   // 'flags'
+    $data = $meta->to_array();           // For REST/JSON serialization
+}
 ```
 
 ---
@@ -589,11 +645,14 @@ Add custom action.
 
 Mark the last action as locked.
 
-Locked actions prevent subsequent actions **of the same type** from executing in later rules. The first matching locked action wins. This is useful for preventing cache TTL values or security settings from being overridden by lower-priority rules.
+Locked actions prevent subsequent actions from changing the same setting. How locking works depends on whether the action was registered with a **scope**:
+
+- **Unscoped actions** (default): locks by action type — `set_ttl(300)->lock()` blocks all `set_ttl` calls
+- **Scoped actions**: locks by scope + value — `add_flag('x')->lock()` only blocks operations on `'x'` within the same scope
 
 **Returns**: `ActionBuilder`
 
-**Example**:
+**Example — unscoped (type-level locking)**:
 ```php
 // Rule 1 (order: 10) - Disable cache for logged-in users
 Rules::create('no-cache-logged-in')->order(10)
@@ -604,20 +663,28 @@ Rules::create('no-cache-logged-in')->order(10)
 // Rule 2 (order: 20) - This cache action will be IGNORED
 Rules::create('cache-api')->order(20)
     ->when()->request_url('/api/*')
-    ->then()->do_cache(true)  // Blocked - cache already locked
+    ->then()->do_cache(true)  // Blocked - do_cache is locked
     ->register();
+```
 
-// Lock multiple actions independently
-->then()
-    ->do_cache(false)->lock()           // Locks do_cache
-    ->do_log('User logged in')          // Not locked, still executes
-    ->do_set_header('X-Cache', 'MISS')  // Not locked, still executes
+**Example — scoped (value-level locking)**:
+```php
+// Consumer registers paired actions with shared scope
+Rules::register_action('add_flag', $callback)->scope('flag');
+Rules::register_action('remove_flag', $callback)->scope('flag');
+
+// Lock a specific flag value
+->then()->add_flag('system-flag')->lock()  // Locks 'flag:system-flag'
+
+// Later rules:
+->then()->add_flag('custom-flag')          // Allowed — different lock key
+->then()->remove_flag('system-flag')       // Blocked — same lock key
 ```
 
 **Key Points**:
-- Locks are per action type, not per rule
-- Only affects actions of the same type
-- Different action types can still execute
+- Unscoped: locks are per action type
+- Scoped: locks are per scope + value (cross-type within the same scope)
+- Different action types/scopes can still execute
 - Lock only applies if the rule's conditions match
 - Locks reset on each rule execution
 

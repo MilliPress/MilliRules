@@ -37,6 +37,16 @@ class LockedActionTest extends TestCase
         $actionsProperty = $reflection->getProperty('custom_actions');
         $actionsProperty->setAccessible(true);
         $actionsProperty->setValue(array());
+
+        // Clear action metas registry
+        $metasProperty = $reflection->getProperty('action_metas');
+        $metasProperty->setAccessible(true);
+        $metasProperty->setValue(array());
+
+        // Clear resolved meta cache
+        $cacheProperty = $reflection->getProperty('meta_cache');
+        $cacheProperty->setAccessible(true);
+        $cacheProperty->setValue(array());
     }
 
     /**
@@ -369,5 +379,327 @@ class LockedActionTest extends TestCase
         $this->assertSame(array(false), $cache_values);
         $this->assertSame(false, $context->get('cache.enabled'));
         $this->assertSame(1, $result['actions_executed']);
+    }
+
+    // ===========================
+    // Scoped Action Locking Tests
+    // ===========================
+
+    /**
+     * Test that scoped action locks by value, not by type.
+     *
+     * add_flag('x')->lock() should NOT block add_flag('y').
+     */
+    public function testScopedActionLocksByValue(): void
+    {
+        $flags = array();
+
+        Rules::register_action('add_flag', function ($args, $context) use (&$flags) {
+            $flags[] = $args[0] ?? 'unknown';
+        })->scope('flag');
+
+        $rules = array(
+            array(
+                'id' => 'rule-1',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    array('type' => 'add_flag', 0 => 'archive:author:1', '_locked' => true),
+                ),
+            ),
+            array(
+                'id' => 'rule-2',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    array('type' => 'add_flag', 0 => 'my-custom-flag'),
+                ),
+            ),
+        );
+
+        $context = new Context(array());
+        $engine = new RuleEngine();
+        $result = $engine->execute($rules, $context);
+
+        // Both flags should be added — different values, different lock keys.
+        $this->assertSame(array('archive:author:1', 'my-custom-flag'), $flags);
+        $this->assertSame(2, $result['actions_executed']);
+    }
+
+    /**
+     * Test that scoped lock blocks the same value across action types sharing a scope.
+     *
+     * add_flag('x')->lock() should block remove_flag('x') since both share scope 'flag'.
+     */
+    public function testScopedActionLocksCrossType(): void
+    {
+        $execution_log = array();
+
+        Rules::register_action('add_flag', function ($args, $context) use (&$execution_log) {
+            $execution_log[] = 'add:' . ($args[0] ?? '');
+        })->scope('flag');
+
+        Rules::register_action('remove_flag', function ($args, $context) use (&$execution_log) {
+            $execution_log[] = 'remove:' . ($args[0] ?? '');
+        })->scope('flag');
+
+        $rules = array(
+            array(
+                'id' => 'core-flags',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    array('type' => 'add_flag', 0 => 'archive:author:1', '_locked' => true),
+                ),
+            ),
+            array(
+                'id' => 'user-rule',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    array('type' => 'remove_flag', 0 => 'archive:author:1'), // Blocked — same scope:value.
+                ),
+            ),
+        );
+
+        $context = new Context(array());
+        $engine = new RuleEngine();
+        $result = $engine->execute($rules, $context);
+
+        // remove_flag('archive:author:1') should be blocked.
+        $this->assertSame(array('add:archive:author:1'), $execution_log);
+        $this->assertSame(1, $result['actions_executed']);
+    }
+
+    /**
+     * Test that scoped lock allows different values across action types sharing a scope.
+     *
+     * add_flag('x')->lock() should NOT block remove_flag('y').
+     */
+    public function testScopedActionAllowsDifferentValues(): void
+    {
+        $execution_log = array();
+
+        Rules::register_action('add_flag', function ($args, $context) use (&$execution_log) {
+            $execution_log[] = 'add:' . ($args[0] ?? '');
+        })->scope('flag');
+
+        Rules::register_action('remove_flag', function ($args, $context) use (&$execution_log) {
+            $execution_log[] = 'remove:' . ($args[0] ?? '');
+        })->scope('flag');
+
+        $rules = array(
+            array(
+                'id' => 'core-flags',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    array('type' => 'add_flag', 0 => 'archive:author:1', '_locked' => true),
+                ),
+            ),
+            array(
+                'id' => 'user-rule',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    array('type' => 'remove_flag', 0 => 'some-other-flag'), // Allowed — different value.
+                ),
+            ),
+        );
+
+        $context = new Context(array());
+        $engine = new RuleEngine();
+        $result = $engine->execute($rules, $context);
+
+        // Both should execute — different lock keys.
+        $this->assertSame(array('add:archive:author:1', 'remove:some-other-flag'), $execution_log);
+        $this->assertSame(2, $result['actions_executed']);
+    }
+
+    /**
+     * Test that unscoped actions still lock by type (backward compatible).
+     */
+    public function testUnscopedActionStillLocksByType(): void
+    {
+        $execution_log = array();
+
+        // Register WITHOUT scope — should behave exactly as before.
+        Rules::register_action('set_ttl', function ($args, $context) use (&$execution_log) {
+            $execution_log[] = 'ttl:' . ($args[0] ?? '');
+        });
+
+        $rules = array(
+            array(
+                'id' => 'rule-1',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    array('type' => 'set_ttl', 0 => 300, '_locked' => true),
+                ),
+            ),
+            array(
+                'id' => 'rule-2',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    array('type' => 'set_ttl', 0 => 600), // Blocked — same type, no scope.
+                ),
+            ),
+        );
+
+        $context = new Context(array());
+        $engine = new RuleEngine();
+        $result = $engine->execute($rules, $context);
+
+        // Only first set_ttl should execute.
+        $this->assertSame(array('ttl:300'), $execution_log);
+        $this->assertSame(1, $result['actions_executed']);
+    }
+
+    /**
+     * Test scoped lock from remove_flag also blocks add_flag (bidirectional).
+     */
+    public function testScopedLockIsBidirectional(): void
+    {
+        $execution_log = array();
+
+        Rules::register_action('add_flag', function ($args, $context) use (&$execution_log) {
+            $execution_log[] = 'add:' . ($args[0] ?? '');
+        })->scope('flag');
+
+        Rules::register_action('remove_flag', function ($args, $context) use (&$execution_log) {
+            $execution_log[] = 'remove:' . ($args[0] ?? '');
+        })->scope('flag');
+
+        $rules = array(
+            array(
+                'id' => 'rule-1',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    // Lock removal of a flag.
+                    array('type' => 'remove_flag', 0 => 'no-store', '_locked' => true),
+                ),
+            ),
+            array(
+                'id' => 'rule-2',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    // Try to add same flag back — blocked by same scope:value.
+                    array('type' => 'add_flag', 0 => 'no-store'),
+                ),
+            ),
+        );
+
+        $context = new Context(array());
+        $engine = new RuleEngine();
+        $result = $engine->execute($rules, $context);
+
+        // add_flag('no-store') blocked because remove_flag('no-store') locked 'flag:no-store'.
+        $this->assertSame(array('remove:no-store'), $execution_log);
+        $this->assertSame(1, $result['actions_executed']);
+    }
+
+    /**
+     * Test that scoped actions with non-scalar first arguments skip locking
+     * entirely rather than silently producing "Array" lock keys.
+     *
+     * Previously the (string) cast on an array produced the literal "Array",
+     * which meant two different arrays would collide on the same lock key.
+     * Now the action executes but is simply not lockable.
+     */
+    public function testScopedActionSkipsLockOnNonScalarValue(): void
+    {
+        $execution_log = array();
+
+        Rules::register_action('add_flag', function ($args, $context) use (&$execution_log) {
+            $val = $args[0] ?? null;
+            $execution_log[] = is_array($val) ? 'array:' . json_encode($val) : 'scalar:' . $val;
+        })->scope('flag');
+
+        $rules = array(
+            array(
+                'id' => 'rule-1',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    // Non-scalar first arg — previously would become "flag:Array".
+                    // Now: not lockable, warning logged, action still executes.
+                    array('type' => 'add_flag', 0 => array('nested' => 'value'), '_locked' => true),
+                ),
+            ),
+            array(
+                'id' => 'rule-2',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    // A different array — previously would collide on "flag:Array".
+                    array('type' => 'add_flag', 0 => array('different' => 'structure')),
+                ),
+            ),
+            array(
+                'id' => 'rule-3',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    // Scalar works normally — different scoped key.
+                    array('type' => 'add_flag', 0 => 'custom-flag'),
+                ),
+            ),
+        );
+
+        $context = new Context(array());
+        $engine = new RuleEngine();
+        $result = $engine->execute($rules, $context);
+
+        // All three execute — non-scalar fallback means no lock is set or checked.
+        $this->assertCount(3, $execution_log);
+        $this->assertSame(3, $result['actions_executed']);
+    }
+
+    /**
+     * Test that class-based actions declaring scope via describe() work.
+     *
+     * Uses a real class (defined at bottom of file) registered in the
+     * MilliRules\Actions namespace via a temporary namespace registration.
+     */
+    public function testClassBasedActionScopeViaDescribe(): void
+    {
+        // Register a temporary namespace where our test class lives.
+        \MilliRules\RuleEngine::register_namespace('Actions', 'MilliRules\\Tests\\Feature\\Fixtures');
+
+        $execution_log = array();
+
+        // Inject log collector via global since the fixture class needs to access it.
+        $GLOBALS['__test_class_based_log'] = &$execution_log;
+
+        $rules = array(
+            array(
+                'id' => 'rule-1',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    array('type' => 'test_scoped_action', 0 => 'val-1', '_locked' => true),
+                ),
+            ),
+            array(
+                'id' => 'rule-2',
+                'match_type' => 'all',
+                'conditions' => array(),
+                'actions' => array(
+                    array('type' => 'test_scoped_action', 0 => 'val-2'), // Allowed
+                    array('type' => 'test_scoped_action', 0 => 'val-1'), // Blocked (same scope:value)
+                ),
+            ),
+        );
+
+        $context = new Context(array());
+        $engine = new RuleEngine();
+        $engine->execute($rules, $context);
+
+        $this->assertSame(array('val-1', 'val-2'), $execution_log);
+
+        unset($GLOBALS['__test_class_based_log']);
     }
 }

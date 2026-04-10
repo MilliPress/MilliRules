@@ -112,4 +112,28 @@ abstract class BaseAction implements ActionInterface
 
         return new ArgumentValue( $value, $default, $this->resolver );
     }
+
+    /**
+     * Declare metadata for this action type.
+     *
+     * Override in subclasses to declare action metadata (scope, label,
+     * description, category). Metadata is per-type, not per-instance, so
+     * this method is static and called without instantiating the action.
+     *
+     * Override example:
+     *   public static function describe(): ActionMeta
+     *   {
+     *       return parent::describe()
+     *           ->scope('flag')
+     *           ->label(__('Add Flag', 'millirules'));
+     *   }
+     *
+     * @since 1.2.0
+     *
+     * @return ActionMeta
+     */
+    public static function describe(): ActionMeta
+    {
+        return new ActionMeta(static::class);
+    }
 }

@@ -75,11 +75,14 @@ class RuleEngine
     private array $available_packages = array();
 
     /**
-     * Tracks which action types are locked during execution.
+     * Tracks which actions are locked during execution.
      *
-     * Structure: ['action_type' => 'rule_id_that_locked_it']
+     * Keys are lock keys: either an action type (e.g., 'set_ttl') for unscoped actions,
+     * or a scope:value composite (e.g., 'flag:archive:author:1') for scoped actions.
+     * Values are the rule ID that set the lock.
      *
      * @since 0.1.0
+     * @since 1.2.0 Keys can now be scope:value composites for scoped actions.
      * @var array<string, string>
      */
     private array $locked_actions = array();
@@ -315,13 +318,19 @@ class RuleEngine
             $type_value = $action_config['type'] ?? '';
             $type = is_string($type_value) ? $type_value : '';
 
-            // Check if this action type is already locked.
-            if (! empty($type) && isset($this->locked_actions[ $type ])) {
+            // Build lock key: scoped actions use scope:value, unscoped use type.
+            // Scope is resolved statically via Rules::get_action_meta(), so we can
+            // check the lock before instantiating the action.
+            $lock_key = $this->build_lock_key($type, $action_config);
+
+            // Check if this action is already locked.
+            if ('' !== $lock_key && isset($this->locked_actions[ $lock_key ])) {
                 Logger::warning(
                     sprintf(
-                        "Action '%s' locked by rule '%s', skipping execution in rule '%s'",
+                        "Action '%s' (lock key '%s') locked by rule '%s', skipping execution in rule '%s'",
                         $type,
-                        $this->locked_actions[ $type ],
+                        $lock_key,
+                        $this->locked_actions[ $lock_key ],
                         $rule_id
                     )
                 );
@@ -337,14 +346,67 @@ class RuleEngine
                 $action->execute($this->context);
                 $this->stats['actions_executed']++;
 
-                // If this action has the locked flag, lock the action type.
-                if (! empty($type) && ! empty($action_config['_locked'])) {
-                    $this->locked_actions[ $type ] = $rule_id;
+                // If this action has the locked flag, lock it.
+                if ('' !== $lock_key && ! empty($action_config['_locked'])) {
+                    $this->locked_actions[ $lock_key ] = $rule_id;
                 }
             } catch (\Exception $e) {
                 Logger::aggregate('action_execution', 'Error executing action: ' . $e->getMessage());
             }
         }
+    }
+
+    /**
+     * Build the lock key for an action.
+     *
+     * Resolves metadata via Rules::get_action_meta(), which handles both
+     * callback-based and class-based actions uniformly. If the action is
+     * scoped, the lock key is "scope:value" using the first positional arg
+     * as the value. Otherwise it's just the action type.
+     *
+     * Non-scalar first arguments on scoped actions can't be serialized
+     * into a stable lock key, so they return an empty string — the action
+     * executes but is not lockable.
+     *
+     * @since 1.2.0
+     *
+     * @param string                   $type          The action type.
+     * @param array<int|string, mixed> $action_config The action configuration.
+     * @return string The lock key, or empty string if the action cannot be locked.
+     */
+    private function build_lock_key(string $type, array $action_config): string
+    {
+        if ('' === $type) {
+            return '';
+        }
+
+        $meta  = Rules::get_action_meta($type);
+        $scope = null === $meta ? '' : $meta->get_scope();
+
+        if ('' === $scope) {
+            return $type;
+        }
+
+        // Scoped: build "scope:value" key from the first positional argument.
+        $value = $action_config[0] ?? '';
+
+        if (! is_scalar($value)) {
+            Logger::warning(
+                sprintf(
+                    "Scoped action '%s' has non-scalar first argument — action will not be locked",
+                    $type
+                )
+            );
+            return ''; // Not lockable; skip the lock check and set.
+        }
+
+        $value_str = (string) $value;
+        if ('' === $value_str) {
+            // No value provided — lock only the scope bucket.
+            return $scope;
+        }
+
+        return $scope . ':' . $value_str;
     }
 
     /**

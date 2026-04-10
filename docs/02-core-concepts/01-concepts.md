@@ -120,7 +120,7 @@ For URL `/api/stable/users`:
 
 ### Preventing Overwrites with Action Locking
 
-Sometimes you want to **prevent** later rules from overriding values. Use `->lock()` to lock an action, preventing subsequent actions of the same type from executing:
+Sometimes you want to **prevent** later rules from overriding values. Use `->lock()` to lock an action, preventing subsequent actions from changing the same setting:
 
 ```php
 // Rule 1 (order: 10) sets cache and LOCKS it
@@ -142,21 +142,74 @@ For URL `/api/stable/users`:
 3. Rule 2 matches, but its `set_cache` action is **blocked** (cache already locked)
 4. **Final value**: 3600 seconds (protected from override)
 
+#### Scoped Locking for Paired Actions
+
+For actions that work in pairs (like `add_flag`/`remove_flag`), consumer plugins can register them with a shared **scope**. This changes locking from type-level to **value-level** — locking a specific flag value instead of blocking all flag operations.
+
+**Callback-based registration** — chain `->scope()` after `register_action()`:
+
+```php
+Rules::register_action('add_flag', $addCallback)->scope('flag');
+Rules::register_action('remove_flag', $removeCallback)->scope('flag');
+```
+
+**Class-based registration** — declare via the static `describe()` method on your `BaseAction` subclass:
+
+```php
+use MilliRules\Actions\ActionMeta;
+use MilliRules\Actions\BaseAction;
+
+class AddFlag extends BaseAction
+{
+    public static function describe(): ActionMeta
+    {
+        return parent::describe()->scope('flag');
+    }
+
+    public function execute(Context $context): void { /* ... */ }
+    public function get_type(): string { return 'add_flag'; }
+}
+```
+
+Once registered, scoped locking behaves like this:
+
+```php
+// Rule 1: Add and lock a system flag
+Rules::create('core-author-flag')->order(0)
+    ->when()->is_author()
+    ->then()->add_flag('archive:author:1')->lock()  // Locks 'flag:archive:author:1'
+    ->register();
+
+// Rule 2: This works — different flag value, different lock key
+Rules::create('user-custom-flag')->order(10)
+    ->when()->request_url('/special/*')
+    ->then()->add_flag('my-custom-flag')  // Allowed
+    ->register();
+
+// Rule 3: This is BLOCKED — same scope + value, even though it's remove_flag
+Rules::create('user-remove-flag')->order(10)
+    ->when()->request_url('/no-author/*')
+    ->then()->remove_flag('archive:author:1')  // Blocked
+    ->register();
+```
+
 **Key Points**:
-- Locks are **per action type**, not per rule
-- Only affects actions with the **same type**
-- Different action types can still execute
-- Useful for security headers, cache TTL, access control decisions
+- **Unscoped actions** (default): locks are per action type — `set_ttl(300)->lock()` blocks all `set_ttl` calls
+- **Scoped actions**: locks are per value — `add_flag('x')->lock()` only blocks operations on flag `'x'`
+- Scoped locking works across action types sharing the same scope (e.g., `add_flag` and `remove_flag`)
+- Different action types can still execute regardless of locks
+- Lock only applies if the rule's conditions match
+- Non-scalar values (arrays/objects) cannot be locked at the scope level; the action will execute but `->lock()` is silently skipped with a warning
 
 ### Preventing Rule Replacement with Rule Locking
 
-Action locking prevents later rules from *executing* the same action type, but it doesn't prevent someone from *replacing* the rule itself by re-registering the same rule ID with different conditions or actions. For safety-critical rules, use `->lock()` on the rule builder to make the entire rule immutable:
+Action locking prevents later rules from *executing* the same action, but it doesn't prevent someone from *replacing* the rule itself by re-registering the same rule ID with different conditions or actions. For safety-critical rules, use `->lock()` on the rule builder to make the entire rule immutable:
 
 ```php
 // This rule cannot be overwritten or unregistered
 Rules::create('no-cache-post')->lock()->order(0)
     ->when_all()->request_method('POST')
-    ->then()->set_cache(false)->lock()  // Also lock the action type
+    ->then()->set_cache(false)->lock()  // Also lock the action
     ->register();
 
 // This will be silently rejected — the original rule stays intact
@@ -168,7 +221,7 @@ Rules::create('no-cache-post')  // Same ID
 
 **Two levels of locking work together**:
 - **Rule-level `lock()`** — prevents the rule *definition* from being replaced or removed
-- **Action-level `lock()`** — prevents the same action *type* from executing in later rules
+- **Action-level `lock()`** — prevents the same action from executing in later rules
 
 Use both for maximum protection on core safety rules.
 

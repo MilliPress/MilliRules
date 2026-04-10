@@ -448,6 +448,82 @@ Rules::register_action('my_action', function(array $args, Context $context): voi
 });
 ```
 
+## Declaring Action Metadata
+
+`Rules::register_action()` returns an `ActionMeta` instance that lets you declare metadata about the action type. The metadata is used for both engine behavior (e.g., scoped locking) and consumer introspection (e.g., UI builders reading labels and descriptions).
+
+### Callback-Based Metadata
+
+Chain metadata methods directly after registration:
+
+```php
+Rules::register_action('add_flag', $addCallback)
+    ->scope('flag')
+    ->label(__('Add Flag', 'millirules'))
+    ->description(__('Tag the response with a flag for bulk invalidation.', 'millirules'))
+    ->category('flags');
+```
+
+### Class-Based Metadata via `describe()`
+
+For class-based actions extending `BaseAction`, override the static `describe()` method. Since property initializers can't call functions like `__()`, the static method is the only place where translated strings work:
+
+```php
+use MilliRules\Actions\ActionMeta;
+use MilliRules\Actions\BaseAction;
+use MilliRules\Context;
+
+class AddFlag extends BaseAction
+{
+    public static function describe(): ActionMeta
+    {
+        return parent::describe()
+            ->scope('flag')
+            ->label(__('Add Flag', 'millirules'))
+            ->description(__('Tag the response with a flag.', 'millirules'))
+            ->category('flags');
+    }
+
+    public function execute(Context $context): void
+    {
+        $flag = $this->get_arg(0, '')->string();
+        // ... add the flag ...
+    }
+
+    public function get_type(): string
+    {
+        return 'add_flag';
+    }
+}
+```
+
+### Available Metadata Fields
+
+| Method          | Purpose           | Read by      |
+| --------------- | ----------------- | ------------ |
+| `scope()`       | Lock grouping     | RuleEngine   |
+| `label()`       | Human-readable name | Consumers (UIs) |
+| `description()` | Help text         | Consumers (UIs) |
+| `category()`    | UI grouping       | Consumers (UIs) |
+
+- **`scope`** is engine-relevant: the `RuleEngine` uses it to build value-level lock keys for paired actions (e.g., `add_flag`/`remove_flag`).
+- **`label`, `description`, `category`** are stored but never interpreted by MilliRules itself. Consumers (UI builders, CLIs, docs generators) introspect them via `Rules::get_action_meta($type)`.
+
+### Introspecting Action Metadata
+
+Consumers can query metadata for any registered action type:
+
+```php
+$meta = Rules::get_action_meta('add_flag');
+if ($meta) {
+    echo $meta->get_label();       // 'Add Flag'
+    echo $meta->get_category();    // 'flags'
+    $data = $meta->to_array();     // Serializable array for REST
+}
+```
+
+This works for both callback-based and class-based actions uniformly.
+
 ## Common Pitfalls
 
 ### Don't Modify Context Expecting Persistence

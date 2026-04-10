@@ -55,6 +55,14 @@ class LockedRuleTest extends TestCase
         $actionsProperty = $reflection->getProperty('custom_actions');
         $actionsProperty->setAccessible(true);
         $actionsProperty->setValue(array());
+
+        $metasProperty = $reflection->getProperty('action_metas');
+        $metasProperty->setAccessible(true);
+        $metasProperty->setValue(array());
+
+        $cacheProperty = $reflection->getProperty('meta_cache');
+        $cacheProperty->setAccessible(true);
+        $cacheProperty->setValue(array());
     }
 
     /**

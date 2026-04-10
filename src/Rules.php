@@ -14,6 +14,7 @@
 namespace MilliRules;
 
 use MilliRules\Logger;
+use MilliRules\Actions\ActionMeta;
 use MilliRules\Builders\ConditionBuilder;
 use MilliRules\Builders\ActionBuilder;
 use MilliRules\Builders\NormalizesMethodNames;
@@ -74,6 +75,29 @@ class Rules
      * @var array<string, callable>
      */
     private static array $custom_actions = array();
+
+    /**
+     * Action metadata registry (callback-based actions).
+     *
+     * Stores ActionMeta instances created by register_action() so fluent
+     * chaining (->scope(), ->label(), etc.) mutates the stored instance.
+     *
+     * @since 1.2.0
+     * @var array<string, ActionMeta>
+     */
+    private static array $action_metas = array();
+
+    /**
+     * Resolved metadata cache (both callback- and class-based).
+     *
+     * Keyed by action type. Uses null sentinel for "resolution attempted,
+     * nothing found" to avoid re-resolving on every lookup. Cleared on
+     * re-registration and in test teardown.
+     *
+     * @since 1.2.0
+     * @var array<string, ?ActionMeta>
+     */
+    private static array $meta_cache = array();
 
     /**
      * Hard-coded namespace to package mapping.
@@ -215,21 +239,33 @@ class Rules
     /**
      * Register a custom action callback.
      *
+     * Returns an ActionMeta instance for fluent declaration of metadata
+     * (scope, label, description, category).
+     *
      * @since 0.1.0
+     * @since 1.2.0 Returns ActionMeta for fluent metadata declaration.
      *
      * @param string   $type     The action type identifier.
      * @param callable(array<string, mixed>, Context): void $callback The callback function that receives args array and Context.
      *                                                  Signature: function(array $args, Context $context): void
-     * @return void
+     * @return ActionMeta Fluent metadata declaration for the registered action.
      * @throws \InvalidArgumentException If callback is not callable.
      */
-    public static function register_action(string $type, callable $callback): void
+    public static function register_action(string $type, callable $callback): ActionMeta
     {
         if (! is_callable($callback)) {
             throw new \InvalidArgumentException("Callback for action type '{$type}' is not callable"); // phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         self::$custom_actions[ $type ] = $callback;
+
+        $meta = new ActionMeta($type);
+        self::$action_metas[ $type ] = $meta;
+
+        // Invalidate cache so subsequent get_action_meta() calls see the new instance.
+        unset(self::$meta_cache[ $type ]);
+
+        return $meta;
     }
 
     /**
@@ -381,6 +417,45 @@ class Rules
     public static function get_custom_actions(): array
     {
         return self::$custom_actions;
+    }
+
+    /**
+     * Get the metadata for an action type.
+     *
+     * Resolves metadata from either:
+     * 1. Callback-based registry (populated by register_action())
+     * 2. Class-based static describe() method on BaseAction subclasses
+     *
+     * Results are cached per type. Returns null if no metadata is found
+     * for the given type.
+     *
+     * @since 1.2.0
+     *
+     * @param string $type The action type.
+     * @return ActionMeta|null The metadata, or null if not found.
+     */
+    public static function get_action_meta(string $type): ?ActionMeta
+    {
+        if (array_key_exists($type, self::$meta_cache)) {
+            return self::$meta_cache[ $type ];
+        }
+
+        // Callback-based: stored by register_action().
+        if (isset(self::$action_metas[ $type ])) {
+            self::$meta_cache[ $type ] = self::$action_metas[ $type ];
+            return self::$meta_cache[ $type ];
+        }
+
+        // Class-based: resolve via static describe().
+        $class_name = RuleEngine::type_to_class_name($type, 'Actions');
+        if (class_exists($class_name) && is_subclass_of($class_name, Actions\BaseAction::class)) {
+            /** @var class-string<Actions\BaseAction> $class_name */
+            self::$meta_cache[ $type ] = $class_name::describe();
+            return self::$meta_cache[ $type ];
+        }
+
+        self::$meta_cache[ $type ] = null;
+        return null;
     }
 
     /**
