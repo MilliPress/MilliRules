@@ -53,7 +53,16 @@ class LockedActionTest extends TestCase
         $scopeCacheProperty->setAccessible(true);
         $scopeCacheProperty->setValue(array());
 
-        // Reset the describe-was-called tracking flag
+        // Clear condition meta registries
+        $condMetasProperty = $reflection->getProperty('condition_metas');
+        $condMetasProperty->setAccessible(true);
+        $condMetasProperty->setValue(array());
+
+        $condCacheProperty = $reflection->getProperty('condition_meta_cache');
+        $condCacheProperty->setAccessible(true);
+        $condCacheProperty->setValue(array());
+
+        // Reset the set_meta-was-called tracking flag
         unset($GLOBALS['__test_set_meta_was_called']);
     }
 

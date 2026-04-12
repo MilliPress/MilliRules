@@ -348,4 +348,40 @@ abstract class BaseCondition implements ConditionInterface
      * @return mixed The actual value to compare.
      */
     abstract protected function get_actual_value(Context $context);
+
+    /**
+     * Set consumer-facing metadata for this condition type.
+     *
+     * **Only required by consumer plugins** that want their conditions to
+     * appear in UIs (rule builders, REST schema endpoints, docs generators).
+     * Conditions that do NOT override this method have no consumer-visible
+     * metadata and will typically be hidden from UIs — making UI visibility
+     * opt-in.
+     *
+     * Called only when consumers request full metadata via
+     * Rules::get_condition_meta() — never during engine execution. Safe to
+     * use framework-specific functions (e.g., translation) because consumers
+     * always run after the framework has fully initialized.
+     *
+     * Override example:
+     *   public static function set_meta(ConditionMeta $meta): void
+     *   {
+     *       $meta
+     *           ->label('Request URL')
+     *           ->description('Match the current request URL.')
+     *           ->categories('request')
+     *           ->operators('=', '!=', 'LIKE', 'REGEXP', 'IN', 'NOT IN')
+     *           ->args()
+     *               ->string('value')->label('URL Pattern')->required();
+     *   }
+     *
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     * @return void
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        // Default: no metadata. Conditions without metadata are hidden from UIs.
+    }
 }

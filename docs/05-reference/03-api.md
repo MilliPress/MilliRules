@@ -427,21 +427,108 @@ if (wp_get_environment_type() === 'production') {
 
 ---
 
-##### `register_condition(string $type, callable $callback): void`
+##### `register_condition(string $type, callable $callback): ConditionMeta`
 
 Register custom condition callback.
+
+Returns a `ConditionMeta` instance for fluent declaration of metadata (label, description, categories, operators, arguments).
 
 **Parameters**:
 - `$type` (string): Condition type identifier
 - `$callback` (callable): Callback function `function($args, Context $context): bool`
 
-**Returns**: `void`
+**Returns**: `ConditionMeta` — fluent metadata declaration for the registered condition
 
 **Example**:
 ```php
-Rules::register_condition('is_weekend', function(Context $context) {
+// Simple condition (return value can be ignored)
+Rules::register_condition('is_weekend', function($args, Context $context) {
     return date('N') >= 6;
 });
+
+// With full metadata for UI introspection
+Rules::register_condition('is_weekend', function($args, Context $context) {
+    return date('N') >= 6;
+})
+    ->label('Is Weekend')
+    ->description('Matches on Saturdays and Sundays.')
+    ->categories('date')
+    ->operators('=', '!=');
+```
+
+For class-based conditions, override `set_meta()` on your `BaseCondition` subclass:
+
+```php
+class RequestUrl extends BaseCondition {
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Request URL')
+            ->description('Match the current request URL.')
+            ->categories('request')
+            ->operators('=', '!=', 'LIKE', 'REGEXP', 'IN', 'NOT IN')
+            ->args()
+                ->string('value')->label('URL Pattern')->required();
+    }
+}
+```
+
+---
+
+##### `get_condition_meta(string $type): ?ConditionMeta`
+
+Get the full metadata for a registered condition type.
+
+Resolves metadata from either the callback-based registry (populated by `register_condition()`) or the class-based `BaseCondition::set_meta()` method. For class-based conditions, the argument mapping from `BaseCondition::get_argument_mapping()` is automatically included.
+
+Results are cached per type.
+
+**Parameters**:
+- `$type` (string): Condition type identifier
+
+**Returns**: `ConditionMeta|null` — metadata for the condition, or `null` if not found
+
+**Example**:
+```php
+$meta = Rules::get_condition_meta('request_url');
+if ($meta) {
+    $label     = $meta->get_label();            // 'Request URL'
+    $operators = $meta->get_operators();         // ['=', '!=', 'LIKE', ...]
+    $mapping   = $meta->get_argument_mapping();  // ['value']
+    $args      = $meta->get_arguments();         // array<ArgumentSchema>
+    $data      = $meta->to_array();              // For REST/JSON serialization
+}
+```
+
+---
+
+#### `ConditionMeta` — fluent condition metadata
+
+`ConditionMeta` is the metadata container for condition types. Parallel to `ActionMeta` but with operators instead of scope.
+
+##### Core fields
+
+- `->label(string $label)` — human-readable name
+- `->description(string $description)` — help text
+- `->categories(string ...$categories)` — one or more UI grouping categories
+- `->operators(string ...$operators)` — supported comparison operators (e.g., `'='`, `'!='`, `'LIKE'`, `'IN'`)
+- `->argument_mapping(array $mapping)` — how builder args map to config keys (auto-set for class-based conditions)
+- `->args()` → `ArgumentsBuilder` — same walking-builder pattern as ActionMeta
+- `->extend(string $key, $value)` — plugin-specific metadata bag
+
+##### `->to_array(): array` — wire format
+
+```php
+[
+    'type'             => string,
+    'label'            => string,
+    'description'      => string,
+    'categories'       => array<int, string>,
+    'operators'        => array<int, string>,
+    'argument_mapping' => array<int, string>,
+    'arguments'        => array<int, array>,
+    'extensions'       => array<string, mixed>,
+]
 ```
 
 ---

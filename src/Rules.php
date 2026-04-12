@@ -15,6 +15,7 @@ namespace MilliRules;
 
 use MilliRules\Logger;
 use MilliRules\Actions\ActionMeta;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Builders\ConditionBuilder;
 use MilliRules\Builders\ActionBuilder;
 use MilliRules\Builders\NormalizesMethodNames;
@@ -112,6 +113,22 @@ class Rules
      * @var array<string, string>
      */
     private static array $scope_cache = array();
+
+    /**
+     * Condition metadata registry (callback-based conditions).
+     *
+     * @since 1.2.0
+     * @var array<string, ConditionMeta>
+     */
+    private static array $condition_metas = array();
+
+    /**
+     * Resolved condition metadata cache (both callback- and class-based).
+     *
+     * @since 1.2.0
+     * @var array<string, ?ConditionMeta>
+     */
+    private static array $condition_meta_cache = array();
 
     /**
      * Hard-coded namespace to package mapping.
@@ -233,21 +250,32 @@ class Rules
     /**
      * Register a custom condition callback.
      *
+     * Returns a ConditionMeta instance for fluent declaration of metadata
+     * (label, description, categories, operators, arguments).
+     *
      * @since 0.1.0
+     * @since 1.2.0 Returns ConditionMeta for fluent metadata declaration.
      *
      * @param string   $type     The condition type identifier.
      * @param callable(array<string, mixed>, Context): bool $callback The callback function that receives args array and Context.
      *                                                  Signature: function(array $args, Context $context): bool
-     * @return void
+     * @return ConditionMeta Fluent metadata declaration for the registered condition.
      * @throws \InvalidArgumentException If callback is not callable.
      */
-    public static function register_condition(string $type, callable $callback): void
+    public static function register_condition(string $type, callable $callback): ConditionMeta
     {
         if (! is_callable($callback)) {
             throw new \InvalidArgumentException("Callback for condition type '{$type}' is not callable"); // phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         self::$custom_conditions[ $type ] = $callback;
+
+        $meta = new ConditionMeta($type);
+        self::$condition_metas[ $type ] = $meta;
+
+        unset(self::$condition_meta_cache[ $type ]);
+
+        return $meta;
     }
 
     /**
@@ -526,6 +554,50 @@ class Rules
         }
 
         self::$meta_cache[ $type ] = null;
+        return null;
+    }
+
+    /**
+     * Get the full metadata for a condition type.
+     *
+     * Resolves metadata from either:
+     * 1. Callback-based registry (populated by register_condition())
+     * 2. Class-based static set_meta() method on BaseCondition subclasses
+     *
+     * For class-based conditions, the argument_mapping from
+     * BaseCondition::get_argument_mapping() is automatically included.
+     *
+     * Results are cached per type. Returns null if no metadata is found.
+     *
+     * @since 1.2.0
+     *
+     * @param string $type The condition type.
+     * @return ConditionMeta|null The metadata, or null if not found.
+     */
+    public static function get_condition_meta(string $type): ?ConditionMeta
+    {
+        if (array_key_exists($type, self::$condition_meta_cache)) {
+            return self::$condition_meta_cache[ $type ];
+        }
+
+        // Callback-based: stored by register_condition().
+        if (isset(self::$condition_metas[ $type ])) {
+            self::$condition_meta_cache[ $type ] = self::$condition_metas[ $type ];
+            return self::$condition_meta_cache[ $type ];
+        }
+
+        // Class-based: construct meta and let the subclass configure it.
+        $class_name = RuleEngine::type_to_class_name($type, 'Conditions');
+        if (class_exists($class_name) && is_subclass_of($class_name, Conditions\BaseCondition::class)) {
+            /** @var class-string<Conditions\BaseCondition> $class_name */
+            $meta = new ConditionMeta($type);
+            $meta->argument_mapping($class_name::get_argument_mapping());
+            $class_name::set_meta($meta);
+            self::$condition_meta_cache[ $type ] = $meta;
+            return $meta;
+        }
+
+        self::$condition_meta_cache[ $type ] = null;
         return null;
     }
 

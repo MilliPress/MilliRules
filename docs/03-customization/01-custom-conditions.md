@@ -509,6 +509,67 @@ Rules::register_condition('should_notify', function($args, Context $context) {
 // Then use an action to send email when condition matches
 ```
 
+## Declaring Condition Metadata
+
+Conditions can declare consumer-facing metadata so UIs can render condition pickers, operator dropdowns, and input fields without hand-maintained schemas.
+
+### Callback-Based Metadata
+
+Chain metadata methods directly after registration:
+
+```php
+Rules::register_condition('is_weekend', function($args, Context $context) {
+    return date('N') >= 6;
+})
+    ->label('Is Weekend')
+    ->description('Matches on Saturdays and Sundays.')
+    ->categories('date')
+    ->operators('=', '!=');
+```
+
+### Class-Based Metadata via `set_meta()`
+
+For class-based conditions extending `BaseCondition`, override the static `set_meta()` method:
+
+```php
+use MilliRules\Conditions\ConditionMeta;
+use MilliRules\Conditions\BaseCondition;
+
+class RequestUrl extends BaseCondition
+{
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Request URL')
+            ->description('Match the current request URL against a pattern.')
+            ->categories('request')
+            ->operators('=', '!=', 'LIKE', 'REGEXP', 'IN', 'NOT IN')
+            ->args()
+                ->string('value')->label('URL Pattern')->required();
+    }
+
+    // get_actual_value(), get_type(), etc.
+}
+```
+
+The `argument_mapping` (from `BaseCondition::get_argument_mapping()`) is automatically included when the engine resolves class-based condition metadata.
+
+> **Note**: `set_meta()` is called after the application framework has fully initialized. If your framework provides translation functions, you can safely use them for labels, descriptions, and argument labels inside `set_meta()`.
+
+### Available Metadata Fields
+
+| Method              | Purpose                    | Notes |
+| ------------------- | -------------------------- | ----- |
+| `label()`           | Human-readable name        | Shown in condition pickers |
+| `description()`     | Help text                  | Tooltip or inline help |
+| `categories()`      | UI grouping (one or more)  | Groups conditions in dropdowns |
+| `operators()`       | Supported operators        | Populates operator dropdown |
+| `argument_mapping()` | Arg-to-config key mapping | Auto-set for class-based conditions |
+| `args()`            | Argument schemas           | Same walking-builder as actions |
+| `extend()`          | Plugin-specific metadata   | Stored but not interpreted |
+
+See the [ConditionMeta API reference](../05-reference/03-api.md#conditionmeta--fluent-condition-metadata) for the full API.
+
 ## Next Steps
 
 - **[Custom Actions](./02-custom-actions.md)** - Implement action logic
