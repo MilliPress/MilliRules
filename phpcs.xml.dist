@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<ruleset name="MilliRules">
+    <description>MilliRules coding standards — PSR-12 with snake_case method names.</description>
+
+    <!-- Paths to lint -->
+    <file>src</file>
+    <file>tests</file>
+
+    <!-- Base on PSR-12 -->
+    <rule ref="PSR12">
+        <!--
+            Exclude the camelCase method naming sniff.
+            MilliRules uses snake_case throughout (get_type, build_lock_key,
+            register_action, etc.) to match WordPress conventions. This is
+            a deliberate codebase-wide choice, not a violation.
+        -->
+        <exclude name="PSR1.Methods.CamelCapsMethodName"/>
+    </rule>
+</ruleset>

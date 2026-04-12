@@ -37,8 +37,8 @@
     ],
     "test:unit": "pest",
     "test:phpstan": "phpstan --memory-limit=512M",
-    "lint": "phpcs --standard=PSR12 src tests",
-    "fix": "phpcbf --standard=PSR12 src tests"
+    "lint": "phpcs",
+    "fix": "phpcbf"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
