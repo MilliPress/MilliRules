@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -73,5 +74,21 @@ class RequestUrl extends BaseCondition
         // Get the URI from context.
         $uri = $context->get('request.uri', '');
         return is_string($uri) ? $uri : '';
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Request URL')
+            ->description('Match the current request URL/URI path.')
+            ->categories('request')
+            ->operators('=', '!=', 'LIKE', 'REGEXP', 'IN', 'NOT IN')
+            ->args()
+                ->string('value')->label('URL Pattern')->required();
     }
 }

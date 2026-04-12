@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -52,13 +53,13 @@ class Constant extends BaseCondition
         return ['name', 'value'];
     }
 
-    /**
-     * Get the condition type.
-     *
-     * @since 0.1.0
-     *
-     * @return string The condition type identifier.
-     */
+	/**
+	 * Get the condition type.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return string The condition type identifier.
+	 */
     public function get_type(): string
     {
         return 'constant';
@@ -87,5 +88,22 @@ class Constant extends BaseCondition
         }
 
         return constant($constant_name);
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('PHP Constant')
+            ->description('Check if a PHP constant exists and/or matches a value.')
+            ->categories('environment')
+            ->operators('=', '!=', '>', '>=', '<', '<=', 'IS', 'IS NOT', 'EXISTS', 'NOT EXISTS')
+            ->args()
+                ->string('name')->label('Constant Name')->required()
+                ->string('value')->label('Expected Value');
     }
 }

@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -72,5 +73,21 @@ class WpEnvironment extends BaseCondition
 
         // Default to production.
         return 'production';
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Environment Type')
+            ->description('Match the application environment type.')
+            ->categories('environment')
+            ->operators('=', '!=', 'IN', 'NOT IN')
+            ->args()
+                ->string('value')->label('Environment')->required();
     }
 }

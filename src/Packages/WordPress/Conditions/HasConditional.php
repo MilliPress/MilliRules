@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -220,5 +221,33 @@ class HasConditional extends BaseCondition
             return $upper;
         }
         return 'IS';
+    }
+
+    /**
+     * Auto-generate metadata from the WordPress function this condition wraps.
+     *
+     * Since set_meta() is called after the framework has initialized, the
+     * WordPress function is available for reflection. The label is derived
+     * from the function name (has_block → "Has Block"), and arguments are
+     * extracted from the function's parameters.
+     *
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object (type is the specific function name).
+     * @return void
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $fn = $meta->get_type();
+
+        $meta->label(ucwords(str_replace('_', ' ', $fn)));
+
+        if (function_exists($fn)) {
+            IsConditional::extract_function_args($meta, $fn);
+        }
+
+        $meta
+            ->categories('wordpress')
+            ->operators('IS', 'IS NOT');
     }
 }

@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -308,5 +309,22 @@ class Cookie extends BaseCondition
         }
 
         return null;
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Cookie')
+            ->description('Check if a cookie exists and/or matches a value.')
+            ->categories('request')
+            ->operators('=', '!=', 'LIKE', 'REGEXP', 'EXISTS', 'NOT EXISTS')
+            ->args()
+                ->string('name')->label('Cookie Name')->required()
+                ->string('value')->label('Cookie Value');
     }
 }

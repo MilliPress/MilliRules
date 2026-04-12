@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -62,13 +63,13 @@ class RequestHeader extends BaseCondition
         return ['name', 'value'];
     }
 
-    /**
-     * Get the condition type.
-     *
-     * @since 0.1.0
-     *
-     * @return string The condition type identifier.
-     */
+	/**
+	 * Get the condition type.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return string The condition type identifier.
+	 */
     public function get_type(): string
     {
         return 'request_header';
@@ -104,5 +105,22 @@ class RequestHeader extends BaseCondition
 
         $value = $headers[ $header_name ] ?? '';
         return is_string($value) ? $value : '';
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Request Header')
+            ->description('Check if an HTTP request header exists and/or matches a value.')
+            ->categories('request')
+            ->operators('=', '!=', 'LIKE', 'REGEXP', 'EXISTS', 'NOT EXISTS')
+            ->args()
+                ->string('name')->label('Header Name')->required()
+                ->string('value')->label('Header Value');
     }
 }

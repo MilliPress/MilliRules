@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -87,5 +88,21 @@ class PostStatus extends BaseCondition
         }
 
         return '';
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Post Status')
+            ->description('Match the current post status.')
+            ->categories('content')
+            ->operators('=', '!=', 'IN', 'NOT IN')
+            ->args()
+                ->string('value')->label('Post Status')->required();
     }
 }

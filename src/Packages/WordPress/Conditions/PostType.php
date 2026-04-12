@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -73,5 +74,21 @@ class PostType extends BaseCondition
         // Get post type from context.
         $post_type = $context->get('post.type', '');
         return is_string($post_type) ? $post_type : '';
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Post Type')
+            ->description('Match the current post type.')
+            ->categories('content')
+            ->operators('=', '!=', 'IN', 'NOT IN')
+            ->args()
+                ->string('value')->label('Post Type')->required();
     }
 }

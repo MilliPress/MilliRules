@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -69,5 +70,21 @@ class RequestMethod extends BaseCondition
         $context->load('request');
         $method = $context->get('request.method', '');
         return is_string($method) ? strtoupper($method) : '';
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Request Method')
+            ->description('Match the HTTP request method.')
+            ->categories('request')
+            ->operators('=', '!=', 'IN', 'NOT IN')
+            ->args()
+                ->string('value')->label('HTTP Method')->required();
     }
 }

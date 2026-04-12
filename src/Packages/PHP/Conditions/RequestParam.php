@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\PHP\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -62,13 +63,13 @@ class RequestParam extends BaseCondition
         return ['name', 'value'];
     }
 
-    /**
-     * Get the condition type.
-     *
-     * @since 0.1.0
-     *
-     * @return string The condition type identifier.
-     */
+	/**
+	 * Get the condition type.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return string The condition type identifier.
+	 */
     public function get_type(): string
     {
         return 'request_param';
@@ -102,5 +103,22 @@ class RequestParam extends BaseCondition
 
         $value = $params[ $param_name ] ?? '';
         return is_string($value) ? $value : '';
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Request Parameter')
+            ->description('Check if a URL query parameter exists and/or matches a value.')
+            ->categories('request')
+            ->operators('=', '!=', 'LIKE', 'REGEXP', 'IN', 'EXISTS', 'NOT EXISTS')
+            ->args()
+                ->string('name')->label('Parameter Name')->required()
+                ->string('value')->label('Parameter Value');
     }
 }

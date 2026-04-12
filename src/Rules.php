@@ -279,6 +279,52 @@ class Rules
     }
 
     /**
+     * Register metadata for a condition type without providing a callback.
+     *
+     * Use this to attach metadata (label, operators, categories, etc.) to
+     * class-based conditions that are resolved via namespace convention and
+     * don't need a callback registration. Useful for batch-registering
+     * metadata for dynamic condition classes (e.g., is_* / has_* conditionals).
+     *
+     * @since 1.2.0
+     *
+     * @param string $type The condition type identifier.
+     * @return ConditionMeta Fluent metadata declaration.
+     */
+    public static function register_condition_meta(string $type): ConditionMeta
+    {
+        $meta = new ConditionMeta($type);
+        self::$condition_metas[ $type ] = $meta;
+
+        unset(self::$condition_meta_cache[ $type ]);
+
+        return $meta;
+    }
+
+    /**
+     * Register metadata for an action type without providing a callback.
+     *
+     * Use this to attach metadata (label, categories, arguments, etc.) to
+     * class-based actions that are resolved via namespace convention and
+     * don't need a callback registration.
+     *
+     * @since 1.2.0
+     *
+     * @param string $type The action type identifier.
+     * @return ActionMeta Fluent metadata declaration.
+     */
+    public static function register_action_meta(string $type): ActionMeta
+    {
+        $meta = new ActionMeta($type);
+        self::$action_metas[ $type ] = $meta;
+
+        unset(self::$meta_cache[ $type ]);
+        unset(self::$scope_cache[ $type ]);
+
+        return $meta;
+    }
+
+    /**
      * Register a custom action callback.
      *
      * Returns an ActionMeta instance for fluent declaration of metadata

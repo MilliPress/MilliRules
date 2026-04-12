@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -108,5 +109,21 @@ class UserRole extends BaseCondition
                 // Fall back to parent comparison for other operators.
                 return parent::compare($actual, $expected);
         }
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('User Role')
+            ->description('Match the current user role.')
+            ->categories('user')
+            ->operators('=', '!=', 'IN', 'NOT IN')
+            ->args()
+                ->string('value')->label('Role')->required();
     }
 }

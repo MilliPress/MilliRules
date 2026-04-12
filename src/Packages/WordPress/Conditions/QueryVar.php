@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -133,5 +134,22 @@ class QueryVar extends BaseCondition
         }
 
         return null;
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Query Variable')
+            ->description('Check a WordPress query variable value.')
+            ->categories('content')
+            ->operators('=', '!=', 'LIKE', 'IN', 'EXISTS', 'NOT EXISTS')
+            ->args()
+                ->string('name')->label('Variable Name')->required()
+                ->string('value')->label('Expected Value');
     }
 }

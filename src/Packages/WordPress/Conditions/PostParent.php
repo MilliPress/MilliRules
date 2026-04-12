@@ -12,6 +12,7 @@
 namespace MilliRules\Packages\WordPress\Conditions;
 
 use MilliRules\Conditions\BaseCondition;
+use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Context;
 
 /**
@@ -89,5 +90,21 @@ class PostParent extends BaseCondition
         }
 
         return 0;
+    }
+
+    /**
+     * @since 1.2.0
+     *
+     * @param ConditionMeta $meta The metadata object to configure.
+     */
+    public static function set_meta(ConditionMeta $meta): void
+    {
+        $meta
+            ->label('Post Parent')
+            ->description('Match the current post parent ID.')
+            ->categories('content')
+            ->operators('=', '!=', '>', '>=', '<', '<=')
+            ->args()
+                ->integer('value')->label('Parent ID')->required();
     }
 }
