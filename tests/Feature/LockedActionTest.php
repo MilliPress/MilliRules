@@ -47,6 +47,14 @@ class LockedActionTest extends TestCase
         $cacheProperty = $reflection->getProperty('meta_cache');
         $cacheProperty->setAccessible(true);
         $cacheProperty->setValue(array());
+
+        // Clear resolved scope cache (engine hot-path cache)
+        $scopeCacheProperty = $reflection->getProperty('scope_cache');
+        $scopeCacheProperty->setAccessible(true);
+        $scopeCacheProperty->setValue(array());
+
+        // Reset the describe-was-called tracking flag
+        unset($GLOBALS['__test_set_meta_was_called']);
     }
 
     /**
@@ -659,12 +667,12 @@ class LockedActionTest extends TestCase
     }
 
     /**
-     * Test that class-based actions declaring scope via describe() work.
+     * Test that class-based actions declaring scope via get_scope() work.
      *
-     * Uses a real class (defined at bottom of file) registered in the
+     * Uses a real class (defined in Fixtures/) registered in the
      * MilliRules\Actions namespace via a temporary namespace registration.
      */
-    public function testClassBasedActionScopeViaDescribe(): void
+    public function testClassBasedActionScopeViaGetScope(): void
     {
         // Register a temporary namespace where our test class lives.
         \MilliRules\RuleEngine::register_namespace('Actions', 'MilliRules\\Tests\\Feature\\Fixtures');
@@ -701,5 +709,77 @@ class LockedActionTest extends TestCase
         $this->assertSame(array('val-1', 'val-2'), $execution_log);
 
         unset($GLOBALS['__test_class_based_log']);
+    }
+
+    /**
+     * Test that Rules::get_action_meta() for class-based actions returns
+     * a meta whose type matches the action type string, not the class name.
+     *
+     * Regression guard: an earlier implementation used static::class as the
+     * type, which produced 'MilliRules\Tests\Feature\Fixtures\TestScopedAction'
+     * instead of 'test_scoped_action'.
+     */
+    public function testClassBasedActionMetaHasCorrectType(): void
+    {
+        \MilliRules\RuleEngine::register_namespace('Actions', 'MilliRules\\Tests\\Feature\\Fixtures');
+
+        $meta = Rules::get_action_meta('test_scoped_action');
+
+        $this->assertNotNull($meta);
+        $this->assertSame('test_scoped_action', $meta->get_type());
+        $this->assertSame('test_scope', $meta->get_scope());
+    }
+
+    /**
+     * Test that Rules::get_action_scope() does NOT trigger set_meta().
+     *
+     * Regression guard: the engine's hot path (build_lock_key) uses
+     * get_action_scope(), which must be safe to call during advanced-cache.php
+     * boot before WordPress loads. If set_meta() were called, any __() usage
+     * inside it would fatal.
+     *
+     * The TestScopedAction fixture sets $GLOBALS['__test_set_meta_was_called']
+     * inside set_meta(). After calling get_action_scope(), the flag must NOT
+     * be set.
+     */
+    public function testGetActionScopeDoesNotTriggerSetMeta(): void
+    {
+        \MilliRules\RuleEngine::register_namespace('Actions', 'MilliRules\\Tests\\Feature\\Fixtures');
+
+        // Sanity: flag is unset after teardown.
+        $this->assertFalse(isset($GLOBALS['__test_set_meta_was_called']));
+
+        // Hot path: resolve scope without triggering set_meta().
+        $scope = Rules::get_action_scope('test_scoped_action');
+
+        $this->assertSame('test_scope', $scope);
+        $this->assertFalse(
+            isset($GLOBALS['__test_set_meta_was_called']),
+            'Rules::get_action_scope() must not trigger set_meta() on the action class'
+        );
+    }
+
+    /**
+     * Test that Rules::get_action_meta() DOES call set_meta().
+     *
+     * Counterpart to the previous test: the consumer-facing full-metadata
+     * path should call set_meta() to populate label, description, etc.
+     */
+    public function testGetActionMetaDoesTriggerSetMeta(): void
+    {
+        \MilliRules\RuleEngine::register_namespace('Actions', 'MilliRules\\Tests\\Feature\\Fixtures');
+
+        // Sanity: flag is unset after teardown.
+        $this->assertFalse(isset($GLOBALS['__test_set_meta_was_called']));
+
+        // Consumer path: full metadata resolution, set_meta() is called.
+        $meta = Rules::get_action_meta('test_scoped_action');
+
+        $this->assertNotNull($meta);
+        $this->assertTrue(
+            isset($GLOBALS['__test_set_meta_was_called']),
+            'Rules::get_action_meta() should trigger set_meta() to populate consumer fields'
+        );
+        $this->assertSame('Test Scoped Action', $meta->get_label());
     }
 }

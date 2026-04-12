@@ -454,19 +454,24 @@ Rules::register_action('my_action', function(array $args, Context $context): voi
 
 ### Callback-Based Metadata
 
-Chain metadata methods directly after registration:
+Chain metadata methods directly after registration. The returned `ActionMeta` is the same instance stored in the registry, so all chained calls persist:
 
 ```php
 Rules::register_action('add_flag', $addCallback)
     ->scope('flag')
-    ->label(__('Add Flag', 'millirules'))
-    ->description(__('Tag the response with a flag for bulk invalidation.', 'millirules'))
-    ->category('flags');
+    ->label('Add Flag')
+    ->description('Tag the response with a flag for bulk invalidation.')
+    ->categories('flags')
+    ->args()
+        ->string(0)->label('Flag')->required();
 ```
 
-### Class-Based Metadata via `describe()`
+### Class-Based Metadata via `set_meta()`
 
-For class-based actions extending `BaseAction`, override the static `describe()` method. Since property initializers can't call functions like `__()`, the static method is the only place where translated strings work:
+For class-based actions extending `BaseAction`, override two static methods:
+
+- `get_scope()` — returns the lock scope. Called by the engine during rule execution, which may happen during early bootstrap. Must return a plain string — no framework-specific function calls.
+- `set_meta()` — configures consumer-facing metadata. Called only when consumers request full metadata, after the framework has initialized.
 
 ```php
 use MilliRules\Actions\ActionMeta;
@@ -475,13 +480,19 @@ use MilliRules\Context;
 
 class AddFlag extends BaseAction
 {
-    public static function describe(): ActionMeta
+    // Engine-relevant. Called during early bootstrap — plain strings only.
+    public static function get_scope(): string
     {
-        return parent::describe()
-            ->scope('flag')
-            ->label(__('Add Flag', 'millirules'))
-            ->description(__('Tag the response with a flag.', 'millirules'))
-            ->category('flags');
+        return 'flag';
+    }
+
+    // Consumer-relevant. Called after framework initialization.
+    public static function set_meta(ActionMeta $meta): void
+    {
+        $meta
+            ->label('Add Flag')
+            ->description('Tag the response with a flag.')
+            ->categories('flags');
     }
 
     public function execute(Context $context): void
@@ -497,17 +508,129 @@ class AddFlag extends BaseAction
 }
 ```
 
+**Why `set_meta()` takes an `ActionMeta` parameter instead of returning one**: the engine owns the action type string (it knows what to look up), so it constructs the `ActionMeta` with the correct type and passes it in. Subclasses can't forget to call a parent method — there's no parent call to make — and they can't set the wrong type.
+
+**Why scope lives in `get_scope()` instead of `set_meta()`**: the engine reads scope during rule execution (to build lock keys), which may happen during early bootstrap before the application framework has fully initialized. If scope were set inside `set_meta()` alongside framework-dependent calls, the engine couldn't read it safely. Splitting scope into a separate, string-only static method keeps the engine hot path runtime-safe.
+
 ### Available Metadata Fields
 
-| Method          | Purpose           | Read by      |
-| --------------- | ----------------- | ------------ |
-| `scope()`       | Lock grouping     | RuleEngine   |
-| `label()`       | Human-readable name | Consumers (UIs) |
-| `description()` | Help text         | Consumers (UIs) |
-| `category()`    | UI grouping       | Consumers (UIs) |
+| Method / Override | Purpose             | Read by         | Where to declare |
+| ----------------- | ------------------- | --------------- | ---------------- |
+| `get_scope()`     | Lock grouping       | RuleEngine (hot path) | Static method on class |
+| `label()`         | Human-readable name | Consumers (UIs) | Inside `set_meta()` |
+| `description()`   | Help text           | Consumers (UIs) | Inside `set_meta()` |
+| `categories()`    | UI grouping (one or more) | Consumers (UIs) | Inside `set_meta()` |
+| `args()`          | Enter arguments context | Consumers (UIs) | Inside `set_meta()` |
+| `extend()`        | Plugin-specific bag | Consumers       | Inside `set_meta()` |
 
-- **`scope`** is engine-relevant: the `RuleEngine` uses it to build value-level lock keys for paired actions (e.g., `add_flag`/`remove_flag`).
-- **`label`, `description`, `category`** are stored but never interpreted by MilliRules itself. Consumers (UI builders, CLIs, docs generators) introspect them via `Rules::get_action_meta($type)`.
+- **`get_scope()`** is engine-relevant: the `RuleEngine` calls it directly (not via `set_meta()`) to build value-level lock keys for paired actions (e.g., `add_flag`/`remove_flag`). It must be runtime-safe — no framework-specific function calls — because rules may execute during early bootstrap.
+- **`label`, `description`, `categories`, `args`** are stored but never interpreted by MilliRules itself. They live inside `set_meta()`, which is called only when consumers (UI builders, CLIs, docs generators) introspect via `Rules::get_action_meta($type)`.
+- **`extend`** is the catch-all for anything plugin-specific that doesn't belong in MilliRules core.
+
+> **Note**: `set_meta()` is called after the application framework has fully initialized. If your framework provides translation functions (e.g., `__()` in WordPress), you can safely use them for labels, descriptions, and argument labels inside `set_meta()`. In contrast, `get_scope()` runs during early bootstrap and must return plain strings only.
+
+### Declaring Arguments
+
+Enter the arguments declaration context with `$meta->args()`. Inside, use type factories (`->integer($key)`, `->string($key)`, etc.) to declare each argument, then chain config setters (`->label()`, `->default()`, etc.) directly on it. To declare another argument, just call another type factory — it "walks" back to the builder and starts a new one.
+
+This mirrors the `->when()`/`->then()` context pattern from rule building.
+
+MilliRules ships a small set of engine-level types (`string`, `integer`, `number`, `boolean`, `choice`, `choices`) plus an open `format` field for consumer-defined UI hints like `'url'`, `'seconds'`, or `'regex'`.
+
+```php
+use MilliRules\Actions\ActionMeta;
+use MilliRules\Actions\BaseAction;
+
+class SetTtl extends BaseAction
+{
+    public static function describe(ActionMeta $meta): void
+    {
+        $meta
+            ->label('Set TTL')
+            ->description('Set cache time-to-live.')
+            ->categories('caching')
+            ->args()
+                ->integer('ttl')
+                    ->format('seconds')  // UI hint: render as duration picker
+                    ->label('TTL')
+                    ->description('Duration in seconds')
+                    ->default(3600)
+                    ->min(0)
+                    ->max(86400)
+                ->string('reason')
+                    ->label('Reason')
+                    ->default('');
+    }
+
+    public function execute(Context $context): void
+    {
+        $ttl    = $this->get_arg('ttl', 3600)->int();
+        $reason = $this->get_arg('reason', '')->string();
+        // ...
+    }
+
+    public function get_type(): string { return 'set_ttl'; }
+}
+```
+
+Key points:
+
+- **No class name imports for arguments**. You never write `ArgumentSchema` or `ArgumentsBuilder` in your own code — they're internal. You only chain methods starting from `$meta->args()`.
+- **Type is chosen by the factory method name** (`->integer($key)`, `->string($key)`, etc.). It's fixed once the argument is created.
+- **Runtime guards catch misuse immediately**. Calling `->min()` on a string schema is fine (it's a length bound), but calling `->min()` on a boolean throws `InvalidArgumentException` at class-load time.
+- **`default()` rejects closures** because schemas must be JSON-serializable. Pass scalars or arrays.
+- **Declaration order is preserved** — the order you declare arguments is the order consumers receive them.
+- **`options()` for choice/choices** — use `->options([...])` to declare the allowed values for `->choice($key)` or `->choices($key)` arguments. Accepts either simple form `['a', 'b']` or structured `[['value' => 'a', 'label' => 'A']]`.
+- **Consumer utilities are available**: `$schema->validate($value)` returns a plain English error or null; `$schema->sanitize($value)` coerces raw input to the declared type. MilliRules' `RuleEngine` does not call these — they're opt-in for consumers (validators, UIs, CLIs) that want to share coercion logic.
+- **Meta methods called after `->args()` are auto-forwarded** — you can continue chaining `->extend()`, `->categories()`, or any other `ActionMeta` method after declaring arguments. The chain routes through the argument schema's `__call()` back to the parent meta. No `->end()` or "put args() last" ceremony needed.
+
+#### Choice and choices example
+
+```php
+$meta
+    ->label('Cache Mode')
+    ->args()
+        ->choice('strategy')
+            ->options(['eager', 'lazy', 'off'])
+            ->default('lazy')
+            ->label('Caching Strategy')
+        ->choices('vary_by')
+            ->options(['user', 'locale', 'device'])
+            ->default(['user'])
+            ->label('Vary By');
+```
+
+See the [ArgumentSchema API reference](../05-reference/03-api.md#argumentschema--argument-metadata) for the full API.
+
+### Plugin-Specific Metadata via `extend()`
+
+Anything that doesn't belong in MilliRules core — icons, conditional visibility rules, documentation URLs, plugin-defined widgets — can be attached to `ActionMeta` via the extension bag:
+
+```php
+public static function describe(ActionMeta $meta): void
+{
+    $meta
+        ->label('Set TTL')
+        ->categories('caching')
+        // Plugin-specific metadata: MilliRules stores these but never reads them.
+        ->extend('my-plugin:icon', 'clock')
+        ->extend('my-plugin:docs_url', 'https://example.com/actions/set-ttl')
+        ->extend('my-plugin:requires_addon', 'pro');
+}
+```
+
+**Namespacing convention**: prefix your keys with your plugin slug and a colon (`my-plugin:field-name`) to avoid collisions with other consumers. MilliRules does not enforce this — the convention is the contract between consumers.
+
+Consumers read extensions via:
+
+```php
+$meta = Rules::get_action_meta('set_ttl');
+$icon = $meta?->get_extension('my-plugin:icon');         // 'clock'
+$has  = $meta?->has_extension('my-plugin:icon');         // true
+$all  = $meta?->get_extensions();                        // full keyed bag
+```
+
+Use `arguments()` for structured data that every consumer needs (argument metadata), and `extend()` for data that only specific consumers care about.
 
 ### Introspecting Action Metadata
 
@@ -516,9 +639,11 @@ Consumers can query metadata for any registered action type:
 ```php
 $meta = Rules::get_action_meta('add_flag');
 if ($meta) {
-    echo $meta->get_label();       // 'Add Flag'
-    echo $meta->get_category();    // 'flags'
-    $data = $meta->to_array();     // Serializable array for REST
+    echo $meta->get_label();              // 'Add Flag'
+    $cats = $meta->get_categories();      // ['flags']
+    $args = $meta->get_arguments();       // array<ArgumentSchema>
+    $icon = $meta->get_extension('my-plugin:icon');
+    $data = $meta->to_array();            // Serializable array for REST
 }
 ```
 

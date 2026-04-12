@@ -472,22 +472,33 @@ Rules::register_action('remove_flag', $removeCallback)->scope('flag');
 // With full metadata for UI introspection
 Rules::register_action('add_flag', $addCallback)
     ->scope('flag')
-    ->label(__('Add Flag', 'millirules'))
-    ->description(__('Tag the response with a flag for bulk invalidation.', 'millirules'))
-    ->category('flags');
+    ->label('Add Flag')
+    ->description('Tag the response with a flag for bulk invalidation.')
+    ->categories('flags')
+    ->args()
+        ->string(0)->label('Flag')->required();
 ```
 
-For class-based actions, override the static `describe()` method on your `BaseAction` subclass:
+For class-based actions, override two static methods on your `BaseAction` subclass:
+
+- `get_scope()` — returns the lock scope as a plain string. **Must not use framework-specific functions** (e.g., translation) because the engine calls it during rule execution, which may happen during early bootstrap.
+- `set_meta(ActionMeta $meta)` — configures consumer-facing metadata (label, description, categories, args). Called only by consumer code like UIs or REST endpoints, which always run after the framework has initialized.
 
 ```php
 class AddFlag extends BaseAction {
-    public static function describe(): ActionMeta
+    // Engine-relevant. Called during early bootstrap — plain strings only.
+    public static function get_scope(): string
     {
-        return parent::describe()
-            ->scope('flag')
-            ->label(__('Add Flag', 'millirules'))
-            ->description(__('Tag the response with a flag.', 'millirules'))
-            ->category('flags');
+        return 'flag';
+    }
+
+    // Consumer-relevant. Called after framework initialization.
+    public static function set_meta(ActionMeta $meta): void
+    {
+        $meta
+            ->label('Add Flag')
+            ->description('Tag the response with a flag.')
+            ->categories('flags');
     }
 
     public function execute(Context $context): void { /* ... */ }
@@ -495,13 +506,44 @@ class AddFlag extends BaseAction {
 }
 ```
 
+**Why this signature**: the engine owns the action type string (from the registration lookup), so it constructs the `ActionMeta` and passes it in. Subclasses can't accidentally set the wrong type or forget to call `parent::set_meta()` — there's no boilerplate to forget.
+
+**Why scope is split from `set_meta()`**: the engine reads scope during rule execution, which may happen during early bootstrap before the application framework has fully initialized. If scope were set inside `set_meta()` alongside framework-dependent calls (e.g., translation functions), the engine couldn't read it safely. The split keeps the hot path runtime-safe.
+
+---
+
+##### `get_action_scope(string $type): string`
+
+Get the lock scope for an action type — **engine hot path, runtime-safe**.
+
+Fast-path accessor that never calls `set_meta()`. Used internally by `RuleEngine::build_lock_key()`. Safe to call during early bootstrap before the application framework has initialized.
+
+**Parameters**:
+- `$type` (string): Action type identifier
+
+**Returns**: `string` — the scope identifier, or `''` for unknown or unscoped actions
+
+**Example**:
+```php
+$scope = Rules::get_action_scope('add_flag');  // 'flag'
+$scope = Rules::get_action_scope('set_ttl');   // '' (unscoped)
+```
+
+Resolution order:
+1. Callback-based: reads from the meta set at registration time (`register_action()->scope()`).
+2. Class-based: calls `$class::get_scope()` directly.
+
+Results are cached per type.
+
 ---
 
 ##### `get_action_meta(string $type): ?ActionMeta`
 
-Get the metadata for a registered action type.
+Get the full metadata for a registered action type.
 
-Resolves metadata from either the callback-based registry (populated by `register_action()`) or the class-based `BaseAction::describe()` method. Results are cached per type.
+Resolves metadata from either the callback-based registry (populated by `register_action()`) or the class-based `BaseAction::set_meta()` method. Results are cached per type.
+
+**May require framework functions**: for class-based actions, this calls `set_meta()`, which may use framework-specific functions (e.g., translation). Do NOT call this during early bootstrap before the framework has initialized — use `get_action_scope()` instead if you only need the scope.
 
 **Parameters**:
 - `$type` (string): Action type identifier
@@ -512,11 +554,243 @@ Resolves metadata from either the callback-based registry (populated by `registe
 ```php
 $meta = Rules::get_action_meta('add_flag');
 if ($meta) {
-    $label = $meta->get_label();         // 'Add Flag'
-    $scope = $meta->get_scope();         // 'flag'
-    $category = $meta->get_category();   // 'flags'
-    $data = $meta->to_array();           // For REST/JSON serialization
+    $label       = $meta->get_label();        // 'Add Flag'
+    $scope       = $meta->get_scope();        // 'flag' (synced from $class::get_scope())
+    $categories  = $meta->get_categories();    // ['flags']
+    $arguments   = $meta->get_arguments();    // array<ArgumentSchema>
+    $icon        = $meta->get_extension('millicache:icon'); // plugin-specific
+    $data        = $meta->to_array();         // For REST/JSON serialization
 }
+```
+
+---
+
+#### `ActionMeta` — fluent action metadata
+
+`ActionMeta` is the declarative metadata container for an action type. Obtain it from `Rules::register_action()` (for callback-based actions) or override `BaseAction::set_meta()` (for class-based actions).
+
+##### Core fields
+
+- `->scope(string $scope)` — lock scope (engine-relevant; see [Scoped Locking](../02-core-concepts/01-concepts.md#scoped-locking-for-paired-actions))
+- `->label(string $label)` — human-readable name
+- `->description(string $description)` — help text
+- `->categories(string ...$categories)` — one or more UI grouping categories
+
+##### `->args(): ArgumentsBuilder`
+
+Enter the arguments declaration context. Returns an internal `ArgumentsBuilder` instance that collects argument schemas via type factories. The builder is cached — calling `args()` multiple times returns the same instance.
+
+```php
+$meta->args()
+    ->integer('ttl')->format('seconds')->default(3600)->min(0)
+    ->string('reason')->default('');
+```
+
+Inside the builder, each type factory (`->integer($key)`, `->string($key)`, etc.) creates a new `ArgumentSchema` and returns it for continued configuration. To declare another argument, just call another type factory — it "walks" back to the builder and starts a new one.
+
+Preserves declaration order (no auto-sorting). Any meta-level methods called after `->args()` (like `->extend()` or `->categories()`) are automatically forwarded back to the `ActionMeta` via `__call()`, so the chain can continue seamlessly:
+
+```php
+$meta
+    ->label(__('Set TTL'))
+    ->args()
+        ->integer('ttl')->default(3600)
+        ->string('reason')->default('')
+    ->extend('millicache:icon', 'clock');  // forwarded to $meta
+```
+
+See [ArgumentSchema](#argumentschema--argument-metadata) below for the per-argument API.
+
+##### `->extend(string $key, mixed $value): self`
+
+Attach plugin-specific metadata under a namespaced key. MilliRules stores the value but never interprets it. Use this for anything that isn't part of MilliRules core: icons, conditional visibility rules, documentation URLs, plugin-defined widgets.
+
+```php
+->extend('millicache:icon', 'clock')
+->extend('seo-redirects:default_status', 301)
+->extend('docs:url', 'https://example.com/actions/set-ttl')
+```
+
+**Namespacing convention**: use `plugin-slug:field-name` to avoid collisions. MilliRules does not enforce this — the convention is the contract.
+
+##### Extension bag getters
+
+- `->get_extension(string $key): mixed|null` — returns the value, or `null` if not set
+- `->has_extension(string $key): bool` — distinguishes "set to null" from "not set"
+- `->get_extensions(): array<string, mixed>` — returns the full keyed bag
+
+##### `->to_array(): array` — wire format
+
+```php
+[
+    'type'        => string,
+    'scope'       => string,
+    'label'       => string,
+    'description' => string,
+    'categories'  => array<int, string>,
+    'arguments'   => array<int, array>,    // each via ArgumentSchema::to_array()
+    'extensions'  => array<string, mixed>, // plugin-specific bag
+]
+```
+
+This is the stable, REST-serializable format for transmitting action metadata to consumers.
+
+---
+
+#### `ArgumentSchema` — argument metadata
+
+`ArgumentSchema` is the declarative format for action arguments. Consumer code never references this class directly — schemas are obtained via `$meta->args()->type($key)`. The class is internal but documented here so you understand what your `->args()` chain is producing.
+
+Every consumer that introspects actions (UIs, CLIs, docs generators, validators) reads the same schema. MilliRules' `RuleEngine` does **not** use `ArgumentSchema` at runtime — it's purely metadata.
+
+##### Type system
+
+Six core types cover all engine-level data shapes:
+
+| Type       | Coercion          | min/max semantics | Default    |
+|------------|-------------------|-------------------|------------|
+| `string`   | `(string)` cast   | length bounds     | `''`       |
+| `integer`  | `(int)` cast      | value bounds      | `0`        |
+| `number`   | `(float)` cast    | value bounds      | `0.0`      |
+| `boolean`  | truthy check      | —                 | `false`    |
+| `choice`   | pass-through      | —                 | first option or `null` |
+| `choices`  | `(array)` + filter to valid options | — | `[]`       |
+
+Everything else (`url`, `email`, `seconds`, `regex`, `date`, etc.) is expressible as a core type + `format`:
+
+```php
+$meta->args()
+    ->integer('ttl')->format('seconds')     // TTL input
+    ->string('homepage')->format('url')     // URL field
+    ->string('contact')->format('email')    // email field
+    ->string('pattern')->format('regex');   // regex pattern
+```
+
+MilliRules stores `format` but never interprets it. Consumers pick their own vocabulary and handle format-specific rendering/validation.
+
+##### Creating schemas
+
+Schemas are created exclusively via the builder's type factories, obtained from `$meta->args()`:
+
+```php
+$meta->args()
+    ->string($key)      // $key is int|string
+    ->integer($key)
+    ->number($key)
+    ->boolean($key)
+    ->choice($key)
+    ->choices($key);
+```
+
+You never write `new ArgumentSchema(...)` yourself.
+
+##### Walking: chain to the next argument
+
+Type factories are also available **on an existing schema** and delegate back to the builder to start a new argument:
+
+```php
+$meta->args()
+    ->integer('ttl')->default(3600)      // schema for 'ttl'
+    ->string('reason')->default('');     // ->string() walks back; new schema for 'reason'
+```
+
+This is why you can chain multiple arguments in a single fluent expression without restarting from `$meta->args()`.
+
+##### Fluent setters (config)
+
+- `->format(string $format)` — consumer-defined format hint
+- `->label(string $label)` — human-readable name
+- `->description(string $description)` — help text
+- `->required(bool $required = true)` — mark as mandatory
+- `->default(mixed $value)` — default value (rejects closures)
+- `->min(int $min)` / `->max(int $max)` — length (string) or value (integer/number) bounds; throws on other types
+- `->options(array $options)` — allowed values for `choice`/`choices` types; throws on other types
+
+##### `options()` format
+
+Accepts either simple or structured form:
+
+```php
+// Simple — value == label
+->options(['GET', 'POST', 'PUT'])
+
+// Structured — separate value and label
+->options([
+    ['value' => 'get',  'label' => 'GET Request'],
+    ['value' => 'post', 'label' => 'POST Request'],
+])
+```
+
+Stored internally as the structured form. `to_array()` always emits the structured form.
+
+##### Runtime guards
+
+Calling incompatible setters throws `InvalidArgumentException` at declaration time (i.e., at class-load time for class-based actions):
+
+```php
+$meta->args()->string('k')->min(5);              // OK: length bound
+$meta->args()->boolean('k')->min(5);             // ✗ throws
+$meta->args()->integer('k')->options(['a', 'b']); // ✗ throws
+```
+
+##### Getters
+
+- `->get_key(): int|string`
+- `->get_type(): string`
+- `->get_format(): string`
+- `->get_label(): string`
+- `->get_description(): string`
+- `->get_default(): mixed`
+- `->has_default(): bool` — distinguishes "default is null" from "no default set"
+- `->is_required(): bool`
+- `->get_min(): ?int`
+- `->get_max(): ?int`
+- `->get_options(): array`
+
+##### `validate(mixed $value): ?string`
+
+Consumer utility. Returns `null` if the value is valid, or a plain English error message string if invalid. MilliRules ships no translation layer — consumers wrap the returned string in their own i18n if needed.
+
+```php
+// Retrieve schemas via the meta's get_arguments():
+$schemas = Rules::get_action_meta('set_ttl')->get_arguments();
+$schema  = $schemas[0];
+
+$schema->validate(50);        // null (valid)
+$schema->validate(150);       // "Argument 'ttl' must be at most 100"
+$schema->validate('abc');     // "Argument 'ttl' must be an integer"
+```
+
+Note: `RuleEngine` does not call `validate()`. It's an opt-in utility for consumers (validators, UIs, CLIs).
+
+##### `sanitize(mixed $value): mixed`
+
+Consumer utility. Coerces a raw value to the declared type.
+
+```php
+$integer_schema->sanitize('3600');   // 3600
+$boolean_schema->sanitize('yes');    // true
+$choices_schema->sanitize(['a', 'invalid', 'b']);  // ['a', 'b']
+```
+
+Null values are replaced with the default if set, otherwise the type's zero value (`''`, `0`, `0.0`, `false`, first option, or `[]`).
+
+##### `to_array(): array` — wire format
+
+```php
+[
+    'key'         => int|string,
+    'type'        => string,
+    'format'      => string,
+    'label'       => string,
+    'description' => string,
+    'default'     => mixed,
+    'has_default' => bool,
+    'required'    => bool,
+    'min'         => int|null,
+    'max'         => int|null,
+    'options'     => array<int, array{value: mixed, label: string}>,
+]
 ```
 
 ---

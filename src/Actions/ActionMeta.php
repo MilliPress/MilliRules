@@ -24,28 +24,31 @@
 
 namespace MilliRules\Actions;
 
+use MilliRules\ArgumentSchema;
+use MilliRules\ArgumentsBuilder;
+
 /**
  * Class ActionMeta
  *
  * Metadata declaration for a registered action type. Obtained from:
  * - Rules::register_action() returns a new ActionMeta for callback-based actions
- * - BaseAction::describe() returns a new ActionMeta for class-based actions
+ * - BaseAction::set_meta() configures an ActionMeta for class-based actions
  *
  * Example (callback-based):
  *   Rules::register_action('add_flag', $callback)
  *       ->scope('flag')
- *       ->label(__('Add Flag', 'millirules'))
- *       ->description(__('Tag the response with a flag.', 'millirules'))
- *       ->category('flags');
+ *       ->label('Add Flag')
+ *       ->description('Tag the response with a flag.')
+ *       ->categories('flags');
  *
  * Example (class-based):
  *   class AddFlag extends BaseAction {
- *       public static function describe(): ActionMeta {
- *           return parent::describe()
- *               ->scope('flag')
- *               ->label(__('Add Flag', 'millirules'))
- *               ->description(__('Tag the response with a flag.', 'millirules'))
- *               ->category('flags');
+ *       public static function get_scope(): string { return 'flag'; }
+ *       public static function set_meta(ActionMeta $meta): void {
+ *           $meta
+ *               ->label('Add Flag')
+ *               ->description('Tag the response with a flag.')
+ *               ->categories('flags');
  *       }
  *   }
  *
@@ -89,12 +92,39 @@ class ActionMeta
     private string $description = '';
 
     /**
-     * UI grouping category (consumer-relevant).
+     * UI grouping categories (consumer-relevant).
      *
      * @since 1.2.0
-     * @var string
+     * @var array<int, string>
      */
-    private string $category = '';
+    private array $categories = array();
+
+    /**
+     * Arguments builder (lazy). Created on first access via args().
+     *
+     * Arguments are a first-class concept on ActionMeta because every rule
+     * engine with actions has arguments. The builder is instantiated lazily
+     * so actions with no arguments don't pay any allocation cost.
+     *
+     * @since 1.2.0
+     * @var ArgumentsBuilder|null
+     */
+    private ?ArgumentsBuilder $args_builder = null;
+
+    /**
+     * Plugin-specific metadata bag.
+     *
+     * For metadata that doesn't belong in MilliRules core (icons,
+     * conditional visibility rules, documentation URLs, plugin-defined
+     * widgets, etc.). MilliRules stores values but never interprets them.
+     *
+     * Callers are encouraged to namespace keys (e.g., 'millicache:icon',
+     * 'seo-redirects:http_status') to avoid cross-plugin collisions.
+     *
+     * @since 1.2.0
+     * @var array<string, mixed>
+     */
+    private array $extensions = array();
 
     /**
      * Constructor.
@@ -156,16 +186,78 @@ class ActionMeta
     }
 
     /**
-     * Set the UI grouping category.
+     * Set the UI grouping categories.
+     *
+     * Actions can belong to one or more categories. UIs use these to
+     * group actions in dropdowns, sidebars, or filter panels.
      *
      * @since 1.2.0
      *
-     * @param string $category The category identifier.
+     * @param string ...$categories One or more category identifiers.
      * @return self
      */
-    public function category(string $category): self
+    public function categories(string ...$categories): self
     {
-        $this->category = $category;
+        $this->categories = $categories;
+        return $this;
+    }
+
+    /**
+     * Enter the arguments declaration context.
+     *
+     * Returns an ArgumentsBuilder that collects the arguments for this
+     * action. Inside the builder, use type factories (->integer($key),
+     * ->string($key), etc.) to declare arguments; each returns an
+     * ArgumentSchema for continued configuration.
+     *
+     * The pattern mirrors ->when()/->then() in rule building: a scoped
+     * context where methods have a focused vocabulary.
+     *
+     * Example:
+     *     $meta->args()
+     *         ->integer('ttl')->format('seconds')->default(3600)->min(0)
+     *         ->string('reason')->default('');
+     *
+     * The builder is cached — calling args() repeatedly returns the same
+     * instance, so you can continue declaring arguments across multiple
+     * statements if needed.
+     *
+     * @since 1.2.0
+     *
+     * @return ArgumentsBuilder
+     */
+    public function args(): ArgumentsBuilder
+    {
+        if (null === $this->args_builder) {
+            // Pass $this as the parent so the builder (and its schemas) can
+            // auto-forward unknown method calls back to this ActionMeta.
+            // That lets consumers continue the chain after ->args(), e.g.
+            // ->args()->integer('ttl')->extend('millicache:icon', 'clock').
+            $this->args_builder = new ArgumentsBuilder($this);
+        }
+        return $this->args_builder;
+    }
+
+    /**
+     * Attach plugin-specific metadata under a namespaced key.
+     *
+     * Use for metadata that doesn't belong in MilliRules core: icons,
+     * conditional visibility rules, documentation URLs, plugin-defined
+     * widgets, etc. MilliRules stores the value but never interprets it.
+     *
+     * Callers are encouraged to namespace their keys (e.g., 'millicache:icon',
+     * 'seo-redirects:http_status') to avoid collisions across plugins.
+     * MilliRules does not enforce namespacing — the convention is the contract.
+     *
+     * @since 1.2.0
+     *
+     * @param string $key   The extension key (should be namespaced).
+     * @param mixed  $value Any JSON-serializable value.
+     * @return self
+     */
+    public function extend(string $key, $value): self
+    {
+        $this->extensions[ $key ] = $value;
         return $this;
     }
 
@@ -218,23 +310,89 @@ class ActionMeta
     }
 
     /**
-     * Get the category.
+     * Get the categories.
      *
      * @since 1.2.0
      *
-     * @return string
+     * @return array<int, string>
      */
-    public function get_category(): string
+    public function get_categories(): array
     {
-        return $this->category;
+        return $this->categories;
+    }
+
+    /**
+     * Get the declared argument schemas.
+     *
+     * Returns an empty array if args() was never called.
+     *
+     * @since 1.2.0
+     *
+     * @return array<int, ArgumentSchema>
+     */
+    public function get_arguments(): array
+    {
+        return null === $this->args_builder ? array() : $this->args_builder->get_schemas();
+    }
+
+    /**
+     * Get the value of an extension key.
+     *
+     * Returns null for unset keys. Use has_extension() to distinguish
+     * "explicitly set to null" from "not set".
+     *
+     * @since 1.2.0
+     *
+     * @param string $key The extension key.
+     * @return mixed|null
+     */
+    public function get_extension(string $key)
+    {
+        return $this->extensions[ $key ] ?? null;
+    }
+
+    /**
+     * Check whether an extension key is set.
+     *
+     * @since 1.2.0
+     *
+     * @param string $key The extension key.
+     * @return bool
+     */
+    public function has_extension(string $key): bool
+    {
+        return array_key_exists($key, $this->extensions);
+    }
+
+    /**
+     * Get all extensions as a keyed array.
+     *
+     * @since 1.2.0
+     *
+     * @return array<string, mixed>
+     */
+    public function get_extensions(): array
+    {
+        return $this->extensions;
     }
 
     /**
      * Convert the metadata to an array, suitable for REST/JSON serialization.
      *
+     * Wire format (stable):
+     *   [
+     *     'type'        => string,
+     *     'scope'       => string,
+     *     'label'       => string,
+     *     'description' => string,
+     *     'categories'  => array<int, string>,
+     *     'arguments'   => array<int, array>,    // each via ArgumentSchema::to_array()
+     *     'extensions'  => array<string, mixed>, // plugin-specific bag
+     *   ]
+     *
      * @since 1.2.0
      *
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
     public function to_array(): array
     {
@@ -243,7 +401,12 @@ class ActionMeta
             'scope'       => $this->scope,
             'label'       => $this->label,
             'description' => $this->description,
-            'category'    => $this->category,
+            'categories'  => $this->categories,
+            'arguments'   => array_map(
+                fn(ArgumentSchema $arg) => $arg->to_array(),
+                $this->get_arguments()
+            ),
+            'extensions'  => $this->extensions,
         );
     }
 }

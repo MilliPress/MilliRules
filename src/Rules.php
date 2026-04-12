@@ -100,6 +100,20 @@ class Rules
     private static array $meta_cache = array();
 
     /**
+     * Resolved scope cache for the engine hot path.
+     *
+     * Separate from $meta_cache because scope resolution NEVER calls
+     * set_meta() — it only reads from $action_metas (for callback-based)
+     * or from $class::get_scope() (for class-based). This keeps the
+     * engine's build_lock_key() path safe to call during early bootstrap,
+     * before framework-specific functions are available.
+     *
+     * @since 1.2.0
+     * @var array<string, string>
+     */
+    private static array $scope_cache = array();
+
+    /**
      * Hard-coded namespace to package mapping.
      *
      * Used as fallback when PackageManager is not available or doesn't have mapping.
@@ -262,8 +276,9 @@ class Rules
         $meta = new ActionMeta($type);
         self::$action_metas[ $type ] = $meta;
 
-        // Invalidate cache so subsequent get_action_meta() calls see the new instance.
+        // Invalidate caches so subsequent lookups see the new instance.
         unset(self::$meta_cache[ $type ]);
+        unset(self::$scope_cache[ $type ]);
 
         return $meta;
     }
@@ -420,11 +435,61 @@ class Rules
     }
 
     /**
-     * Get the metadata for an action type.
+     * Get the lock scope for an action type (engine hot path).
+     *
+     * Fast path that NEVER calls set_meta(). This is critical because the
+     * engine may run during early bootstrap, before framework-specific
+     * functions (like translation) are available.
+     *
+     * Resolves scope from either:
+     * 1. Callback-based: reads from the meta stored at registration time
+     *    (set via Rules::register_action()->scope()). No set_meta() call.
+     * 2. Class-based: calls $class::get_scope() static method directly.
+     *    No set_meta() call.
+     *
+     * Results are cached per type. Returns '' for unknown action types
+     * or unscoped actions.
+     *
+     * @since 1.2.0
+     *
+     * @param string $type The action type.
+     * @return string The scope identifier, or '' if unscoped / unknown.
+     */
+    public static function get_action_scope(string $type): string
+    {
+        if (array_key_exists($type, self::$scope_cache)) {
+            return self::$scope_cache[ $type ];
+        }
+
+        // Callback-based: scope lives on the meta registered via
+        // register_action()->scope(). Read it directly — no set_meta() call.
+        if (isset(self::$action_metas[ $type ])) {
+            return self::$scope_cache[ $type ] = self::$action_metas[ $type ]->get_scope();
+        }
+
+        // Class-based: call the static get_scope() method directly.
+        // Designed to be safe during early bootstrap — no framework calls.
+        $class_name = RuleEngine::type_to_class_name($type, 'Actions');
+        if (class_exists($class_name) && is_subclass_of($class_name, Actions\BaseAction::class)) {
+            /** @var class-string<Actions\BaseAction> $class_name */
+            return self::$scope_cache[ $type ] = $class_name::get_scope();
+        }
+
+        return self::$scope_cache[ $type ] = '';
+    }
+
+    /**
+     * Get the full metadata for an action type.
      *
      * Resolves metadata from either:
      * 1. Callback-based registry (populated by register_action())
-     * 2. Class-based static describe() method on BaseAction subclasses
+     * 2. Class-based static set_meta() method on BaseAction subclasses
+     *
+     * **May require framework functions**: for class-based actions, this
+     * calls set_meta(), which may use framework-specific functions (like
+     * translation). Do NOT call this during early bootstrap before the
+     * framework is initialized. Use get_action_scope() if you only need
+     * the scope.
      *
      * Results are cached per type. Returns null if no metadata is found
      * for the given type.
@@ -446,12 +511,18 @@ class Rules
             return self::$meta_cache[ $type ];
         }
 
-        // Class-based: resolve via static describe().
+        // Class-based: construct meta with the correct type and let the
+        // subclass configure it via set_meta(). The engine owns the type
+        // string so subclasses can't get it wrong. Scope is pre-populated
+        // from the static get_scope() method.
         $class_name = RuleEngine::type_to_class_name($type, 'Actions');
         if (class_exists($class_name) && is_subclass_of($class_name, Actions\BaseAction::class)) {
             /** @var class-string<Actions\BaseAction> $class_name */
-            self::$meta_cache[ $type ] = $class_name::describe();
-            return self::$meta_cache[ $type ];
+            $meta = new ActionMeta($type);
+            $meta->scope($class_name::get_scope());
+            $class_name::set_meta($meta);
+            self::$meta_cache[ $type ] = $meta;
+            return $meta;
         }
 
         self::$meta_cache[ $type ] = null;

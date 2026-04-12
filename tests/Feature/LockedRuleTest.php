@@ -63,6 +63,10 @@ class LockedRuleTest extends TestCase
         $cacheProperty = $reflection->getProperty('meta_cache');
         $cacheProperty->setAccessible(true);
         $cacheProperty->setValue(array());
+
+        $scopeCacheProperty = $reflection->getProperty('scope_cache');
+        $scopeCacheProperty->setAccessible(true);
+        $scopeCacheProperty->setValue(array());
     }
 
     /**

@@ -153,17 +153,17 @@ Rules::register_action('add_flag', $addCallback)->scope('flag');
 Rules::register_action('remove_flag', $removeCallback)->scope('flag');
 ```
 
-**Class-based registration** — declare via the static `describe()` method on your `BaseAction` subclass:
+**Class-based registration** — override the static `get_scope()` method on your `BaseAction` subclass. Scope lives in `get_scope()` (not in `set_meta()`) so the engine can read it during rule execution without triggering `set_meta()`. This is critical for plugins that run rules during `advanced-cache.php` boot, before WordPress is fully loaded.
 
 ```php
-use MilliRules\Actions\ActionMeta;
 use MilliRules\Actions\BaseAction;
 
 class AddFlag extends BaseAction
 {
-    public static function describe(): ActionMeta
+    // Engine-relevant. Runtime-safe — no WordPress functions allowed.
+    public static function get_scope(): string
     {
-        return parent::describe()->scope('flag');
+        return 'flag';
     }
 
     public function execute(Context $context): void { /* ... */ }

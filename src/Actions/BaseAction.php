@@ -114,26 +114,67 @@ abstract class BaseAction implements ActionInterface
     }
 
     /**
-     * Declare metadata for this action type.
+     * Get the lock scope for this action type.
      *
-     * Override in subclasses to declare action metadata (scope, label,
-     * description, category). Metadata is per-type, not per-instance, so
-     * this method is static and called without instantiating the action.
+     * **Engine-relevant, runtime-safe.** Called by the engine during rule
+     * execution, which may happen during early bootstrap before the
+     * application framework has fully initialized. Implementations MUST
+     * NOT use framework-specific functions (e.g., translation functions,
+     * hooks, or database calls) — return a plain string identifier only.
+     *
+     * Override in subclasses that participate in scoped locking. Paired
+     * actions (e.g., add_flag + remove_flag) share a scope so that locking
+     * one specific value prevents the other action from modifying it.
      *
      * Override example:
-     *   public static function describe(): ActionMeta
+     *   public static function get_scope(): string
      *   {
-     *       return parent::describe()
-     *           ->scope('flag')
-     *           ->label(__('Add Flag', 'millirules'));
+     *       return 'flag';
+     *   }
+     *
+     * Default: '' (unscoped — type-level locking).
+     *
+     * @since 1.2.0
+     *
+     * @return string The scope identifier, or '' for unscoped actions.
+     */
+    public static function get_scope(): string
+    {
+        return '';
+    }
+
+    /**
+     * Set consumer-facing metadata for this action type.
+     *
+     * **Only required by consumer plugins** that want their actions to
+     * appear in UIs (rule builders, REST schema endpoints, docs generators).
+     * Actions that do NOT override this method have no consumer-visible
+     * metadata and will typically be hidden from UIs — this is by design,
+     * making UI visibility opt-in.
+     *
+     * Called only when consumers request full metadata via
+     * Rules::get_action_meta() — never during engine execution. Safe to
+     * use framework-specific functions (translation, etc.) because
+     * consumers always run after the framework has fully initialized.
+     *
+     * Override example:
+     *   public static function set_meta(ActionMeta $meta): void
+     *   {
+     *       $meta
+     *           ->label('Add Flag')
+     *           ->description('Add a flag to the request.')
+     *           ->categories('flags')
+     *           ->args()
+     *               ->string(0)->label('Flag')->required();
      *   }
      *
      * @since 1.2.0
      *
-     * @return ActionMeta
+     * @param ActionMeta $meta The metadata object to configure.
+     * @return void
      */
-    public static function describe(): ActionMeta
+    public static function set_meta(ActionMeta $meta): void
     {
-        return new ActionMeta(static::class);
+        // Default: no metadata. Actions without metadata are hidden from UIs.
     }
 }

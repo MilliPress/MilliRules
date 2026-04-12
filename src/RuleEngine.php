@@ -359,10 +359,13 @@ class RuleEngine
     /**
      * Build the lock key for an action.
      *
-     * Resolves metadata via Rules::get_action_meta(), which handles both
-     * callback-based and class-based actions uniformly. If the action is
-     * scoped, the lock key is "scope:value" using the first positional arg
-     * as the value. Otherwise it's just the action type.
+     * Resolves scope via Rules::get_action_scope() — the engine hot path
+     * that never calls set_meta(). This is critical because rules may
+     * execute during early bootstrap, before framework-specific functions
+     * are available.
+     *
+     * If the action is scoped, the lock key is "scope:value" using the
+     * first positional arg as the value. Otherwise it's just the action type.
      *
      * Non-scalar first arguments on scoped actions can't be serialized
      * into a stable lock key, so they return an empty string — the action
@@ -380,8 +383,8 @@ class RuleEngine
             return '';
         }
 
-        $meta  = Rules::get_action_meta($type);
-        $scope = null === $meta ? '' : $meta->get_scope();
+        // Fast path: never calls set_meta(). Safe during early bootstrap.
+        $scope = Rules::get_action_scope($type);
 
         if ('' === $scope) {
             return $type;
