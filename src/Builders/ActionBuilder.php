@@ -143,7 +143,7 @@ class ActionBuilder
         // Handle callback passed as the second parameter.
         if (is_callable($arg)) {
             // Wrap callback to pass only Context (args is redundant for inline callbacks).
-            $wrappedCallback = function($args, $context) use ($arg) {
+            $wrappedCallback = function ($args, $context) use ($arg) {
                 // Call original callback with only Context.
                 return call_user_func($arg, $context);
             };

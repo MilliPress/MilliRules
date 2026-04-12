@@ -20,12 +20,12 @@ test('ActionBuilder custom() wraps inline callback to receive Context-only', fun
 
     // Create a temporary ActionBuilder to test the custom() method
     $rule = Rules::create('test-action-inline');
-    $rule->when()->custom('test_condition', function(Context $context) {
+    $rule->when()->custom('test_condition', function (Context $context) {
         return true;
     });
 
     // This should wrap the callback and register it in Rules::$custom_actions
-    $rule->then()->custom('test_action_inline', function(Context $context) use (&$receivedArgs) {
+    $rule->then()->custom('test_action_inline', function (Context $context) use (&$receivedArgs) {
         // Capture all arguments received
         $receivedArgs = func_get_args();
     });
@@ -57,11 +57,11 @@ test('ActionBuilder custom() inline callback can access context data', function 
     $capturedValue = null;
 
     $rule = Rules::create('test-context');
-    $rule->when()->custom('cond', function(Context $context) {
+    $rule->when()->custom('cond', function (Context $context) {
         return true;
     });
 
-    $rule->then()->custom('test_action_context', function(Context $context) use (&$capturedValue) {
+    $rule->then()->custom('test_action_context', function (Context $context) use (&$capturedValue) {
         $capturedValue = $context->get('test.value');
     });
 
@@ -92,18 +92,18 @@ test('ActionBuilder custom() multiple inline actions work in sequence', function
     $executionOrder = [];
 
     $rule = Rules::create('test-seq');
-    $rule->when()->custom('c', function(Context $context) {
+    $rule->when()->custom('c', function (Context $context) {
         return true;
     });
 
     $rule->then()
-        ->custom('action_first', function(Context $context) use (&$executionOrder) {
+        ->custom('action_first', function (Context $context) use (&$executionOrder) {
             $executionOrder[] = 'first';
         })
-        ->custom('action_second', function(Context $context) use (&$executionOrder) {
+        ->custom('action_second', function (Context $context) use (&$executionOrder) {
             $executionOrder[] = 'second';
         })
-        ->custom('action_third', function(Context $context) use (&$executionOrder) {
+        ->custom('action_third', function (Context $context) use (&$executionOrder) {
             $executionOrder[] = 'third';
         });
 
@@ -133,11 +133,11 @@ test('ActionBuilder custom() inline action works without type hint', function ()
     $executed = false;
 
     $rule = Rules::create('test-notype');
-    $rule->when()->custom('c2', function(Context $context) {
+    $rule->when()->custom('c2', function (Context $context) {
         return true;
     });
 
-    $rule->then()->custom('action_notype', function($context) use (&$executed) {
+    $rule->then()->custom('action_notype', function ($context) use (&$executed) {
         $executed = $context instanceof Context;
     });
 

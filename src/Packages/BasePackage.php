@@ -20,7 +20,7 @@
  *
  * @package     MilliRules
  * @author      Philipp Wellmer
- * @since 		0.1.0
+ * @since       0.1.0
  */
 
 namespace MilliRules\Packages;

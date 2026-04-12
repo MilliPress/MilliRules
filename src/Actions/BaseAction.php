@@ -110,7 +110,7 @@ abstract class BaseAction implements ActionInterface
     {
         $value = $this->args[ $key ] ?? null;
 
-        return new ArgumentValue( $value, $default, $this->resolver );
+        return new ArgumentValue($value, $default, $this->resolver);
     }
 
     /**

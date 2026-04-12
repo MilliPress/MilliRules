@@ -8,7 +8,7 @@
  *
  * @package     MilliRules
  * @author      Philipp Wellmer
- * @since 		0.1.0
+ * @since       0.1.0
  */
 
 namespace MilliRules;
@@ -134,43 +134,43 @@ class MilliRules
         }
     }
 
-	/**
-	 * Load registered packages with dependency resolution.
-	 *
-	 * This is a convenience wrapper around PackageManager::load_packages().
-	 * It assumes packages have already been registered (either via init()
-	 * or manually via PackageManager::register_package()).
-	 *
-	 * Behavior:
-	 * - If $package_names is null, auto-detects and loads all available packages.
-	 * - If $package_names is provided, attempts to load only those packages.
-	 * - Resolves dependencies recursively and skips unavailable or missing packages.
-	 *
-	 * Usage examples:
-	 * - MilliRules::load_packages();              // Load all available registered packages
-	 * - MilliRules::load_packages(['PHP']);       // Load only PHP (and its dependencies)
-	 * - MilliRules::load_packages(['PHP', 'WP']); // Load PHP + WP (with dependency resolution)
-	 *
-	 * @since 0.1.1
-	 *
-	 * @param array<int, string>|null $package_names Optional package names to load or null for all.
-	 * @return array<int, string> Array of successfully loaded package names.
-	 */
-	public static function load_packages(?array $package_names = null): array
-	{
-		try {
-			$loaded = PackageManager::load_packages($package_names);
+    /**
+     * Load registered packages with dependency resolution.
+     *
+     * This is a convenience wrapper around PackageManager::load_packages().
+     * It assumes packages have already been registered (either via init()
+     * or manually via PackageManager::register_package()).
+     *
+     * Behavior:
+     * - If $package_names is null, auto-detects and loads all available packages.
+     * - If $package_names is provided, attempts to load only those packages.
+     * - Resolves dependencies recursively and skips unavailable or missing packages.
+     *
+     * Usage examples:
+     * - MilliRules::load_packages();              // Load all available registered packages
+     * - MilliRules::load_packages(['PHP']);       // Load only PHP (and its dependencies)
+     * - MilliRules::load_packages(['PHP', 'WP']); // Load PHP + WP (with dependency resolution)
+     *
+     * @since 0.1.1
+     *
+     * @param array<int, string>|null $package_names Optional package names to load or null for all.
+     * @return array<int, string> Array of successfully loaded package names.
+     */
+    public static function load_packages(?array $package_names = null): array
+    {
+        try {
+            $loaded = PackageManager::load_packages($package_names);
 
-			if (empty($loaded)) {
-				Logger::warning('No packages were loaded via MilliRules::load_packages()');
-			}
+            if (empty($loaded)) {
+                Logger::warning('No packages were loaded via MilliRules::load_packages()');
+            }
 
-			return $loaded;
-		} catch (\Exception $e) {
-			Logger::error('Error in MilliRules::load_packages(): ' . $e->getMessage());
-			return array();
-		}
-	}
+            return $loaded;
+        } catch (\Exception $e) {
+            Logger::error('Error in MilliRules::load_packages(): ' . $e->getMessage());
+            return array();
+        }
+    }
 
     /**
      * Execute rules from loaded packages with validation.

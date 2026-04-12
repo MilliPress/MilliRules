@@ -266,7 +266,8 @@ class RuleEngine
 
         foreach ($conditions as $condition_config) {
             // Detect inline condition groups (has match_type + conditions, no type).
-            if (isset($condition_config['match_type'], $condition_config['conditions'])
+            if (
+                isset($condition_config['match_type'], $condition_config['conditions'])
                 && ! isset($condition_config['type'])
             ) {
                 $group_conditions = is_array($condition_config['conditions']) ? $condition_config['conditions'] : array();

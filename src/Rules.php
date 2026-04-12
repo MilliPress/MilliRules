@@ -1170,7 +1170,8 @@ class Rules
             }
 
             // Check if this is a condition group (has match_type + conditions, no type).
-            if (isset($condition['match_type'], $condition['conditions'])
+            if (
+                isset($condition['match_type'], $condition['conditions'])
                 && ! isset($condition['type'])
             ) {
                 $group_conditions = is_array($condition['conditions']) ? $condition['conditions'] : array();

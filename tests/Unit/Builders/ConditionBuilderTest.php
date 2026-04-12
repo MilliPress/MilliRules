@@ -22,13 +22,13 @@ test('ConditionBuilder custom() wraps inline callback to receive Context-only', 
     $rule = Rules::create('test-cond-inline');
 
     // This should wrap the callback and register it in Rules::$custom_conditions
-    $rule->when()->custom('test_cond_inline', function(Context $context) use (&$receivedArgs) {
+    $rule->when()->custom('test_cond_inline', function (Context $context) use (&$receivedArgs) {
         // Capture all arguments received
         $receivedArgs = func_get_args();
         return true;
     });
 
-    $rule->then()->custom('test_action', function(Context $context) use (&$actionExecuted) {
+    $rule->then()->custom('test_action', function (Context $context) use (&$actionExecuted) {
         $actionExecuted = true;
     });
 
@@ -63,12 +63,12 @@ test('ConditionBuilder custom() inline callback can access context data', functi
 
     $rule = Rules::create('test-cond-context');
 
-    $rule->when()->custom('test_cond_ctx', function(Context $context) use (&$contextValueChecked) {
+    $rule->when()->custom('test_cond_ctx', function (Context $context) use (&$contextValueChecked) {
         $contextValueChecked = ($context->get('user.id') === 123);
         return $contextValueChecked;
     });
 
-    $rule->then()->custom('act', function(Context $context) {
+    $rule->then()->custom('act', function (Context $context) {
         // Action executes
     });
 
@@ -103,11 +103,11 @@ test('ConditionBuilder custom() inline condition returning false stops rule exec
 
     $rule = Rules::create('test-false');
 
-    $rule->when()->custom('false_cond', function(Context $context) {
+    $rule->when()->custom('false_cond', function (Context $context) {
         return false;
     });
 
-    $rule->then()->custom('action_false', function(Context $context) use (&$actionExecuted) {
+    $rule->then()->custom('action_false', function (Context $context) use (&$actionExecuted) {
         $actionExecuted = true;
     });
 
@@ -142,16 +142,16 @@ test('ConditionBuilder custom() multiple inline conditions work with match_all l
 
     $rule->when()
         ->match_all()
-        ->custom('first_cond', function(Context $context) use (&$firstChecked) {
+        ->custom('first_cond', function (Context $context) use (&$firstChecked) {
             $firstChecked = true;
             return true;
         })
-        ->custom('second_cond', function(Context $context) use (&$secondChecked) {
+        ->custom('second_cond', function (Context $context) use (&$secondChecked) {
             $secondChecked = true;
             return true;
         });
 
-    $rule->then()->custom('action_multi', function(Context $context) {
+    $rule->then()->custom('action_multi', function (Context $context) {
         // Action executes
     });
 
@@ -186,12 +186,12 @@ test('ConditionBuilder custom() inline condition works without type hint', funct
 
     $rule = Rules::create('test-notypeC');
 
-    $rule->when()->custom('cond_notype', function($context) use (&$conditionPassed) {
+    $rule->when()->custom('cond_notype', function ($context) use (&$conditionPassed) {
         $conditionPassed = $context instanceof Context;
         return true;
     });
 
-    $rule->then()->custom('action_notypeC', function(Context $context) {
+    $rule->then()->custom('action_notypeC', function (Context $context) {
         // Action executes
     });
 

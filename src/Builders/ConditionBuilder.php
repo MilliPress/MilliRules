@@ -239,7 +239,7 @@ class ConditionBuilder
         // Handle callback passed as the second parameter.
         if (is_callable($arg)) {
             // Wrap callback to pass only Context (args is redundant for inline callbacks).
-            $wrappedCallback = function($args, $context) use ($arg) {
+            $wrappedCallback = function ($args, $context) use ($arg) {
                 // Call original callback with only Context.
                 return call_user_func($arg, $context);
             };
@@ -380,43 +380,43 @@ class ConditionBuilder
      */
     private function build_condition_config(string $type, array $args): array
     {
-		$config = ['type' => $type];
+        $config = ['type' => $type];
 
-		// No arguments - boolean condition.
-		if (empty($args)) {
-			$config['operator'] = 'IS';
-			return $config;
-		}
+        // No arguments - boolean condition.
+        if (empty($args)) {
+            $config['operator'] = 'IS';
+            return $config;
+        }
 
-		// Extract operator if the last argument looks like one.
-		$operator = null;
-		if (is_string(end($args)) && $this->is_operator(end($args))) {
-			$operator = array_pop($args);
-		}
+        // Extract operator if the last argument looks like one.
+        $operator = null;
+        if (is_string(end($args)) && $this->is_operator(end($args))) {
+            $operator = array_pop($args);
+        }
 
-		// Get the argument mapping from the condition class.
-		$mapping = $this->get_condition_argument_mapping($type);
+        // Get the argument mapping from the condition class.
+        $mapping = $this->get_condition_argument_mapping($type);
 
-		// Empty mapping = custom handling, pass through all args.
-		if (empty($mapping)) {
-			$config['args'] = $args;
-			if ($operator !== null) {
-				$config['operator'] = $operator;
-			}
-			return $config;
-		}
+        // Empty mapping = custom handling, pass through all args.
+        if (empty($mapping)) {
+            $config['args'] = $args;
+            if ($operator !== null) {
+                $config['operator'] = $operator;
+            }
+            return $config;
+        }
 
-		// Apply the mapping: map positional args to config keys.
-		foreach ($args as $index => $value) {
-			if (isset($mapping[$index])) {
-				$config[$mapping[$index]] = $value;
-			}
-		}
+        // Apply the mapping: map positional args to config keys.
+        foreach ($args as $index => $value) {
+            if (isset($mapping[$index])) {
+                $config[$mapping[$index]] = $value;
+            }
+        }
 
-		// Determine the operator based on what was mapped.
-		$config['operator'] = $this->determine_operator($config, $mapping, $operator);
+        // Determine the operator based on what was mapped.
+        $config['operator'] = $this->determine_operator($config, $mapping, $operator);
 
-		return $config;
+        return $config;
     }
 
     /**

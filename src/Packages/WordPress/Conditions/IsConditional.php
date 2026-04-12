@@ -162,7 +162,7 @@ class IsConditional extends BaseCondition
      * @return bool The result of the WordPress conditional function, or false if it doesn't exist.
      */
     protected function get_actual_value(Context $context): bool
-	{
+    {
         $fn = $this->get_type();
 
         // Check if the function exists.
@@ -186,8 +186,8 @@ class IsConditional extends BaseCondition
      * - '!='
      * - 'IS'
      * - 'IS NOT'
-	 *
-	 * @since 0.1.0
+     *
+     * @since 0.1.0
      *
      * @param string $value Candidate operator string.
      * @return bool
@@ -204,8 +204,8 @@ class IsConditional extends BaseCondition
      *
      * For now, this simply uppercases known operators and falls back to 'IS'
      * if the provided operator is not recognized.
-	 *
-	 * @since 0.1.0
+     *
+     * @since 0.1.0
      *
      * @param string $operator Provided operator.
      * @param bool   $value    The boolean value (currently unused, but may be used in future).
