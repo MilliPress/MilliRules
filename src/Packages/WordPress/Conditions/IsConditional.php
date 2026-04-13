@@ -75,31 +75,31 @@ class IsConditional extends BaseCondition
      */
     public function __construct(array $config, Context $context)
     {
-        // Default operator/value fallbacks (will be refined below).
-        if (! isset($config['operator'])) {
-            $config['operator'] = 'IS';
-        }
-
-        // If no explicit value provided, start from TRUE (boolean conditionals).
-        if (! isset($config['value'])) {
-            $config['value'] = true;
-        }
-
-        // If we have raw arguments from the builder, interpret them.
-        if (isset($config['args']) && is_array($config['args']) && ! empty($config['args'])) {
+        // Interpret raw builder arguments before applying defaults.
+        //
+        // Builder input has 'args' without 'value' — the args need
+        // interpretation (boolean mode, operator extraction, etc.).
+        // Stored data has 'args' alongside 'value' and 'operator',
+        // so it skips this block entirely.
+        $has_raw_args = isset($config['args']) && is_array($config['args']) && ! empty($config['args']);
+        if ($has_raw_args && ! isset($config['value'])) {
             $raw_args = $config['args'];
             $first    = $raw_args[0];
 
             // Mode A: boolean mode when first arg is boolean (->is_404(false), ->is_404(true, 'IS NOT')).
             if (is_bool($first)) {
                 $config['value'] = $first;
+                unset($config['args']); // Boolean mode — no function args.
 
                 // Optional operator as second arg if it's a string.
                 if (isset($raw_args[1]) && is_string($raw_args[1])) {
                     $config['operator'] = $raw_args[1];
                 } else {
                     // Infer operator for boolean values (IS / IS NOT).
-                    $config['operator'] = self::normalize_operator($config['operator'], $first);
+                    $config['operator'] = self::normalize_operator(
+                        $config['operator'] ?? 'IS',
+                        $first
+                    );
                 }
             } else {
                 // Mode B: function-call mode (arguments for the is_* function).
@@ -114,8 +114,8 @@ class IsConditional extends BaseCondition
                     array_pop($args);
                 }
 
-                // Store remaining arguments as function args.
-                $config['fn_args'] = $args;
+                // Replace raw args with cleaned function args.
+                $config['args'] = $args;
 
                 // We always compare the result of the is_* function to TRUE.
                 $config['value'] = true;
@@ -123,6 +123,14 @@ class IsConditional extends BaseCondition
                 // Operator for comparison: explicit operator from args or default to 'IS'.
                 $config['operator'] = $operator !== null ? $operator : 'IS';
             }
+        }
+
+        // Apply defaults for anything not yet set.
+        if (! isset($config['operator'])) {
+            $config['operator'] = 'IS';
+        }
+        if (! isset($config['value'])) {
+            $config['value'] = true;
         }
 
         parent::__construct($config, $context);
@@ -152,7 +160,7 @@ class IsConditional extends BaseCondition
      * Dynamically calls the WordPress conditional function corresponding to the type.
      * For example, type 'is_home' will call the is_home() function.
      *
-     * If 'fn_args' is present in config, calls the function with those arguments:
+     * If 'args' is present in config, calls the function with those arguments:
      *   is_tax('genre','sci-fi')
      * Otherwise, calls the function with no arguments.
      *
@@ -171,8 +179,15 @@ class IsConditional extends BaseCondition
         }
 
         // Call with or without function arguments.
-        if (isset($this->config['fn_args']) && is_array($this->config['fn_args']) && ! empty($this->config['fn_args'])) {
-            return (bool) call_user_func_array($fn, $this->config['fn_args']);
+        if (isset($this->config['args']) && is_array($this->config['args']) && ! empty($this->config['args'])) {
+            // Right-trim trailing empty strings.
+            $args = $this->config['args'];
+            while ($args && '' === end($args)) {
+                array_pop($args);
+            }
+            if ($args) {
+                return (bool) call_user_func_array($fn, $args);
+            }
         }
 
         return (bool) call_user_func($fn);
@@ -228,7 +243,7 @@ class IsConditional extends BaseCondition
      * from the function name (is_author → "Is Author"), and arguments are
      * extracted from the function's parameters.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param ConditionMeta $meta The metadata object (type is the specific function name).
      * @return void
@@ -255,7 +270,7 @@ class IsConditional extends BaseCondition
      * Each parameter becomes a string argument on the meta with a label derived
      * from the parameter name (e.g., $block_name → "Block Name").
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param ConditionMeta $meta The metadata object to populate.
      * @param string        $fn   The function name to reflect.
