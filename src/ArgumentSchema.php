@@ -47,7 +47,7 @@ namespace MilliRules;
 /**
  * Class ArgumentSchema
  *
- * @since 1.2.0
+ * @since 1.1.0
  */
 class ArgumentSchema
 {
@@ -63,7 +63,7 @@ class ArgumentSchema
      * The parent builder, used for walking delegation when a type method
      * is called on an existing schema to start a new argument.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var ArgumentsBuilder
      */
     private ArgumentsBuilder $parent;
@@ -71,7 +71,7 @@ class ArgumentSchema
     /**
      * The argument key (positional int or named string).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var int|string
      */
     private $key;
@@ -79,7 +79,7 @@ class ArgumentSchema
     /**
      * The engine-level type.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $type;
@@ -87,7 +87,7 @@ class ArgumentSchema
     /**
      * Consumer-defined format hint (e.g., 'seconds', 'url', 'regex').
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $format = '';
@@ -95,7 +95,7 @@ class ArgumentSchema
     /**
      * Human-readable label.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $label = '';
@@ -103,7 +103,7 @@ class ArgumentSchema
     /**
      * Help text description.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $description = '';
@@ -111,7 +111,7 @@ class ArgumentSchema
     /**
      * Default value.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var mixed
      */
     private $default = null;
@@ -119,7 +119,7 @@ class ArgumentSchema
     /**
      * Whether default() has been called.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var bool
      */
     private bool $has_default = false;
@@ -127,7 +127,7 @@ class ArgumentSchema
     /**
      * Whether the argument is required.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var bool
      */
     private bool $required = false;
@@ -135,7 +135,7 @@ class ArgumentSchema
     /**
      * Minimum bound (int for string length / integer value, int|float for number value).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var int|float|null
      */
     private $min = null;
@@ -143,7 +143,7 @@ class ArgumentSchema
     /**
      * Maximum bound (int for string length / integer value, int|float for number value).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var int|float|null
      */
     private $max = null;
@@ -154,7 +154,7 @@ class ArgumentSchema
      * Stored in normalized structured form:
      * [{'value' => mixed, 'label' => string}, ...]
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<int, array{value: mixed, label: string}>
      */
     private array $options = array();
@@ -167,7 +167,7 @@ class ArgumentSchema
      *           instantiating directly. The parent reference is required
      *           for walking delegation.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param ArgumentsBuilder $parent The parent builder.
      * @param int|string       $key    The argument key.
@@ -190,7 +190,7 @@ class ArgumentSchema
      * MilliRules stores but never interprets this value. Consumers pick
      * their own vocabulary ('url', 'seconds', 'regex', 'email', etc.).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $format The format hint.
      * @return self
@@ -204,7 +204,7 @@ class ArgumentSchema
     /**
      * Set the human-readable label.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $label The label (typically translated).
      * @return self
@@ -218,7 +218,7 @@ class ArgumentSchema
     /**
      * Set the help text description.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $description The description (typically translated).
      * @return self
@@ -232,7 +232,7 @@ class ArgumentSchema
     /**
      * Mark the argument as required.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param bool $required Whether the argument is required.
      * @return self
@@ -249,7 +249,7 @@ class ArgumentSchema
      * Closures are rejected because schemas must be JSON-serializable.
      * Null is accepted and tracked separately from "no default set".
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param mixed $value The default value.
      * @return self
@@ -276,7 +276,7 @@ class ArgumentSchema
      * For number: minimum value (int or float).
      * For other types: throws.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|float $min The minimum bound.
      * @return self
@@ -302,7 +302,7 @@ class ArgumentSchema
      * For number: maximum value (int or float).
      * For other types: throws.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|float $max The maximum bound.
      * @return self
@@ -327,7 +327,7 @@ class ArgumentSchema
      * - Simple form: ['a', 'b', 'c']  (each entry becomes {value, label} with value == label)
      * - Structured form: [['value' => 'a', 'label' => 'Apple'], ...]
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param array<int, mixed> $options The allowed options.
      * @return self
@@ -347,7 +347,7 @@ class ArgumentSchema
     /**
      * Start a new string argument on the parent builder.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The new argument's key.
      * @return self The new argument (not this one).
@@ -360,7 +360,7 @@ class ArgumentSchema
     /**
      * Start a new integer argument on the parent builder.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The new argument's key.
      * @return self The new argument (not this one).
@@ -373,7 +373,7 @@ class ArgumentSchema
     /**
      * Start a new number (float) argument on the parent builder.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The new argument's key.
      * @return self The new argument (not this one).
@@ -386,7 +386,7 @@ class ArgumentSchema
     /**
      * Start a new boolean argument on the parent builder.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The new argument's key.
      * @return self The new argument (not this one).
@@ -399,7 +399,7 @@ class ArgumentSchema
     /**
      * Start a new single-choice argument on the parent builder.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The new argument's key.
      * @return self The new argument (not this one).
@@ -412,7 +412,7 @@ class ArgumentSchema
     /**
      * Start a new multi-choice argument on the parent builder.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The new argument's key.
      * @return self The new argument (not this one).
@@ -439,7 +439,7 @@ class ArgumentSchema
      *
      *     ArgumentSchema → ArgumentsBuilder → ActionMeta
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string            $method The method name.
      * @param array<int, mixed> $args   The method arguments.
@@ -460,7 +460,7 @@ class ArgumentSchema
     /**
      * Get the argument key.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return int|string
      */
@@ -472,7 +472,7 @@ class ArgumentSchema
     /**
      * Get the engine-level type.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string
      */
@@ -484,7 +484,7 @@ class ArgumentSchema
     /**
      * Get the consumer-defined format hint.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string
      */
@@ -496,7 +496,7 @@ class ArgumentSchema
     /**
      * Get the label.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string
      */
@@ -508,7 +508,7 @@ class ArgumentSchema
     /**
      * Get the description.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string
      */
@@ -523,7 +523,7 @@ class ArgumentSchema
      * Returns null if no default was set OR if the default was explicitly
      * set to null. Use has_default() to distinguish.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return mixed
      */
@@ -535,7 +535,7 @@ class ArgumentSchema
     /**
      * Whether a default value was explicitly set.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return bool
      */
@@ -547,7 +547,7 @@ class ArgumentSchema
     /**
      * Whether the argument is required.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return bool
      */
@@ -559,7 +559,7 @@ class ArgumentSchema
     /**
      * Get the minimum bound.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return int|float|null
      */
@@ -571,7 +571,7 @@ class ArgumentSchema
     /**
      * Get the maximum bound.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return int|float|null
      */
@@ -583,7 +583,7 @@ class ArgumentSchema
     /**
      * Get the normalized options (choice/choices types).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<int, array{value: mixed, label: string}>
      */
@@ -610,7 +610,7 @@ class ArgumentSchema
      *     'options'     => array<int, array{value: mixed, label: string}>,
      *   ]
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<string, mixed>
      */
@@ -646,7 +646,7 @@ class ArgumentSchema
      * MilliRules does not ship translated error messages — consumers wrap
      * the return value in their own translation layer if needed.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param mixed $value The value to validate.
      * @return string|null Null if valid, error message if invalid.
@@ -741,7 +741,7 @@ class ArgumentSchema
      * Null values are replaced with the default if set, otherwise the
      * type's zero value.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param mixed $value The raw value.
      * @return mixed The coerced value.
@@ -795,7 +795,7 @@ class ArgumentSchema
     /**
      * Throw if the current type does not support min/max bounds.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $caller The calling method name (for error message).
      * @return void
@@ -818,7 +818,7 @@ class ArgumentSchema
     /**
      * Throw if the current type does not support options().
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return void
      * @throws \InvalidArgumentException If the type does not support options.
@@ -839,7 +839,7 @@ class ArgumentSchema
     /**
      * Normalize an options array to the structured form.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param array<int, mixed> $options The input options.
      * @return array<int, array{value: mixed, label: string}>
@@ -867,7 +867,7 @@ class ArgumentSchema
     /**
      * Check whether a value is in the normalized options list.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param mixed $value The value to check.
      * @return bool
@@ -885,7 +885,7 @@ class ArgumentSchema
     /**
      * Check whether a value can be coerced to an integer without loss.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param mixed $value
      * @return bool
@@ -907,7 +907,7 @@ class ArgumentSchema
     /**
      * Check whether a value can be coerced to a boolean.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param mixed $value
      * @return bool
@@ -930,7 +930,7 @@ class ArgumentSchema
     /**
      * Coerce a value to a boolean using the same rules as ArgumentValue.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param mixed $value
      * @return bool
@@ -955,7 +955,7 @@ class ArgumentSchema
     /**
      * Get the zero value for the current type.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return mixed
      */

@@ -52,14 +52,14 @@ use MilliRules\ArgumentsBuilder;
  *       }
  *   }
  *
- * @since 1.2.0
+ * @since 1.1.0
  */
 class ActionMeta
 {
     /**
      * The action type identifier.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $type;
@@ -70,7 +70,7 @@ class ActionMeta
      * Actions sharing a scope use lock keys like "scope:value" instead of
      * just the action type. Empty string means type-level locking.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $scope = '';
@@ -78,7 +78,7 @@ class ActionMeta
     /**
      * Human-readable label (consumer-relevant).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $label = '';
@@ -86,7 +86,7 @@ class ActionMeta
     /**
      * Help text description (consumer-relevant).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $description = '';
@@ -94,7 +94,7 @@ class ActionMeta
     /**
      * UI grouping categories (consumer-relevant).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<int, string>
      */
     private array $categories = array();
@@ -106,7 +106,7 @@ class ActionMeta
      * engine with actions has arguments. The builder is instantiated lazily
      * so actions with no arguments don't pay any allocation cost.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var ArgumentsBuilder|null
      */
     private ?ArgumentsBuilder $args_builder = null;
@@ -121,7 +121,7 @@ class ActionMeta
      * Callers are encouraged to namespace keys (e.g., 'millicache:icon',
      * 'seo-redirects:http_status') to avoid cross-plugin collisions.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<string, mixed>
      */
     private array $extensions = array();
@@ -129,7 +129,7 @@ class ActionMeta
     /**
      * Constructor.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $type The action type identifier.
      */
@@ -146,7 +146,7 @@ class ActionMeta
      * type-level keys. This allows locking a specific value without blocking
      * other values of the same action type.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $scope The lock scope identifier.
      * @return self
@@ -160,7 +160,7 @@ class ActionMeta
     /**
      * Set the human-readable label.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $label The label (typically translated).
      * @return self
@@ -174,7 +174,7 @@ class ActionMeta
     /**
      * Set the help text description.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $description The description (typically translated).
      * @return self
@@ -191,7 +191,7 @@ class ActionMeta
      * Actions can belong to one or more categories. UIs use these to
      * group actions in dropdowns, sidebars, or filter panels.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string ...$categories One or more category identifiers.
      * @return self
@@ -222,7 +222,7 @@ class ActionMeta
      * instance, so you can continue declaring arguments across multiple
      * statements if needed.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return ArgumentsBuilder
      */
@@ -249,7 +249,7 @@ class ActionMeta
      * 'seo-redirects:http_status') to avoid collisions across plugins.
      * MilliRules does not enforce namespacing — the convention is the contract.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $key   The extension key (should be namespaced).
      * @param mixed  $value Any JSON-serializable value.
@@ -264,7 +264,7 @@ class ActionMeta
     /**
      * Get the action type identifier.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string
      */
@@ -276,7 +276,7 @@ class ActionMeta
     /**
      * Get the lock scope.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string The scope, or empty string if unscoped.
      */
@@ -288,7 +288,7 @@ class ActionMeta
     /**
      * Get the label.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string
      */
@@ -300,7 +300,7 @@ class ActionMeta
     /**
      * Get the description.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string
      */
@@ -312,7 +312,7 @@ class ActionMeta
     /**
      * Get the categories.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<int, string>
      */
@@ -326,7 +326,7 @@ class ActionMeta
      *
      * Returns an empty array if args() was never called.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<int, ArgumentSchema>
      */
@@ -341,7 +341,7 @@ class ActionMeta
      * Returns null for unset keys. Use has_extension() to distinguish
      * "explicitly set to null" from "not set".
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $key The extension key.
      * @return mixed|null
@@ -354,7 +354,7 @@ class ActionMeta
     /**
      * Check whether an extension key is set.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $key The extension key.
      * @return bool
@@ -367,7 +367,7 @@ class ActionMeta
     /**
      * Get all extensions as a keyed array.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<string, mixed>
      */
@@ -390,7 +390,7 @@ class ActionMeta
      *     'extensions'  => array<string, mixed>, // plugin-specific bag
      *   ]
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<string, mixed>
      */

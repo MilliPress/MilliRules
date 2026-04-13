@@ -30,14 +30,14 @@ namespace MilliRules;
 /**
  * Class ArgumentsBuilder
  *
- * @since 1.2.0
+ * @since 1.1.0
  */
 class ArgumentsBuilder
 {
     /**
      * The argument schemas declared so far.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<int, ArgumentSchema>
      */
     private array $schemas = array();
@@ -50,7 +50,7 @@ class ArgumentsBuilder
      * or ->category() after declaring arguments, instead of being stuck on
      * the arguments chain.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var object|null
      */
     private ?object $parent = null;
@@ -58,7 +58,7 @@ class ArgumentsBuilder
     /**
      * Constructor.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param object|null $parent The parent metadata object (ActionMeta or
      *                            ConditionMeta). When set, unknown method
@@ -73,7 +73,7 @@ class ArgumentsBuilder
     /**
      * Get the parent metadata object, if one was provided.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return object|null
      */
@@ -92,7 +92,7 @@ class ArgumentsBuilder
      *             ->integer('ttl')->default(3600)
      *         ->extend('millicache:icon', 'clock');  // forwarded to $meta
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string            $method The method name.
      * @param array<int, mixed> $args   The method arguments.
@@ -115,7 +115,7 @@ class ArgumentsBuilder
     /**
      * Declare a string argument.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The argument key.
      * @return ArgumentSchema The new schema (for config chaining).
@@ -128,7 +128,7 @@ class ArgumentsBuilder
     /**
      * Declare an integer argument.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The argument key.
      * @return ArgumentSchema The new schema (for config chaining).
@@ -141,7 +141,7 @@ class ArgumentsBuilder
     /**
      * Declare a number (float) argument.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The argument key.
      * @return ArgumentSchema The new schema (for config chaining).
@@ -154,7 +154,7 @@ class ArgumentsBuilder
     /**
      * Declare a boolean argument.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The argument key.
      * @return ArgumentSchema The new schema (for config chaining).
@@ -169,7 +169,7 @@ class ArgumentsBuilder
      *
      * Use ArgumentSchema::options() to set the allowed values.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The argument key.
      * @return ArgumentSchema The new schema (for config chaining).
@@ -184,7 +184,7 @@ class ArgumentsBuilder
      *
      * Use ArgumentSchema::options() to set the allowed values.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key The argument key.
      * @return ArgumentSchema The new schema (for config chaining).
@@ -197,7 +197,7 @@ class ArgumentsBuilder
     /**
      * Get all declared schemas in their declaration order.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<int, ArgumentSchema>
      */
@@ -209,7 +209,7 @@ class ArgumentsBuilder
     /**
      * Create a new schema, append it to the internal list, and return it.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param int|string $key  The argument key.
      * @param string     $type One of the ArgumentSchema::TYPE_* constants.

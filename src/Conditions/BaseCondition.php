@@ -375,7 +375,7 @@ abstract class BaseCondition implements ConditionInterface
      *               ->string('value')->label('URL Pattern')->required();
      *   }
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param ConditionMeta $meta The metadata object to configure.
      * @return void

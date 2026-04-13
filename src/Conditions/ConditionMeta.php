@@ -47,14 +47,14 @@ use MilliRules\ArgumentsBuilder;
  *       }
  *   }
  *
- * @since 1.2.0
+ * @since 1.1.0
  */
 class ConditionMeta
 {
     /**
      * The condition type identifier.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $type;
@@ -62,7 +62,7 @@ class ConditionMeta
     /**
      * Human-readable label.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $label = '';
@@ -70,7 +70,7 @@ class ConditionMeta
     /**
      * Help text description.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var string
      */
     private string $description = '';
@@ -78,7 +78,7 @@ class ConditionMeta
     /**
      * UI grouping categories.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<int, string>
      */
     private array $categories = array();
@@ -89,7 +89,7 @@ class ConditionMeta
      * Declares which operators the condition supports (e.g., '=', '!=',
      * 'LIKE', 'IN'). UIs use this to populate operator dropdowns.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<int, string>
      */
     private array $operators = array();
@@ -104,7 +104,7 @@ class ConditionMeta
      * Set automatically from BaseCondition::get_argument_mapping() when
      * resolved via Rules::get_condition_meta() for class-based conditions.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<int, string>
      */
     private array $argument_mapping = array();
@@ -112,7 +112,7 @@ class ConditionMeta
     /**
      * Arguments builder (lazy).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var ArgumentsBuilder|null
      */
     private ?ArgumentsBuilder $args_builder = null;
@@ -120,7 +120,7 @@ class ConditionMeta
     /**
      * Plugin-specific metadata bag.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<string, mixed>
      */
     private array $extensions = array();
@@ -128,7 +128,7 @@ class ConditionMeta
     /**
      * Constructor.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $type The condition type identifier.
      */
@@ -144,7 +144,7 @@ class ConditionMeta
     /**
      * Set the human-readable label.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $label The label.
      * @return self
@@ -158,7 +158,7 @@ class ConditionMeta
     /**
      * Set the help text description.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $description The description.
      * @return self
@@ -172,7 +172,7 @@ class ConditionMeta
     /**
      * Set the UI grouping categories.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string ...$categories One or more category identifiers.
      * @return self
@@ -189,7 +189,7 @@ class ConditionMeta
      * Declares which operators this condition supports. UIs use this
      * to populate operator dropdowns in rule builders.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string ...$operators One or more operator strings (e.g., '=', '!=', 'LIKE', 'IN').
      * @return self
@@ -207,7 +207,7 @@ class ConditionMeta
      * during class-based resolution. Callback-based conditions can set it
      * manually if needed.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param array<int, string> $mapping Array of config keys (e.g., ['value'] or ['name', 'value']).
      * @return self
@@ -224,7 +224,7 @@ class ConditionMeta
      * Returns an ArgumentsBuilder that collects the arguments for this
      * condition. Same walking-builder pattern as ActionMeta::args().
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return ArgumentsBuilder
      */
@@ -239,7 +239,7 @@ class ConditionMeta
     /**
      * Attach plugin-specific metadata under a namespaced key.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $key   The extension key (should be namespaced).
      * @param mixed  $value Any JSON-serializable value.
@@ -258,7 +258,7 @@ class ConditionMeta
     /**
      * Get the condition type identifier.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string
      */
@@ -270,7 +270,7 @@ class ConditionMeta
     /**
      * Get the label.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string
      */
@@ -282,7 +282,7 @@ class ConditionMeta
     /**
      * Get the description.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string
      */
@@ -294,7 +294,7 @@ class ConditionMeta
     /**
      * Get the categories.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<int, string>
      */
@@ -306,7 +306,7 @@ class ConditionMeta
     /**
      * Get the supported operators.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<int, string>
      */
@@ -318,7 +318,7 @@ class ConditionMeta
     /**
      * Get the argument-to-config-key mapping.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<int, string>
      */
@@ -330,7 +330,7 @@ class ConditionMeta
     /**
      * Get the declared argument schemas.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<int, ArgumentSchema>
      */
@@ -342,7 +342,7 @@ class ConditionMeta
     /**
      * Get the value of an extension key.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $key The extension key.
      * @return mixed|null
@@ -355,7 +355,7 @@ class ConditionMeta
     /**
      * Check whether an extension key is set.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $key The extension key.
      * @return bool
@@ -368,7 +368,7 @@ class ConditionMeta
     /**
      * Get all extensions as a keyed array.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<string, mixed>
      */
@@ -392,7 +392,7 @@ class ConditionMeta
      *     'extensions'       => array<string, mixed>,
      *   ]
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return array<string, mixed>
      */

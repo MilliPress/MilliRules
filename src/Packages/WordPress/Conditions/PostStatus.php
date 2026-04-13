@@ -91,7 +91,7 @@ class PostStatus extends BaseCondition
     }
 
     /**
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param ConditionMeta $meta The metadata object to configure.
      */
