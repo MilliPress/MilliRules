@@ -358,3 +358,110 @@ test('get_arg() real-world logging scenario with positional args', function () {
         ->and($message)->toBe('Something broke')
         ->and($priority)->toBe(3);
 });
+
+// ============================================
+// Positional fallback for named args (data-stored rules)
+// ============================================
+
+/**
+ * Test: get_arg(0) works when config has named keys from REST/storage
+ *
+ * Action execute() methods use get_arg(0), get_arg(1) etc. When rules
+ * come from a UI or REST API, the config uses named keys from the
+ * ArgumentSchema (e.g. 'flag' instead of 0). The positional fallback
+ * maps int keys to the Nth non-internal string key.
+ */
+test('get_arg() positional fallback resolves named keys by declaration order', function () {
+    // Simulates a data-stored rule: ['type' => 'add_flag', 'flag' => 'my-flag']
+    $config = [
+        'type' => 'add_flag',
+        'flag' => 'my-flag',
+    ];
+
+    $action = new TestAction($config, new Context());
+
+    // Action execute() uses get_arg(0) — should find 'flag' as the first named arg
+    expect($action->test_get_arg(0)->string())->toBe('my-flag');
+});
+
+test('get_arg() positional fallback works with multiple named args', function () {
+    // Simulates: ['type' => 'set_header', 'name' => 'X-Custom', 'value' => '123']
+    $config = [
+        'type' => 'set_header',
+        'name' => 'X-Custom',
+        'value' => '123',
+    ];
+
+    $action = new TestAction($config, new Context());
+
+    expect($action->test_get_arg(0)->string())->toBe('X-Custom')
+        ->and($action->test_get_arg(1)->string())->toBe('123');
+});
+
+test('get_arg() positional fallback skips internal _-prefixed keys', function () {
+    $config = [
+        'type' => 'add_flag',
+        '_locked' => true,
+        'flag' => 'my-flag',
+    ];
+
+    $action = new TestAction($config, new Context());
+
+    // _locked should be skipped; 'flag' is the first non-internal string key
+    expect($action->test_get_arg(0)->string())->toBe('my-flag');
+});
+
+test('get_arg() positional fallback does not activate when int key exists', function () {
+    // Builder-created rule: positional keys already present
+    $config = [
+        'type' => 'add_flag',
+        0 => 'builder-flag',
+    ];
+
+    $action = new TestAction($config, new Context());
+
+    expect($action->test_get_arg(0)->string())->toBe('builder-flag');
+});
+
+test('get_arg() positional fallback returns default when index exceeds named args', function () {
+    $config = [
+        'type' => 'add_flag',
+        'flag' => 'my-flag',
+    ];
+
+    $action = new TestAction($config, new Context());
+
+    // Only one named arg; index 1 should return default
+    expect($action->test_get_arg(1, 'default')->string())->toBe('default');
+});
+
+test('get_arg() named access still works alongside positional fallback', function () {
+    $config = [
+        'type' => 'set_header',
+        'name' => 'X-Custom',
+        'value' => '123',
+    ];
+
+    $action = new TestAction($config, new Context());
+
+    // Both access patterns work on the same config
+    expect($action->test_get_arg('name')->string())->toBe('X-Custom')
+        ->and($action->test_get_arg(0)->string())->toBe('X-Custom')
+        ->and($action->test_get_arg('value')->string())->toBe('123')
+        ->and($action->test_get_arg(1)->string())->toBe('123');
+});
+
+test('get_arg() positional fallback handles falsy values correctly', function () {
+    $config = [
+        'type' => 'test_action',
+        'count' => 0,
+        'enabled' => false,
+        'message' => '',
+    ];
+
+    $action = new TestAction($config, new Context());
+
+    expect($action->test_get_arg(0, 999)->int())->toBe(0)
+        ->and($action->test_get_arg(1, true)->bool())->toBeFalse()
+        ->and($action->test_get_arg(2, 'default')->string())->toBe('');
+});

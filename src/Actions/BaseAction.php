@@ -94,6 +94,15 @@ abstract class BaseAction implements ActionInterface
      * Provides a fluent API for accessing action arguments with automatic
      * placeholder resolution and type-safe conversion.
      *
+     * Supports both positional and named argument access:
+     * - Positional: get_arg(0), get_arg(1) — used by action execute() methods
+     * - Named: get_arg('to'), get_arg('flag') — used when accessing by schema key
+     *
+     * When a positional key (int) is not found, falls back to the Nth named
+     * string key. This allows action execute() methods using get_arg(0) to
+     * work regardless of whether the config came from the builder (positional
+     * keys) or from stored data like REST/config files (named keys).
+     *
      * Examples:
      *   $this->get_arg(0, 'default')->string()
      *   $this->get_arg('to', 'admin@example.com')->string()
@@ -109,6 +118,27 @@ abstract class BaseAction implements ActionInterface
     protected function get_arg($key, $default = null): ArgumentValue
     {
         $value = $this->args[ $key ] ?? null;
+
+        // Positional fallback for named args.
+        //
+        // Builder-created rules store args with int keys: [0 => 'my-flag']
+        // Data-stored rules use named keys from ArgumentSchema: ['flag' => 'my-flag']
+        //
+        // When an int key is missing, map it to the Nth non-internal string
+        // key. Internal keys (prefixed with '_', e.g. '_locked') are skipped.
+        if (null === $value && is_int($key) && ! array_key_exists($key, $this->args)) {
+            $i = 0;
+            foreach ($this->args as $k => $v) {
+                if (! is_string($k) || ('' !== $k && '_' === $k[0])) {
+                    continue;
+                }
+                if ($i === $key) {
+                    $value = $v;
+                    break;
+                }
+                $i++;
+            }
+        }
 
         return new ArgumentValue($value, $default, $this->resolver);
     }
@@ -134,7 +164,7 @@ abstract class BaseAction implements ActionInterface
      *
      * Default: '' (unscoped — type-level locking).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @return string The scope identifier, or '' for unscoped actions.
      */
@@ -168,7 +198,7 @@ abstract class BaseAction implements ActionInterface
      *               ->string(0)->label('Flag')->required();
      *   }
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param ActionMeta $meta The metadata object to configure.
      * @return void
