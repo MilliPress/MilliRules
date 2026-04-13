@@ -62,6 +62,14 @@ class Rules
     use NormalizesMethodNames;
 
     /**
+     * Match types supported by the rule engine.
+     *
+     * @since 1.1.0
+     * @var array<int, string>
+     */
+    public const MATCH_TYPES = array( 'all', 'any', 'none' );
+
+    /**
      * Custom condition callbacks registry.
      *
      * @since 0.1.0
@@ -83,7 +91,7 @@ class Rules
      * Stores ActionMeta instances created by register_action() so fluent
      * chaining (->scope(), ->label(), etc.) mutates the stored instance.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<string, ActionMeta>
      */
     private static array $action_metas = array();
@@ -95,7 +103,7 @@ class Rules
      * nothing found" to avoid re-resolving on every lookup. Cleared on
      * re-registration and in test teardown.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<string, ?ActionMeta>
      */
     private static array $meta_cache = array();
@@ -109,7 +117,7 @@ class Rules
      * engine's build_lock_key() path safe to call during early bootstrap,
      * before framework-specific functions are available.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<string, string>
      */
     private static array $scope_cache = array();
@@ -117,7 +125,7 @@ class Rules
     /**
      * Condition metadata registry (callback-based conditions).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<string, ConditionMeta>
      */
     private static array $condition_metas = array();
@@ -125,10 +133,30 @@ class Rules
     /**
      * Resolved condition metadata cache (both callback- and class-based).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<string, ?ConditionMeta>
      */
     private static array $condition_meta_cache = array();
+
+    /**
+     * Cached result of get_all_action_metas().
+     *
+     * Null means not yet computed. Cleared when new actions are registered.
+     *
+     * @since 1.1.0
+     * @var array<string, ActionMeta>|null
+     */
+    private static ?array $all_action_metas_cache = null;
+
+    /**
+     * Cached result of get_all_condition_metas().
+     *
+     * Null means not yet computed. Cleared when new conditions are registered.
+     *
+     * @since 1.1.0
+     * @var array<string, ConditionMeta>|null
+     */
+    private static ?array $all_condition_metas_cache = null;
 
     /**
      * Hard-coded namespace to package mapping.
@@ -254,7 +282,7 @@ class Rules
      * (label, description, categories, operators, arguments).
      *
      * @since 0.1.0
-     * @since 1.2.0 Returns ConditionMeta for fluent metadata declaration.
+     * @since 1.1.0 Returns ConditionMeta for fluent metadata declaration.
      *
      * @param string   $type     The condition type identifier.
      * @param callable(array<string, mixed>, Context): bool $callback The callback function that receives args array and Context.
@@ -274,6 +302,7 @@ class Rules
         self::$condition_metas[ $type ] = $meta;
 
         unset(self::$condition_meta_cache[ $type ]);
+        self::$all_condition_metas_cache = null;
 
         return $meta;
     }
@@ -286,7 +315,7 @@ class Rules
      * don't need a callback registration. Useful for batch-registering
      * metadata for dynamic condition classes (e.g., is_* / has_* conditionals).
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $type The condition type identifier.
      * @return ConditionMeta Fluent metadata declaration.
@@ -297,6 +326,7 @@ class Rules
         self::$condition_metas[ $type ] = $meta;
 
         unset(self::$condition_meta_cache[ $type ]);
+        self::$all_condition_metas_cache = null;
 
         return $meta;
     }
@@ -308,7 +338,7 @@ class Rules
      * class-based actions that are resolved via namespace convention and
      * don't need a callback registration.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $type The action type identifier.
      * @return ActionMeta Fluent metadata declaration.
@@ -320,6 +350,7 @@ class Rules
 
         unset(self::$meta_cache[ $type ]);
         unset(self::$scope_cache[ $type ]);
+        self::$all_action_metas_cache = null;
 
         return $meta;
     }
@@ -331,7 +362,7 @@ class Rules
      * (scope, label, description, category).
      *
      * @since 0.1.0
-     * @since 1.2.0 Returns ActionMeta for fluent metadata declaration.
+     * @since 1.1.0 Returns ActionMeta for fluent metadata declaration.
      *
      * @param string   $type     The action type identifier.
      * @param callable(array<string, mixed>, Context): void $callback The callback function that receives args array and Context.
@@ -353,6 +384,7 @@ class Rules
         // Invalidate caches so subsequent lookups see the new instance.
         unset(self::$meta_cache[ $type ]);
         unset(self::$scope_cache[ $type ]);
+        self::$all_action_metas_cache = null;
 
         return $meta;
     }
@@ -524,7 +556,7 @@ class Rules
      * Results are cached per type. Returns '' for unknown action types
      * or unscoped actions.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $type The action type.
      * @return string The scope identifier, or '' if unscoped / unknown.
@@ -568,7 +600,7 @@ class Rules
      * Results are cached per type. Returns null if no metadata is found
      * for the given type.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $type The action type.
      * @return ActionMeta|null The metadata, or null if not found.
@@ -615,7 +647,7 @@ class Rules
      *
      * Results are cached per type. Returns null if no metadata is found.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string $type The condition type.
      * @return ConditionMeta|null The metadata, or null if not found.
@@ -648,6 +680,86 @@ class Rules
     }
 
     /**
+     * Get metadata for all available action types.
+     *
+     * Discovers all action types from both class-based (via namespace scanning)
+     * and callback-based registrations, and resolves their metadata.
+     *
+     * Results are cached after first call. The cache is cleared when new
+     * actions are registered via register_action() or register_action_meta().
+     *
+     * @since 1.1.0
+     *
+     * @return array<string, ActionMeta> Map of type string => ActionMeta.
+     */
+    public static function get_all_action_metas(): array
+    {
+        if (null !== self::$all_action_metas_cache) {
+            return self::$all_action_metas_cache;
+        }
+
+        // Discover class-based types by scanning registered namespaces.
+        $types = RuleEngine::scan_namespace_types('Actions');
+
+        // Merge callback-based types (keys are type strings).
+        foreach (self::$custom_actions as $type => $callback) {
+            $types[ $type ] = true;
+        }
+
+        $result = array();
+
+        foreach ($types as $type => $unused) {
+            $meta = self::get_action_meta($type);
+            if (null !== $meta) {
+                $result[ $type ] = $meta;
+            }
+        }
+
+        self::$all_action_metas_cache = $result;
+        return $result;
+    }
+
+    /**
+     * Get metadata for all available condition types.
+     *
+     * Discovers all condition types from both class-based (via namespace scanning)
+     * and callback-based registrations, and resolves their metadata.
+     *
+     * Results are cached after first call. The cache is cleared when new
+     * conditions are registered via register_condition() or register_condition_meta().
+     *
+     * @since 1.1.0
+     *
+     * @return array<string, ConditionMeta> Map of type string => ConditionMeta.
+     */
+    public static function get_all_condition_metas(): array
+    {
+        if (null !== self::$all_condition_metas_cache) {
+            return self::$all_condition_metas_cache;
+        }
+
+        // Discover class-based types by scanning registered namespaces.
+        $types = RuleEngine::scan_namespace_types('Conditions');
+
+        // Merge callback-based types (keys are type strings).
+        foreach (self::$custom_conditions as $type => $callback) {
+            $types[ $type ] = true;
+        }
+
+        $result = array();
+
+        foreach ($types as $type => $unused) {
+            $meta = self::get_condition_meta($type);
+            if (null !== $meta) {
+                $result[ $type ] = $meta;
+            }
+        }
+
+        self::$all_condition_metas_cache = $result;
+        return $result;
+    }
+
+    /**
      * Helper method to compare values using WP_Query-style operators.
      *
      * @since 0.1.0
@@ -660,6 +772,161 @@ class Rules
     public static function compare_values($actual, $expected, string $operator = '='): bool
     {
         return Conditions\BaseCondition::compare_values($actual, $expected, $operator);
+    }
+
+    // ===========================
+    // Validation API
+    // ===========================
+
+    /**
+     * Validate a rule configuration against the engine's registry.
+     *
+     * Checks that the rule's match_type, condition types, operators, action
+     * types, and action arguments are all recognized by the engine. Returns
+     * an array of plain-English error strings (empty array = valid).
+     *
+     * This validates engine-level concerns only. Storage-layer concerns
+     * (ID format, title length, order range) are the consumer's responsibility.
+     *
+     * @since 1.1.0
+     *
+     * @param array<string, mixed> $rule The rule configuration array.
+     * @return array<int, string> Error messages. Empty if valid.
+     */
+    public static function validate(array $rule): array
+    {
+        $errors = array();
+
+        // Match type.
+        $match_type = $rule['match_type'] ?? 'all';
+        if (! in_array($match_type, self::MATCH_TYPES, true)) {
+            $errors[] = sprintf(
+                "Invalid match_type '%s'. Must be one of: %s.",
+                $match_type,
+                implode(', ', self::MATCH_TYPES)
+            );
+        }
+
+        // Conditions.
+        $conditions = $rule['conditions'] ?? array();
+        if (is_array($conditions)) {
+            self::validate_conditions($conditions, $errors);
+        }
+
+        // Actions.
+        $actions = $rule['actions'] ?? array();
+        if (is_array($actions)) {
+            self::validate_actions($actions, $errors);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate a conditions array (recursive for nested groups).
+     *
+     * @since 1.1.0
+     *
+     * @param array<int, mixed>    $conditions The conditions array.
+     * @param array<int, string>   &$errors    Error collector.
+     * @return void
+     */
+    private static function validate_conditions(array $conditions, array &$errors): void
+    {
+        foreach ($conditions as $i => $condition) {
+            if (! is_array($condition)) {
+                $errors[] = sprintf('Condition #%d must be an array.', $i + 1);
+                continue;
+            }
+
+            // Condition group: has match_type + conditions, no type.
+            if (isset($condition['match_type'], $condition['conditions']) && ! isset($condition['type'])) {
+                if (! in_array($condition['match_type'], self::MATCH_TYPES, true)) {
+                    $errors[] = sprintf(
+                        "Condition group #%d has invalid match_type '%s'.",
+                        $i + 1,
+                        $condition['match_type']
+                    );
+                }
+                if (is_array($condition['conditions'])) {
+                    self::validate_conditions($condition['conditions'], $errors);
+                }
+                continue;
+            }
+
+            // Individual condition.
+            $type = $condition['type'] ?? '';
+            if (! is_string($type) || '' === $type) {
+                $errors[] = sprintf('Condition #%d is missing a type.', $i + 1);
+                continue;
+            }
+
+            $meta = self::get_condition_meta($type);
+            if (null === $meta) {
+                $errors[] = sprintf("Condition #%d has unknown type '%s'.", $i + 1, $type);
+                continue;
+            }
+
+            // Operator validation (only if the condition declares allowed operators).
+            $operator         = $condition['operator'] ?? '';
+            $allowed_operators = $meta->get_operators();
+
+            if (
+                is_string($operator)
+                && '' !== $operator
+                && ! empty($allowed_operators)
+                && ! in_array(strtoupper($operator), $allowed_operators, true)
+            ) {
+                $errors[] = sprintf(
+                    "Condition #%d ('%s') has unsupported operator '%s'.",
+                    $i + 1,
+                    $type,
+                    $operator
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate an actions array.
+     *
+     * @since 1.1.0
+     *
+     * @param array<int, mixed>    $actions The actions array.
+     * @param array<int, string>   &$errors Error collector.
+     * @return void
+     */
+    private static function validate_actions(array $actions, array &$errors): void
+    {
+        foreach ($actions as $i => $action) {
+            if (! is_array($action)) {
+                $errors[] = sprintf('Action #%d must be an array.', $i + 1);
+                continue;
+            }
+
+            $type = $action['type'] ?? '';
+            if (! is_string($type) || '' === $type) {
+                $errors[] = sprintf('Action #%d is missing a type.', $i + 1);
+                continue;
+            }
+
+            $meta = self::get_action_meta($type);
+            if (null === $meta) {
+                $errors[] = sprintf("Action #%d has unknown type '%s'.", $i + 1, $type);
+                continue;
+            }
+
+            // Argument validation via ArgumentSchema.
+            foreach ($meta->get_arguments() as $arg_schema) {
+                $key   = $arg_schema->get_key();
+                $value = $action[ $key ] ?? null;
+                $error = $arg_schema->validate($value);
+
+                if (null !== $error) {
+                    $errors[] = sprintf("Action #%d ('%s'): %s", $i + 1, $type, $error);
+                }
+            }
+        }
     }
 
     // ===========================

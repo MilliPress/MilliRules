@@ -652,6 +652,117 @@ if ($meta) {
 
 ---
 
+##### `get_all_condition_metas(): array`
+
+Get metadata for all available condition types.
+
+Discovers all condition types from both class-based (via namespace scanning) and callback-based registrations, and resolves their metadata.
+
+Results are cached after first call. The cache is cleared when new conditions are registered.
+
+**Returns**: `array<string, ConditionMeta>` — map of type string to ConditionMeta
+
+**Example**:
+```php
+$conditions = Rules::get_all_condition_metas();
+
+foreach ($conditions as $type => $meta) {
+    echo $type;                    // 'post_type'
+    echo $meta->get_label();       // 'Post Type'
+    echo $meta->get_operators();   // ['=', '!=', 'IN', 'NOT IN']
+}
+```
+
+---
+
+##### `get_all_action_metas(): array`
+
+Get metadata for all available action types.
+
+Discovers all action types from both class-based (via namespace scanning) and callback-based registrations, and resolves their metadata.
+
+Results are cached after first call. The cache is cleared when new actions are registered.
+
+**Returns**: `array<string, ActionMeta>` — map of type string to ActionMeta
+
+**Example**:
+```php
+$actions = Rules::get_all_action_metas();
+
+foreach ($actions as $type => $meta) {
+    echo $type;                  // 'add_flag'
+    echo $meta->get_label();     // 'Add Flag'
+    echo $meta->get_scope();     // 'flag'
+}
+```
+
+---
+
+##### `validate(array $rule): array`
+
+Validate a rule configuration against the engine's registry.
+
+Checks that the rule's `match_type`, condition types, operators, action types, and action arguments are all recognized by the engine. Returns an array of plain-English error strings (empty array = valid).
+
+This validates engine-level concerns only. Storage-layer concerns (ID format, title length, order range) are the consumer's responsibility.
+
+**Parameters**:
+- `$rule` (array): The rule configuration array
+
+**Returns**: `array<int, string>` — error messages; empty if valid
+
+**Example**:
+```php
+$errors = Rules::validate([
+    'match_type' => 'all',
+    'conditions' => [
+        ['type' => 'post_type', 'operator' => '=', 'value' => 'page'],
+    ],
+    'actions' => [
+        ['type' => 'set_ttl', 'ttl' => 3600],
+    ],
+]);
+
+if (! empty($errors)) {
+    // Handle validation errors.
+    foreach ($errors as $error) {
+        echo $error; // "Condition #1 has unknown type 'foo'."
+    }
+}
+```
+
+**Validates**:
+- `match_type` against `Rules::MATCH_TYPES`
+- Condition types exist in the registry
+- Condition operators are in the condition's declared operators (if any)
+- Condition groups recursively (match_type + nested conditions)
+- Action types exist in the registry
+- Action arguments pass `ArgumentSchema::validate()`
+
+---
+
+#### Constants
+
+##### `Rules::MATCH_TYPES`
+
+Array of match types supported by the rule engine.
+
+```php
+Rules::MATCH_TYPES  // ['all', 'any', 'none']
+```
+
+Use this instead of hardcoding match type values:
+
+```php
+// In validation
+if (! in_array($match_type, Rules::MATCH_TYPES, true)) { /* ... */ }
+
+// In UI dropdowns
+foreach (Rules::MATCH_TYPES as $type) { /* ... */ }
+```
+
+---
+
 #### `ActionMeta` — fluent action metadata
 
 `ActionMeta` is the declarative metadata container for an action type. Obtain it from `Rules::register_action()` (for callback-based actions) or override `BaseAction::set_meta()` (for class-based actions).
