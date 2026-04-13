@@ -82,7 +82,7 @@ class RuleEngine
      * Values are the rule ID that set the lock.
      *
      * @since 0.1.0
-     * @since 1.2.0 Keys can now be scope:value composites for scoped actions.
+     * @since 1.1.0 Keys can now be scope:value composites for scoped actions.
      * @var array<string, string>
      */
     private array $locked_actions = array();
@@ -372,7 +372,7 @@ class RuleEngine
      * into a stable lock key, so they return an empty string — the action
      * executes but is not lockable.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param string                   $type          The action type.
      * @param array<int|string, mixed> $action_config The action configuration.
@@ -391,8 +391,24 @@ class RuleEngine
             return $type;
         }
 
-        // Scoped: build "scope:value" key from the first positional argument.
-        $value = $action_config[0] ?? '';
+        // Scoped: build "scope:value" key from the first argument.
+        // Builder-created rules use positional keys (0 => 'val'), while
+        // data-stored rules use named keys ('flag' => 'val'). Try
+        // positional first, then fall back to the first non-internal
+        // named key.
+        $value = $action_config[0] ?? null;
+        if (null === $value && ! array_key_exists(0, $action_config)) {
+            foreach ($action_config as $key => $val) {
+                if (! is_string($key) || 'type' === $key || ('' !== $key && '_' === $key[0])) {
+                    continue;
+                }
+                $value = $val;
+                break;
+            }
+            if (null === $value) {
+                $value = '';
+            }
+        }
 
         if (! is_scalar($value)) {
             Logger::warning(
@@ -592,6 +608,137 @@ class RuleEngine
             Logger::error('Error creating action: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Convert a PascalCase class base name to a snake_case type string.
+     *
+     * Inverse of the conversion in type_to_class_name():
+     *   'IsUserLoggedIn' → 'is_user_logged_in'
+     *   'PostType'       → 'post_type'
+     *
+     * @internal
+     * @since 1.1.0
+     *
+     * @param string $class_base The unqualified class name (e.g., 'PostType').
+     * @return string The snake_case type string.
+     */
+    public static function class_name_to_type(string $class_base): string
+    {
+        $replaced = preg_replace('/(?<!^)[A-Z]/', '_$0', $class_base);
+
+        return strtolower(is_string($replaced) ? $replaced : $class_base);
+    }
+
+    /**
+     * Discover all class-based type strings for a given namespace type.
+     *
+     * Scans all registered namespace directories for PHP files whose classes
+     * extend the appropriate base class (BaseCondition or BaseAction).
+     *
+     * Uses the Composer autoloader (PSR-4) to resolve namespace prefixes to
+     * directories. Falls back to the MilliRules src/ directory for the
+     * project's own namespaces.
+     *
+     * @internal
+     * @since 1.1.0
+     *
+     * @param string $type 'Conditions' or 'Actions'.
+     * @return array<string, string> Map of type string => fully-qualified class name.
+     */
+    public static function scan_namespace_types(string $type): array
+    {
+        $base_class = 'Conditions' === $type
+            ? Conditions\BaseCondition::class
+            : Actions\BaseAction::class;
+
+        $skip = array(
+            Conditions\BaseCondition::class,
+            Actions\BaseAction::class,
+            Conditions\Callback::class,
+            Actions\Callback::class,
+            'MilliRules\Conditions\ConditionInterface',
+            'MilliRules\Actions\ActionInterface',
+        );
+
+        $results = array();
+
+        foreach (self::$namespaces[ $type ] ?? array() as $namespace) {
+            $dir = self::namespace_to_directory($namespace);
+            if (null === $dir || ! is_dir($dir)) {
+                continue;
+            }
+
+            $files = scandir($dir);
+            if (false === $files) {
+                continue;
+            }
+
+            foreach ($files as $file) {
+                if ('.' === $file[0] || 'php' !== pathinfo($file, PATHINFO_EXTENSION)) {
+                    continue;
+                }
+
+                $class_base = pathinfo($file, PATHINFO_FILENAME);
+                $fqn        = $namespace . '\\' . $class_base;
+
+                if (in_array($fqn, $skip, true)) {
+                    continue;
+                }
+
+                if (! class_exists($fqn) || ! is_subclass_of($fqn, $base_class)) {
+                    continue;
+                }
+
+                $type_string = self::class_name_to_type($class_base);
+                $results[ $type_string ] = $fqn;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Resolve a namespace to a filesystem directory.
+     *
+     * Uses Composer's ClassLoader PSR-4 prefix map when available.
+     * Falls back to deriving the path from the MilliRules src/ root.
+     *
+     * @internal
+     * @since 1.1.0
+     *
+     * @param string $namespace The fully-qualified namespace.
+     * @return string|null The directory path, or null if not resolvable.
+     */
+    private static function namespace_to_directory(string $namespace): ?string
+    {
+        // Try Composer's autoloader for PSR-4 prefix resolution.
+        foreach (spl_autoload_functions() as $autoloader) {
+            if (
+                is_array($autoloader)
+                && $autoloader[0] instanceof \Composer\Autoload\ClassLoader
+            ) {
+                /** @var \Composer\Autoload\ClassLoader $loader */
+                $loader   = $autoloader[0];
+                $prefixes = $loader->getPrefixesPsr4();
+
+                foreach ($prefixes as $prefix => $dirs) {
+                    if (strpos($namespace . '\\', $prefix) === 0) {
+                        $relative = str_replace('\\', DIRECTORY_SEPARATOR, substr($namespace, strlen($prefix)));
+                        return rtrim($dirs[0], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $relative;
+                    }
+                }
+            }
+        }
+
+        // Fallback: derive from the MilliRules src/ root.
+        $src_dir = dirname(__DIR__);
+        if (strpos($namespace, 'MilliRules\\') === 0) {
+            $relative = str_replace('\\', DIRECTORY_SEPARATOR, substr($namespace, strlen('MilliRules\\')));
+            return $src_dir . DIRECTORY_SEPARATOR . $relative;
+        }
+
+        return null;
     }
 
     /**
