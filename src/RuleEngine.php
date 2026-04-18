@@ -189,6 +189,33 @@ class RuleEngine
     }
 
     /**
+     * Execute additional rules, preserving locked actions from prior calls.
+     *
+     * Used by the WP Package to run rules across multiple hook priorities
+     * while keeping locks intact. Priority 20 locks carry to priority 9999.
+     *
+     * @since 1.2.0
+     *
+     * @param array<int, array<string, mixed>> $rules   The rules to execute.
+     * @param Context                          $context The execution context.
+     * @return void
+     */
+    public function execute_continue(array $rules, Context $context): void
+    {
+        $this->context = $context;
+
+        if (empty($this->available_packages)) {
+            $this->available_packages = PackageManager::get_loaded_package_names();
+        }
+
+        foreach ($rules as $rule) {
+            $this->execute_rule($rule);
+        }
+
+        Logger::flush_aggregated();
+    }
+
+    /**
      * Execute a single rule.
      *
      * @since 0.1.0
@@ -226,6 +253,13 @@ class RuleEngine
 
         // Rule matched.
         $this->stats['rules_matched']++;
+
+        // Expose rule metadata on context for actions.
+        $metadata = $rule['_metadata'] ?? array();
+        $this->context->set('rule', array(
+            'id'    => $rule_id,
+            'order' => $metadata['order'] ?? 10,
+        ));
 
         // Execute actions.
         $actions_value = $rule['actions'] ?? array();

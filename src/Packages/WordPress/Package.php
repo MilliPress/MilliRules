@@ -38,33 +38,43 @@ use MilliRules\RuleEngine;
 class Package extends BasePackage
 {
     /**
-     * Rules grouped by WordPress hook name.
+     * Rules grouped by hook and priority.
      *
-     * Structure: ['hook_name' => [rule1, rule2, ...]]
+     * Structure: [$hook][$priority] => [rule1, rule2, ...]
      *
      * @since 0.1.0
-     * @var array<string, array<int, array<string, mixed>>>
+     * @var array<string, array<int, array<int, array<string, mixed>>>>
      */
     private array $rules_by_hook = array();
 
     /**
-     * Tracks which hooks have been registered with WordPress.
+     * Shared engine instances per hook.
      *
-     * Prevents duplicate hook registrations.
+     * Reused across priority callbacks so locked actions carry over
+     * from lower-priority rules to higher-priority ones.
+     *
+     * @since 1.2.0
+     * @var array<string, RuleEngine>
+     */
+    private array $engines = array();
+
+    /**
+     * Tracks which (hook, priority) pairs have been registered.
+     *
+     * Structure: [$hook][$priority] => true
      *
      * @since 0.1.0
-     * @var array<string, bool>
+     * @var array<string, array<int, bool>>
      */
     private array $hooks_registered = array();
 
     /**
      * Hooks pending registration.
      *
-     * Stores hooks that need to be registered when WordPress becomes available.
-     * Format: ['hook_name' => priority]
+     * Structure: [$hook][$priority] => true
      *
      * @since 0.1.0
-     * @var array<string, int>
+     * @var array<string, array<int, bool>>
      */
     private array $pending_hooks = array();
 
@@ -227,21 +237,15 @@ class Package extends BasePackage
             $this->remove_rule_by_id($rule_id);
         }
 
-        // Group by hook.
-        if (! isset($this->rules_by_hook[ $hook ])) {
-            $this->rules_by_hook[ $hook ] = array();
-        }
-        $this->rules_by_hook[ $hook ][] = $rule;
+        // Group by hook + priority.
+        $this->rules_by_hook[ $hook ][ $priority ][] = $rule;
 
         // Also add to parent's flat rules array for get_rules() compatibility.
         $this->rules[] = $rule;
 
         // Check if WordPress is available.
         if (! $this->is_available()) {
-            // WordPress not available yet - add to pending hooks.
-            if (! isset($this->pending_hooks[ $hook ])) {
-                $this->pending_hooks[ $hook ] = $priority;
-            }
+            $this->pending_hooks[ $hook ][ $priority ] = true;
             return;
         }
 
@@ -250,10 +254,10 @@ class Package extends BasePackage
             $this->register_pending_hooks();
         }
 
-        // Register this hook if not already registered.
-        if (! isset($this->hooks_registered[ $hook ])) {
+        // Register this (hook, priority) pair if not already registered.
+        if (! isset($this->hooks_registered[ $hook ][ $priority ])) {
             $this->register_hook($hook, $priority);
-            $this->hooks_registered[ $hook ] = true;
+            $this->hooks_registered[ $hook ][ $priority ] = true;
         }
     }
 
@@ -282,12 +286,14 @@ class Package extends BasePackage
         }
 
         // Remove from rules_by_hook array.
-        foreach ($this->rules_by_hook as $hook => &$rules) {
-            foreach ($rules as $index => $rule) {
-                if (($rule['id'] ?? null) === $rule_id) {
-                    array_splice($rules, $index, 1);
-                    $found = true;
-                    break 2;
+        foreach ($this->rules_by_hook as $hook => &$priorities) {
+            foreach ($priorities as $priority => &$rules) {
+                foreach ($rules as $index => $rule) {
+                    if (($rule['id'] ?? null) === $rule_id) {
+                        array_splice($rules, $index, 1);
+                        $found = true;
+                        break 3;
+                    }
                 }
             }
         }
@@ -368,12 +374,14 @@ class Package extends BasePackage
 
         $count = 0;
 
-        // Register all pending hooks.
-        foreach ($this->pending_hooks as $hook => $priority) {
-            if (! isset($this->hooks_registered[ $hook ])) {
-                $this->register_hook($hook, $priority);
-                $this->hooks_registered[ $hook ] = true;
-                ++$count;
+        // Register all pending (hook, priority) pairs.
+        foreach ($this->pending_hooks as $hook => $priorities) {
+            foreach ($priorities as $priority => $unused) {
+                if (! isset($this->hooks_registered[ $hook ][ $priority ])) {
+                    $this->register_hook($hook, $priority);
+                    $this->hooks_registered[ $hook ][ $priority ] = true;
+                    ++$count;
+                }
             }
         }
 
@@ -424,8 +432,8 @@ class Package extends BasePackage
         try {
             // Create closure that calls execute_rules_for_hook.
             // Accepts variadic args from WordPress hooks (e.g., save_post passes $post_id, $post, $update).
-            $closure = function (...$args) use ($hook) {
-                $this->execute_rules_for_hook($hook, $args);
+            $closure = function (...$args) use ($hook, $priority) {
+                $this->execute_rules_for_hook($hook, $priority, $args);
             };
 
             // Register hook using custom callback or add_action.
@@ -441,22 +449,23 @@ class Package extends BasePackage
     }
 
     /**
-     * Execute all rules for a specific WordPress hook.
+     * Execute all rules for a specific (hook, priority) pair.
      *
-     * Called automatically when the WordPress hook fires.
+     * Called automatically when the WordPress hook fires at this priority.
      * Builds context, sorts rules by order, and executes them via RuleEngine.
      * Hook arguments are added to the context under 'hook' key for access by conditions/actions.
      *
      * @since 0.1.0
      *
      * @param string               $hook      The WordPress hook name.
+     * @param int                  $priority  The hook priority.
      * @param array<int, mixed>    $hook_args Optional. Arguments passed by the WordPress hook. Default empty array.
      * @return void
      */
-    private function execute_rules_for_hook(string $hook, array $hook_args = array()): void
+    private function execute_rules_for_hook(string $hook, int $priority, array $hook_args = array()): void
     {
-        // Get rules for this hook.
-        $rules = $this->rules_by_hook[ $hook ] ?? array();
+        // Get rules for this (hook, priority) pair.
+        $rules = $this->rules_by_hook[ $hook ][ $priority ] ?? array();
 
         if (empty($rules)) {
             return;
@@ -477,9 +486,13 @@ class Package extends BasePackage
                 ));
             }
 
-            // Create engine and execute.
-            $engine = new RuleEngine();
-            $engine->execute($sorted_rules, $context);
+            // Reuse engine per hook so locked actions carry across priorities.
+            if (! isset($this->engines[ $hook ])) {
+                $this->engines[ $hook ] = new RuleEngine();
+                $this->engines[ $hook ]->execute($sorted_rules, $context);
+            } else {
+                $this->engines[ $hook ]->execute_continue($sorted_rules, $context);
+            }
         } catch (\Exception $e) {
             Logger::error("Error executing rules for hook '{$hook}': " . $e->getMessage());
         }
@@ -504,7 +517,15 @@ class Package extends BasePackage
      */
     public function get_rules(): array
     {
-        return $this->rules_by_hook;
+        // Flatten [$hook][$priority] back to [$hook] => [rules].
+        $by_hook = array();
+        foreach ($this->rules_by_hook as $hook => $priorities) {
+            $by_hook[ $hook ] = array();
+            foreach ($priorities as $rules) {
+                array_push($by_hook[ $hook ], ...$rules);
+            }
+        }
+        return $by_hook;
     }
 
     /**
@@ -527,6 +548,7 @@ class Package extends BasePackage
 
         // Clear hook-based storage.
         $this->rules_by_hook = array();
+        $this->engines = array();
 
         // Clear pending hooks.
         $this->pending_hooks = array();
