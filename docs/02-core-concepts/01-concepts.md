@@ -447,6 +447,14 @@ use MilliRules\Context;
     'user' => [...],         // WordPress user data
     'query' => [...],        // WordPress query variables (post_type, paged, s, etc.)
     'term' => [...],         // WordPress taxonomy terms
+    'rule' => [              // Current rule metadata (set by engine)
+        'id' => 'my-rule',
+        'order' => 10,
+    ],
+    'hook' => [              // WordPress hook info (WP package only)
+        'name' => 'template_redirect',
+        'args' => [...],
+    ],
     // Custom package data...
 ]
 ```
