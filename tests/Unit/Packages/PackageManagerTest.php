@@ -837,6 +837,38 @@ class PackageManagerTest extends TestCase
         $this->assertSame('Loaded', $all[0]['_package']);
     }
 
+    public function testRegisterRuleRemovesFromOldPackageWhenRequiredPackagesChange(): void
+    {
+        $wp = $this->createMockPackage('WP');
+        $php = $this->createMockPackage('PHP');
+        PackageManager::register_package($wp);
+        PackageManager::register_package($php);
+        PackageManager::load_packages(['WP', 'PHP']);
+
+        // Rule initially registered in WP package.
+        PackageManager::register_rule(
+            ['id' => 'my-rule', 'conditions' => [], 'actions' => []],
+            ['required_packages' => ['WP']]
+        );
+
+        $all = PackageManager::get_all_rules();
+        $this->assertCount(1, $all);
+        $this->assertSame('WP', $all[0]['_package']);
+
+        // User overrides rule — now targets PHP package instead.
+        PackageManager::register_rule(
+            ['id' => 'my-rule', 'conditions' => ['changed'], 'actions' => []],
+            ['required_packages' => ['PHP']]
+        );
+
+        $all = PackageManager::get_all_rules();
+
+        // Should exist only once, in the PHP package.
+        $this->assertCount(1, $all);
+        $this->assertSame('PHP', $all[0]['_package']);
+        $this->assertSame(['changed'], $all[0]['conditions']);
+    }
+
     /**
      * Find a rule by ID in an array of rules.
      *

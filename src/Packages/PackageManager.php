@@ -499,7 +499,18 @@ class PackageManager
             return;
         }
 
-        // All packages are loaded - register immediately.
+        // Remove rule from packages it's no longer targeting.
+        // This handles the case where a rule override changes required_packages
+        // (e.g., from WP to PHP), preventing duplicates across packages.
+        if ('unknown' !== $rule_id) {
+            foreach (self::$packages as $pkg_name => $pkg) {
+                if (! in_array($pkg_name, $required_packages, true)) {
+                    $pkg->unregister_rule($rule_id);
+                }
+            }
+        }
+
+        // Register in target packages.
         foreach ($required_packages as $package_name) {
             if (isset(self::$packages[ $package_name ])) {
                 self::$packages[ $package_name ]->register_rule($rule, $metadata);
@@ -575,7 +586,16 @@ class PackageManager
             }
 
             if ($all_loaded) {
-                // All packages loaded - register now.
+                // Remove rule from packages it's no longer targeting.
+                if ('unknown' !== $rule_id) {
+                    foreach (self::$packages as $pkg_name => $pkg) {
+                        if (! in_array($pkg_name, $pending['required_packages'], true)) {
+                            $pkg->unregister_rule($rule_id);
+                        }
+                    }
+                }
+
+                // Register in target packages.
                 foreach ($pending['required_packages'] as $package_name) {
                     if (isset(self::$packages[ $package_name ])) {
                         self::$packages[ $package_name ]->register_rule($pending['rule'], $pending['metadata']);
@@ -631,11 +651,18 @@ class PackageManager
 
             foreach (self::flatten_rules($package->get_rules()) as $rule) {
                 $rule['_package'] = $package_name;
-                $all_rules[]      = $rule;
+                $rule_id          = $rule['id'] ?? null;
+
+                if (null !== $rule_id) {
+                    // Deduplicate by ID — later packages override earlier ones.
+                    $all_rules[ $rule_id ] = $rule;
+                } else {
+                    $all_rules[] = $rule;
+                }
             }
         }
 
-        return $all_rules;
+        return array_values($all_rules);
     }
 
     /**
