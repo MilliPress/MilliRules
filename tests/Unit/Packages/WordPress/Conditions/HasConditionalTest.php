@@ -31,23 +31,6 @@ class HasConditionalTest extends TestCase
     }
 
     /**
-     * Boolean mode when first raw arg is boolean.
-     * Example: ->has_post_thumbnail(false) should compare has_post_thumbnail() IS FALSE.
-     */
-    public function testBooleanModeWithBooleanRawArg(): void
-    {
-        $config = array(
-            'type' => 'has_post_thumbnail',
-            'args' => array(false),
-        );
-
-        $condition = new HasConditional($config, new Context());
-
-        // has_post_thumbnail() returns true, value=false, operator=IS -> should NOT match.
-        $this->assertFalse($condition->matches(new Context()));
-    }
-
-    /**
      * Function-call mode with single argument.
      * Example: ->has_block('core/paragraph')
      *          calls has_block('core/paragraph') and compares result IS TRUE.

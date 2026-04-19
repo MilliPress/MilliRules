@@ -31,23 +31,6 @@ class IsConditionalTest extends TestCase
     }
 
     /**
-     * Boolean mode when first raw arg is boolean.
-     * Example: ->is_404(false) should compare is_404() IS FALSE.
-     */
-    public function testBooleanModeWithBooleanRawArg(): void
-    {
-        $config = array(
-            'type'      => 'is_404',
-            'args' => array(false),
-        );
-
-        $condition = new IsConditional($config, new Context());
-
-        // is_404() returns true, value=false, operator=IS -> should NOT match.
-        $this->assertFalse($condition->matches(new Context()));
-    }
-
-    /**
      * Function-call mode: arguments-only, default operator 'IS'.
      * Example: ->is_tax('genre', 'sci-fi')
      *          calls is_tax('genre','sci-fi') and compares result IS TRUE.

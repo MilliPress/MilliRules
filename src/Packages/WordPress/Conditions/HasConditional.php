@@ -78,51 +78,26 @@ class HasConditional extends BaseCondition
         // Interpret raw builder arguments before applying defaults.
         //
         // Builder input has 'args' without 'value' — the args need
-        // interpretation (boolean mode, operator extraction, etc.).
+        // interpretation (operator extraction, etc.).
         // Stored data has 'args' alongside 'value' and 'operator',
         // so it skips this block entirely.
         $has_raw_args = isset($config['args']) && is_array($config['args']) && ! empty($config['args']);
         if ($has_raw_args && ! isset($config['value'])) {
-            $raw_args = $config['args'];
-            $first    = $raw_args[0];
+            $args = $config['args'];
 
-            // Mode A: boolean mode when first arg is boolean (->has_post_thumbnail(false), ->has_post_thumbnail(true, 'IS NOT')).
-            if (is_bool($first)) {
-                $config['value'] = $first;
-                unset($config['args']); // Boolean mode — no function args.
+            // Extract trailing operator if present.
+            $maybe_op = end($args);
+            $operator = null;
 
-                // Optional operator as second arg if it's a string.
-                if (isset($raw_args[1]) && is_string($raw_args[1])) {
-                    $config['operator'] = $raw_args[1];
-                } else {
-                    // Infer operator for boolean values (IS / IS NOT).
-                    $config['operator'] = self::normalize_boolean_operator(
-                        $config['operator'] ?? 'IS',
-                        $first
-                    );
-                }
-            } else {
-                // Mode B: function-call mode (arguments for the has_* function).
-                $args = $raw_args;
-
-                // Inspect last raw arg as potential operator.
-                $maybe_op = end($args);
-                $operator = null;
-
-                if (is_string($maybe_op) && self::looks_like_operator($maybe_op)) {
-                    $operator = $maybe_op;
-                    array_pop($args);
-                }
-
-                // Replace raw args with cleaned function args.
-                $config['args'] = $args;
-
-                // We always compare the result of the has_* function to TRUE.
-                $config['value'] = true;
-
-                // Operator for comparison: explicit operator from args or default to 'IS'.
-                $config['operator'] = $operator !== null ? $operator : 'IS';
+            if (is_string($maybe_op) && self::looks_like_operator($maybe_op)) {
+                $operator = $maybe_op;
+                array_pop($args);
             }
+
+            // Store cleaned function args.
+            $config['args'] = $args;
+            $config['value'] = true;
+            $config['operator'] = $operator !== null ? $operator : 'IS';
         }
 
         // Apply defaults for anything not yet set.
@@ -214,29 +189,7 @@ class HasConditional extends BaseCondition
         return in_array($upper, $supported, true);
     }
 
-    /**
-     * Normalize operator for boolean comparisons.
-     *
-     * For now, this simply uppercases known operators and falls back to 'IS'
-     * if the provided operator is not recognized.
-     *
-     * Note: This method is named differently from BaseCondition::normalize_operator()
-     * to avoid PHP 7.4 incompatibility issues (cannot make non-static method static).
-     *
-     * @since 0.1.0
-     *
-     * @param string $operator Provided operator.
-     * @param bool   $value    The boolean value (currently unused, but may be used in future).
-     * @return string
-     */
-    private static function normalize_boolean_operator(string $operator, bool $value): string
-    {
-        $upper = strtoupper(trim($operator));
-        if (self::looks_like_operator($upper)) {
-            return $upper;
-        }
-        return 'IS';
-    }
+
 
     /**
      * Auto-generate metadata from the WordPress function this condition wraps.
