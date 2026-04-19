@@ -189,6 +189,12 @@ class IsConditional extends BaseCondition
         return in_array($upper, $supported, true);
     }
 
+    /** @inheritDoc */
+    public static function is_discoverable(): bool
+    {
+        return false;
+    }
+
     /**
      * Auto-generate metadata from the WordPress function this condition wraps.
      *

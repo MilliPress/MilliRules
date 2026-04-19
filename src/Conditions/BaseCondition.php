@@ -384,4 +384,19 @@ abstract class BaseCondition implements ConditionInterface
     {
         // Default: no metadata. Conditions without metadata are hidden from UIs.
     }
+
+    /**
+     * Whether this class should appear in type discovery.
+     *
+     * Return false in handler classes that serve as base for dynamic types
+     * (e.g., IsConditional, HasConditional) but are not user-selectable.
+     *
+     * @since 1.1.0
+     *
+     * @return bool
+     */
+    public static function is_discoverable(): bool
+    {
+        return true;
+    }
 }

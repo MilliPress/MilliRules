@@ -724,6 +724,11 @@ class RuleEngine
                     continue;
                 }
 
+                // Let classes opt out of discovery (e.g., handler base classes).
+                if (method_exists($fqn, 'is_discoverable') && ! $fqn::is_discoverable()) {
+                    continue;
+                }
+
                 $type_string = self::class_name_to_type($class_base);
                 $results[ $type_string ] = $fqn;
             }

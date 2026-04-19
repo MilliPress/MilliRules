@@ -279,6 +279,14 @@ test('scan_namespace_types discovers actions from registered namespaces', functi
         ->and($types)->not->toHaveKey('action_interface');
 });
 
+test('scan_namespace_types excludes non-discoverable handler classes', function () {
+    $types = RuleEngine::scan_namespace_types('Conditions');
+
+    // IsConditional and HasConditional are handler base classes, not user-selectable types.
+    expect($types)->not->toHaveKey('is_conditional')
+        ->and($types)->not->toHaveKey('has_conditional');
+});
+
 test('scan_namespace_types excludes non-condition classes', function () {
     $types = RuleEngine::scan_namespace_types('Conditions');
 

@@ -207,4 +207,19 @@ abstract class BaseAction implements ActionInterface
     {
         // Default: no metadata. Actions without metadata are hidden from UIs.
     }
+
+    /**
+     * Whether this class should appear in type discovery.
+     *
+     * Return false in handler classes that serve as base for dynamic types
+     * but are not user-selectable.
+     *
+     * @since 1.1.0
+     *
+     * @return bool
+     */
+    public static function is_discoverable(): bool
+    {
+        return true;
+    }
 }

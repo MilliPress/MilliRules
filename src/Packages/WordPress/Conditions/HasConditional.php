@@ -190,6 +190,11 @@ class HasConditional extends BaseCondition
     }
 
 
+    /** @inheritDoc */
+    public static function is_discoverable(): bool
+    {
+        return false;
+    }
 
     /**
      * Auto-generate metadata from the WordPress function this condition wraps.
@@ -204,6 +209,7 @@ class HasConditional extends BaseCondition
      * @param ConditionMeta $meta The metadata object (type is the specific function name).
      * @return void
      */
+
     public static function set_meta(ConditionMeta $meta): void
     {
         $fn = $meta->get_type();
