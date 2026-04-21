@@ -87,7 +87,7 @@ class RequestUrl extends BaseCondition
             ->label('Request URL')
             ->description('Match the current request URL/URI path.')
             ->categories('request')
-            ->operators('=', '!=', 'LIKE', 'REGEXP', 'IN', 'NOT IN')
+            ->operators('=', '!=', 'IN', 'NOT IN')
             ->args()
                 ->string('value')->label('URL Pattern')->required();
     }

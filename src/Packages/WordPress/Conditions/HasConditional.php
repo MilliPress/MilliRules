@@ -199,29 +199,16 @@ class HasConditional extends BaseCondition
     /**
      * Auto-generate metadata from the WordPress function this condition wraps.
      *
-     * Since set_meta() is called after the framework has initialized, the
-     * WordPress function is available for reflection. The label is derived
-     * from the function name (has_block → "Has Block"), and arguments are
-     * extracted from the function's parameters.
+     * Delegates to IsConditional::set_meta() which uses docblock parsing
+     * to determine the correct operator set and argument mapping.
      *
      * @since 1.1.0
      *
      * @param ConditionMeta $meta The metadata object (type is the specific function name).
      * @return void
      */
-
     public static function set_meta(ConditionMeta $meta): void
     {
-        $fn = $meta->get_type();
-
-        $meta->label(ucwords(str_replace('_', ' ', $fn)));
-
-        if (function_exists($fn)) {
-            IsConditional::extract_function_args($meta, $fn);
-        }
-
-        $meta
-            ->categories('wordpress')
-            ->operators('IS', 'IS NOT');
+        IsConditional::set_meta($meta);
     }
 }

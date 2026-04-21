@@ -118,7 +118,7 @@ class RequestHeader extends BaseCondition
             ->label('Request Header')
             ->description('Check if an HTTP request header exists and/or matches a value.')
             ->categories('request')
-            ->operators('=', '!=', 'LIKE', 'REGEXP', 'EXISTS', 'NOT EXISTS')
+            ->operators('=', '!=', 'EXISTS', 'NOT EXISTS')
             ->args()
                 ->string('name')->label('Header Name')->required()
                 ->string('value')->label('Header Value');

@@ -188,6 +188,20 @@ abstract class BaseCondition implements ConditionInterface
         $actual_str   = is_scalar($actual) ? (string) $actual : '';
         $expected_str = is_scalar($expected) ? (string) $expected : '';
 
+        // Auto-infer pattern matching for = and !=.
+        // Wildcards (* or ?) upgrade to LIKE, /regex/ upgrades to REGEXP.
+        // Escaped wildcards (\* or \?) are treated as literals.
+        if ('=' === $operator || '!=' === $operator) {
+            $inferred = self::infer_operator($expected_str, $operator);
+            if ($inferred !== $operator) {
+                $operator = $inferred;
+            } else {
+                // No pattern detected — strip escape backslashes so
+                // \* and \? compare as literal * and ?.
+                $expected_str = str_replace(array( '\\*', '\\?' ), array( '*', '?' ), $expected_str);
+            }
+        }
+
         switch ($operator) {
             // Equality operators.
             case '=':
@@ -218,6 +232,9 @@ abstract class BaseCondition implements ConditionInterface
 
             case 'REGEXP':
                 return self::regexp_match($actual_str, $expected_str);
+
+            case 'NOT REGEXP':
+                return ! self::regexp_match($actual_str, $expected_str);
 
             // Array operators.
             case 'IN':
@@ -273,14 +290,21 @@ abstract class BaseCondition implements ConditionInterface
      */
     protected static function like_match(string $string, string $pattern): bool
     {
-        // Convert LIKE wildcards to regex: * = .*, ? = .
-        $regex = '/^' . str_replace(
-            array( '\\*', '\\?' ),
-            array( '.*', '.' ),
-            preg_quote($pattern, '/')
-        ) . '$/i';
+        // 1. Escape the pattern for regex.
+        $regex = preg_quote($pattern, '/');
 
-        return preg_match($regex, $string) === 1;
+        // 2. Restore escaped wildcards (\* \?) to placeholders before
+        //    converting unescaped wildcards. preg_quote turns \ to \\,
+        //    so \* becomes \\\* and \? becomes \\\?.
+        $regex = str_replace(array( '\\\\\\*', '\\\\\\?' ), array( '{{LITERAL_STAR}}', '{{LITERAL_QUESTION}}' ), $regex);
+
+        // 3. Convert unescaped wildcards: * → .*, ? → .
+        $regex = str_replace(array( '\\*', '\\?' ), array( '.*', '.' ), $regex);
+
+        // 4. Restore literal wildcards.
+        $regex = str_replace(array( '{{LITERAL_STAR}}', '{{LITERAL_QUESTION}}' ), array( '\\*', '\\?' ), $regex);
+
+        return preg_match('/^' . $regex . '$/i', $string) === 1;
     }
 
     /**
@@ -302,6 +326,34 @@ abstract class BaseCondition implements ConditionInterface
         // Wildcard support: convert * to regex.
         $regex = '/^' . str_replace(array( '\\*', '\\?' ), array( '.*', '.' ), preg_quote($pattern, '/')) . '$/i';
         return preg_match($regex, $string) === 1;
+    }
+
+    /**
+     * Infer a more specific operator from the value pattern.
+     *
+     * When the base operator is = or !=, the value is inspected for
+     * wildcard characters (* or ?) and regex patterns (/.../).
+     * Escaped wildcards (\* or \?) are ignored.
+     *
+     * @since 1.1.0
+     *
+     * @param string $value    The expected value string.
+     * @param string $operator The base operator (= or !=).
+     * @return string The inferred operator (LIKE, NOT LIKE, REGEXP, or the original).
+     */
+    private static function infer_operator(string $value, string $operator): string
+    {
+        // Regex pattern: enclosed in forward slashes.
+        if (preg_match('/^\/.*\/$/', $value)) {
+            return '=' === $operator ? 'REGEXP' : 'NOT REGEXP';
+        }
+
+        // Unescaped wildcards: * or ? not preceded by \.
+        if (preg_match('/(?<!\\\\)[*?]/', $value)) {
+            return '=' === $operator ? 'LIKE' : 'NOT LIKE';
+        }
+
+        return $operator;
     }
 
     /**
@@ -370,7 +422,7 @@ abstract class BaseCondition implements ConditionInterface
      *           ->label('Request URL')
      *           ->description('Match the current request URL.')
      *           ->categories('request')
-     *           ->operators('=', '!=', 'LIKE', 'REGEXP', 'IN', 'NOT IN')
+     *           ->operators('=', '!=', 'IN', 'NOT IN')
      *           ->args()
      *               ->string('value')->label('URL Pattern')->required();
      *   }

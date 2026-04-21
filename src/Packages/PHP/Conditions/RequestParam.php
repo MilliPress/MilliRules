@@ -116,7 +116,7 @@ class RequestParam extends BaseCondition
             ->label('Request Parameter')
             ->description('Check if a URL query parameter exists and/or matches a value.')
             ->categories('request')
-            ->operators('=', '!=', 'LIKE', 'REGEXP', 'IN', 'EXISTS', 'NOT EXISTS')
+            ->operators('=', '!=', 'IN', 'EXISTS', 'NOT EXISTS')
             ->args()
                 ->string('name')->label('Parameter Name')->required()
                 ->string('value')->label('Parameter Value');

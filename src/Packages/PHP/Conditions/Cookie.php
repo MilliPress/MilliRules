@@ -322,9 +322,9 @@ class Cookie extends BaseCondition
             ->label('Cookie')
             ->description('Check if a cookie exists and/or matches a value.')
             ->categories('request')
-            ->operators('=', '!=', 'LIKE', 'REGEXP', 'EXISTS', 'NOT EXISTS')
+            ->operators('=', '!=', 'EXISTS', 'NOT EXISTS')
             ->args()
                 ->string('name')->label('Cookie Name')->required()
-                ->string('value')->label('Cookie Value');
+                ->string('value')->label('Cookie Value')->description('Value to compare against. If not specified, condition checks for cookie existence only.');
     }
 }

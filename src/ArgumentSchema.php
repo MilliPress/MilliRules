@@ -149,6 +149,18 @@ class ArgumentSchema
     private $max = null;
 
     /**
+     * Types this argument accepts.
+     *
+     * Always includes the primary type. Consumers (UIs) use this to
+     * decide input mode per-argument — e.g., when 'array' is present,
+     * a multi-value input may be offered.
+     *
+     * @since 1.1.0
+     * @var string[]
+     */
+    private array $accepts = array();
+
+    /**
      * Allowed options for choice/choices types.
      *
      * Stored in normalized structured form:
@@ -175,9 +187,10 @@ class ArgumentSchema
      */
     public function __construct(ArgumentsBuilder $parent, $key, string $type)
     {
-        $this->parent = $parent;
-        $this->key    = $key;
-        $this->type   = $type;
+        $this->parent  = $parent;
+        $this->key     = $key;
+        $this->type    = $type;
+        $this->accepts = array( $type );
     }
 
     // -----------------------------------------------------------------
@@ -337,6 +350,22 @@ class ArgumentSchema
     {
         $this->assert_supports_options();
         $this->options = self::normalize_options($options);
+        return $this;
+    }
+
+    /**
+     * Add an additional accepted type (e.g., 'array').
+     *
+     * @since 1.1.0
+     *
+     * @param string $type The additional type name.
+     * @return self
+     */
+    public function also_accepts(string $type): self
+    {
+        if (! in_array($type, $this->accepts, true)) {
+            $this->accepts[] = $type;
+        }
         return $this;
     }
 
@@ -593,6 +622,18 @@ class ArgumentSchema
     }
 
     /**
+     * Get the list of accepted types.
+     *
+     * @since 1.1.0
+     *
+     * @return string[]
+     */
+    public function get_accepts(): array
+    {
+        return $this->accepts;
+    }
+
+    /**
      * Serialize to a REST/JSON-friendly array.
      *
      * Wire format (stable):
@@ -607,6 +648,7 @@ class ArgumentSchema
      *     'required'    => bool,
      *     'min'         => int|null,
      *     'max'         => int|null,
+     *     'accepts'     => string[],
      *     'options'     => array<int, array{value: mixed, label: string}>,
      *   ]
      *
@@ -627,6 +669,7 @@ class ArgumentSchema
             'required'    => $this->required,
             'min'         => $this->min,
             'max'         => $this->max,
+            'accepts'     => $this->accepts,
             'options'     => $this->options,
         );
     }

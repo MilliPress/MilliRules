@@ -95,7 +95,8 @@ test('fluent setters return self for continued configuration', function () {
         ->and($schema->description('Help text'))->toBe($schema)
         ->and($schema->format('email'))->toBe($schema)
         ->and($schema->required())->toBe($schema)
-        ->and($schema->default('foo'))->toBe($schema);
+        ->and($schema->default('foo'))->toBe($schema)
+        ->and($schema->also_accepts('array'))->toBe($schema);
 });
 
 test('setters store and expose values correctly', function () {
@@ -376,6 +377,25 @@ test('sanitize() falls back to default for invalid choice', function () {
 });
 
 // -----------------------------------------------------------------
+// also_accepts()
+// -----------------------------------------------------------------
+
+test('accepts defaults to primary type only', function () {
+    $schema = (new ArgumentsBuilder())->string('k');
+    expect($schema->get_accepts())->toBe(['string']);
+});
+
+test('also_accepts() adds an additional type', function () {
+    $schema = (new ArgumentsBuilder())->string('k')->also_accepts('array');
+    expect($schema->get_accepts())->toBe(['string', 'array']);
+});
+
+test('also_accepts() does not duplicate existing types', function () {
+    $schema = (new ArgumentsBuilder())->string('k')->also_accepts('array')->also_accepts('array');
+    expect($schema->get_accepts())->toBe(['string', 'array']);
+});
+
+// -----------------------------------------------------------------
 // to_array()
 // -----------------------------------------------------------------
 
@@ -390,16 +410,17 @@ test('to_array() produces the full wire format', function () {
         ->required();
 
     expect($schema->to_array())->toBe([
-        'key'         => 'ttl',
-        'type'        => 'integer',
-        'format'      => 'seconds',
-        'label'       => 'TTL',
-        'description' => 'Time to live in seconds',
-        'default'     => 3600,
-        'has_default' => true,
-        'required'    => true,
+        'key'            => 'ttl',
+        'type'           => 'integer',
+        'format'         => 'seconds',
+        'label'          => 'TTL',
+        'description'    => 'Time to live in seconds',
+        'default'        => 3600,
+        'has_default'    => true,
+        'required'       => true,
         'min'         => 0,
         'max'         => 86400,
+        'accepts'     => ['integer'],
         'options'     => [],
     ]);
 });

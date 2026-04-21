@@ -147,7 +147,7 @@ class QueryVar extends BaseCondition
             ->label('Query Variable')
             ->description('Check a WordPress query variable value.')
             ->categories('content')
-            ->operators('=', '!=', 'LIKE', 'IN', 'EXISTS', 'NOT EXISTS')
+            ->operators('=', '!=', 'IN', 'EXISTS', 'NOT EXISTS')
             ->args()
                 ->string('name')->label('Variable Name')->required()
                 ->string('value')->label('Expected Value');

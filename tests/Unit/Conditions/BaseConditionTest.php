@@ -662,6 +662,68 @@ class BaseConditionTest extends TestCase
         $this->assertTrue($condition->matches(new Context()));
     }
 
+    // ============================================
+    // Auto-inference: = and != with patterns
+    // ============================================
+
+    public function testEqualsAutoInfersLikeForWildcards(): void
+    {
+        $this->assertTrue(BaseCondition::compare_values('session_abc', 'session_*', '='));
+        $this->assertFalse(BaseCondition::compare_values('other', 'session_*', '='));
+    }
+
+    public function testNotEqualsAutoInfersNotLikeForWildcards(): void
+    {
+        $this->assertFalse(BaseCondition::compare_values('session_abc', 'session_*', '!='));
+        $this->assertTrue(BaseCondition::compare_values('other', 'session_*', '!='));
+    }
+
+    public function testEqualsAutoInfersRegexpForSlashPattern(): void
+    {
+        $this->assertTrue(BaseCondition::compare_values('post-123', '/^post-\d+$/', '='));
+        $this->assertFalse(BaseCondition::compare_values('page-abc', '/^post-\d+$/', '='));
+    }
+
+    public function testNotEqualsAutoInfersNotRegexpForSlashPattern(): void
+    {
+        $this->assertFalse(BaseCondition::compare_values('post-123', '/^post-\d+$/', '!='));
+        $this->assertTrue(BaseCondition::compare_values('page-abc', '/^post-\d+$/', '!='));
+    }
+
+    public function testEqualsWithEscapedWildcardDoesExactMatch(): void
+    {
+        // \* should be treated as literal asterisk, not wildcard.
+        $this->assertTrue(BaseCondition::compare_values('price_5*2', 'price_5\*2', '='));
+        $this->assertFalse(BaseCondition::compare_values('price_5x2', 'price_5\*2', '='));
+    }
+
+    public function testEqualsWithQuestionMarkWildcard(): void
+    {
+        $this->assertTrue(BaseCondition::compare_values('user_a', 'user_?', '='));
+        $this->assertFalse(BaseCondition::compare_values('user_ab', 'user_?', '='));
+    }
+
+    public function testEqualsWithEscapedQuestionMark(): void
+    {
+        // \? means literal ?, so 'what\?' matches 'what?'.
+        $this->assertTrue(BaseCondition::compare_values('what?', 'what\?', '='));
+        $this->assertFalse(BaseCondition::compare_values('whatX', 'what\?', '='));
+    }
+
+    public function testEqualsPlainStringStaysExact(): void
+    {
+        // No wildcards, no regex — plain exact match.
+        $this->assertTrue(BaseCondition::compare_values('admin', 'admin', '='));
+        $this->assertFalse(BaseCondition::compare_values('admin', 'Admin', '='));
+    }
+
+    public function testLikeWithEscapedWildcardMatchesLiteral(): void
+    {
+        // Explicit LIKE with \* should match literal *.
+        $this->assertTrue(BaseCondition::compare_values('5*2', '5\*2', 'LIKE'));
+        $this->assertFalse(BaseCondition::compare_values('5x2', '5\*2', 'LIKE'));
+    }
+
     public function testInvalidMatchTypeDefaultsToAny(): void
     {
         $condition = $this->createTestCondition([

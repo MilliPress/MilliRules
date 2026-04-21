@@ -23,13 +23,20 @@ use MilliRules\Context;
  * condition class exists.
  *
  * Modes:
- * - Boolean mode (no args): calls the is_* function with no arguments and compares
- *   the boolean result to the configured value (default TRUE) using the configured
- *   operator (default 'IS').
+ * - Boolean mode (no args, no value): calls the is_* function with no arguments
+ *   and checks the boolean result. Default operator is 'IS' (expects TRUE).
  *   Examples:
  *     ->is_404()                    // is_404() IS TRUE
  *     ['type' => 'is_404']          // is_404() IS TRUE
- *     ['type' => 'is_404','value'=>false,'operator'=>'IS']
+ *
+ * - Value-based mode (value set): passes the value to the is_* function as its
+ *   first argument. The operator determines negation and whether the value is
+ *   a single item or a list.
+ *   Examples:
+ *     ['type' => 'is_category', 'value' => 'news', 'operator' => 'IS']
+ *         → is_category('news') === true
+ *     ['type' => 'is_category', 'value' => ['news','sports'], 'operator' => 'IN']
+ *         → is_category(['news','sports']) === true
  *
  * - Function-call mode (with args): uses the raw method arguments to call the
  *   is_* function, and compares the resulting boolean value to TRUE using an
@@ -130,14 +137,53 @@ class IsConditional extends BaseCondition
     }
 
     /**
+     * Check if the condition matches.
+     *
+     * Calls the WordPress conditional function and interprets the boolean
+     * result based on the operator. The value (if not boolean) is passed
+     * to the function as its argument — WordPress conditionals like
+     * is_category() accept both a single value and an array natively.
+     *
+     * @since 0.1.0
+     *
+     * @param Context $context The execution context.
+     * @return bool True if the condition matches, false otherwise.
+     */
+    public function matches(Context $context): bool
+    {
+        $fn = $this->get_type();
+
+        if (empty($fn) || ! function_exists($fn)) {
+            return false;
+        }
+
+        // Builder path: explicit args array.
+        if (isset($this->config['args']) && is_array($this->config['args']) && ! empty($this->config['args'])) {
+            $args = $this->config['args'];
+            while ($args && '' === end($args)) {
+                array_pop($args);
+            }
+            $result = $args ? (bool) call_user_func_array($fn, $args) : (bool) call_user_func($fn);
+        } elseif (! is_bool($this->value) && $this->value !== '' && $this->value !== null) {
+            // Value-based path: pass value as the function's argument.
+            $result = (bool) call_user_func($fn, $this->value);
+        } else {
+            // Boolean mode: no arguments.
+            $result = (bool) call_user_func($fn);
+        }
+
+        // IS/IN → match when function returns true.
+        // IS NOT/NOT IN/!= → match when function returns false.
+        return in_array($this->operator, array( 'IS NOT', 'NOT IN', '!=' ), true)
+            ? ! $result
+            : $result;
+    }
+
+    /**
      * Get the actual value from context.
      *
-     * Dynamically calls the WordPress conditional function corresponding to the type.
-     * For example, type 'is_home' will call the is_home() function.
-     *
-     * If 'args' is present in config, calls the function with those arguments:
-     *   is_tax('genre','sci-fi')
-     * Otherwise, calls the function with no arguments.
+     * Not used directly — matches() handles the full comparison. Kept
+     * because BaseCondition declares this method abstract.
      *
      * @since 0.1.0
      *
@@ -148,21 +194,8 @@ class IsConditional extends BaseCondition
     {
         $fn = $this->get_type();
 
-        // Check if the function exists.
         if (empty($fn) || ! function_exists($fn)) {
             return false;
-        }
-
-        // Call with or without function arguments.
-        if (isset($this->config['args']) && is_array($this->config['args']) && ! empty($this->config['args'])) {
-            // Right-trim trailing empty strings.
-            $args = $this->config['args'];
-            while ($args && '' === end($args)) {
-                array_pop($args);
-            }
-            if ($args) {
-                return (bool) call_user_func_array($fn, $args);
-            }
         }
 
         return (bool) call_user_func($fn);
@@ -198,10 +231,16 @@ class IsConditional extends BaseCondition
     /**
      * Auto-generate metadata from the WordPress function this condition wraps.
      *
-     * Since set_meta() is called after the framework has initialized, the
-     * WordPress function is available for reflection. The label is derived
-     * from the function name (is_author → "Is Author"), and arguments are
-     * extracted from the function's parameters.
+     * Combines reflection (parameter count, optionality) with docblock
+     * parsing (types, descriptions) to produce accurate argument schemas.
+     *
+     * Single-param functions use value-based mapping (['value']) with
+     * a properly labeled and described argument. Multi-param functions
+     * use custom mapping ([]) with indexed argument schemas.
+     *
+     * The first parameter's docblock type determines available operators:
+     * - Type includes 'array' → IS, IS NOT, IN, NOT IN
+     * - Otherwise             → IS, IS NOT
      *
      * @since 1.1.0
      *
@@ -212,51 +251,155 @@ class IsConditional extends BaseCondition
     {
         $fn = $meta->get_type();
 
-        $meta->label(ucwords(str_replace('_', ' ', $fn)));
+        $meta
+            ->label(ucwords(str_replace('_', ' ', $fn)))
+            ->categories('wordpress');
 
-        if (function_exists($fn)) {
-            self::extract_function_args($meta, $fn);
+        if (! function_exists($fn)) {
+            $meta->operators('IS', 'IS NOT');
+            return;
         }
 
-        $meta
-            ->categories('wordpress')
-            ->operators('IS', 'IS NOT');
+        try {
+            $ref = new \ReflectionFunction($fn);
+        } catch (\ReflectionException $e) {
+            $meta->operators('IS', 'IS NOT');
+            return;
+        }
+
+        $params = $ref->getParameters();
+
+        if (empty($params)) {
+            $meta->operators('IS', 'IS NOT');
+            return;
+        }
+
+        $doc_params    = self::parse_docblock_params($ref->getDocComment() ?: '');
+        $first_type    = $doc_params[0]['type'] ?? null;
+        $accepts_array = $first_type && self::type_includes_array($first_type);
+
+        if (count($params) === 1) {
+            // Value-based: single argument mapped to 'value'.
+            $meta->argument_mapping(array( 'value' ));
+            $doc    = $doc_params[0] ?? array();
+            $schema = $meta->args()
+                ->string('value')
+                ->label(ucwords(str_replace('_', ' ', $params[0]->getName())));
+
+            if (! empty($doc['description'])) {
+                $schema->description($doc['description']);
+            }
+            if ($accepts_array) {
+                $schema->also_accepts('array');
+            }
+            // Value is never required — omitting it falls back to boolean mode.
+
+            // IN/NOT IN only makes sense for value mode where the single
+            // argument is the comparison target.
+            if ($accepts_array) {
+                $meta->operators('IS', 'IS NOT', 'IN', 'NOT IN');
+            } else {
+                $meta->operators('IS', 'IS NOT');
+            }
+        } else {
+            // Multi-param (args mode): indexed argument schemas.
+            // Operators describe boolean result interpretation only.
+            $builder = $meta->args();
+            foreach ($params as $i => $param) {
+                $doc    = $doc_params[ $i ] ?? array();
+                $type   = $doc['type'] ?? null;
+                $schema = $builder->string($i)
+                    ->label(ucwords(str_replace('_', ' ', $param->getName())));
+
+                if (! empty($doc['description'])) {
+                    $schema->description($doc['description']);
+                }
+                if ($type && self::type_includes_array($type)) {
+                    $schema->also_accepts('array');
+                }
+                if (! $param->isOptional()) {
+                    $schema->required();
+                }
+            }
+
+            $meta->operators('IS', 'IS NOT');
+        }
     }
 
     /**
-     * Extract argument schemas from a function's parameters via reflection.
+     * Parse all @param tags from a docblock.
      *
-     * Uses ReflectionFunction to read parameter names, types, and optionality.
-     * Each parameter becomes a string argument on the meta with a label derived
-     * from the parameter name (e.g., $block_name → "Block Name").
+     * Returns an indexed array (matching parameter order) of arrays
+     * with 'type', 'name', and 'description' keys.
+     *
+     * Handles multi-line descriptions (continuation lines that are
+     * indented but don't start with @) and WordPress-style formatting
+     * where type and variable may be separated by extra whitespace.
      *
      * @since 1.1.0
      *
-     * @param ConditionMeta $meta The metadata object to populate.
-     * @param string        $fn   The function name to reflect.
-     * @return void
+     * @param string $doc The raw docblock string.
+     * @return array<int, array{type: string, name: string, description: string}>
      */
-    public static function extract_function_args(ConditionMeta $meta, string $fn): void
+    private static function parse_docblock_params(string $doc): array
     {
-        try {
-            $reflection = new \ReflectionFunction($fn);
-        } catch (\ReflectionException $e) {
-            return;
+        if ('' === $doc) {
+            return array();
         }
 
-        $params = $reflection->getParameters();
-        if (empty($params)) {
-            return;
+        // Match @param lines: type, $name, and the rest of the line as description start.
+        // The type may contain unions (string|int), arrays (int[]), and generics.
+        if (! preg_match_all(
+            '/@param\s+(\S+)\s+\$(\w+)\s*(.*?)(?=\n\s*\*\s*@|\n\s*\*\/|\z)/s',
+            $doc,
+            $matches,
+            PREG_SET_ORDER
+        )) {
+            return array();
         }
 
-        $builder = $meta->args();
-        foreach ($params as $i => $param) {
-            $schema = $builder->string($i)
-                ->label(ucwords(str_replace('_', ' ', $param->getName())));
+        $params = array();
+        foreach ($matches as $match) {
+            // Clean up the description: strip leading * from continuation lines,
+            // collapse whitespace, and trim.
+            $desc = preg_replace('/\n\s*\*\s*/', ' ', $match[3]);
+            $desc = trim(preg_replace('/\s+/', ' ', $desc));
 
-            if (! $param->isOptional()) {
-                $schema->required();
+            // Strip "Optional." prefix — the schema's required flag handles this.
+            $desc = preg_replace('/^Optional\.\s*/i', '', $desc);
+
+            $params[] = array(
+                'type'        => $match[1],
+                'name'        => $match[2],
+                'description' => $desc,
+            );
+        }
+
+        return $params;
+    }
+
+    /**
+     * Check whether a docblock type string includes 'array'.
+     *
+     * Handles union types like 'string|int|array', standalone 'array',
+     * and typed arrays like 'int[]'.
+     *
+     * @since 1.1.0
+     *
+     * @param string $type The docblock type string.
+     * @return bool
+     */
+    private static function type_includes_array(string $type): bool
+    {
+        $parts = preg_split('/[|&]/', $type);
+
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if ('array' === $part || 'mixed' === $part || substr($part, -2) === '[]') {
+                return true;
             }
         }
+
+        return false;
     }
 }

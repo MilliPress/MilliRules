@@ -41,7 +41,7 @@ use MilliRules\ArgumentsBuilder;
  *               ->label('Request URL')
  *               ->description('Match the current request URL.')
  *               ->categories('request')
- *               ->operators('=', '!=', 'LIKE', 'REGEXP', 'IN', 'NOT IN')
+ *               ->operators('=', '!=', 'IN', 'NOT IN')
  *               ->args()
  *                   ->string('value')->label('URL Pattern')->required();
  *       }
@@ -383,6 +383,7 @@ class ConditionMeta
      * Wire format (stable):
      *   [
      *     'type'             => string,
+     *     'mode'             => 'boolean'|'value'|'name_value'|'args',
      *     'label'            => string,
      *     'description'      => string,
      *     'categories'       => array<int, string>,
@@ -396,10 +397,35 @@ class ConditionMeta
      *
      * @return array<string, mixed>
      */
+    /**
+     * Derive the rendering mode from argument_mapping and arguments.
+     *
+     * @since 1.1.0
+     *
+     * @return string One of 'boolean', 'value', 'name_value', or 'args'.
+     */
+    private function compute_mode(): string
+    {
+        if (empty($this->argument_mapping)) {
+            return empty($this->get_arguments()) ? 'boolean' : 'args';
+        }
+
+        if ($this->argument_mapping === array( 'value' )) {
+            return 'value';
+        }
+
+        if ($this->argument_mapping === array( 'name', 'value' )) {
+            return 'name_value';
+        }
+
+        return 'args';
+    }
+
     public function to_array(): array
     {
         return array(
             'type'             => $this->type,
+            'mode'             => $this->compute_mode(),
             'label'            => $this->label,
             'description'      => $this->description,
             'categories'       => $this->categories,

@@ -140,6 +140,7 @@ test('to_array() produces the full wire format', function () {
     $array = $meta->to_array();
 
     expect($array['type'])->toBe('request_url')
+        ->and($array['mode'])->toBe('value')
         ->and($array['label'])->toBe('Request URL')
         ->and($array['description'])->toBe('Match the current request URL.')
         ->and($array['categories'])->toBe(['request'])
@@ -155,6 +156,7 @@ test('to_array() includes all keys in stable order', function () {
 
     expect(array_keys($meta->to_array()))->toBe([
         'type',
+        'mode',
         'label',
         'description',
         'categories',
