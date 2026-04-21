@@ -124,7 +124,7 @@ class RequestHeader extends BaseCondition
             ->categories('request')
             ->operators('=', '!=', 'EXISTS', 'NOT EXISTS')
             ->args()
-                ->string('name')->label('Header Name')->required()
+                ->string('name')->label('Header Name')->format('pattern')->required()
                 ->string('value')->label('Header Value');
     }
 }

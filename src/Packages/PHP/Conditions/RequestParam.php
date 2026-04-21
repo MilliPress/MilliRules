@@ -124,7 +124,7 @@ class RequestParam extends BaseCondition
             ->categories('request')
             ->operators('=', '!=', 'IN', 'EXISTS', 'NOT EXISTS')
             ->args()
-                ->string('name')->label('Parameter Name')->required()
+                ->string('name')->label('Parameter Name')->format('pattern')->required()
                 ->string('value')->label('Parameter Value');
     }
 }
