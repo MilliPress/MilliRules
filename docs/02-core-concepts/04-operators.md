@@ -67,6 +67,23 @@ flowchart TD
 > [!TIP]
 > Auto-detection makes your code cleaner and more readable. Only specify operators explicitly when you need precise control.
 
+### Auto-Inference at Runtime
+
+Auto-detection applies not only in the builder API but also at **runtime** for `=` and `!=` operators. When the engine evaluates a condition with `=` or `!=`, it inspects the expected value and automatically upgrades the operator:
+
+- Value contains `*` or `?` → treated as `LIKE` / `NOT LIKE`
+- Value matches `/regex/` → treated as `REGEXP` / `NOT REGEXP`
+- Plain string → exact match
+
+This means rules stored with `operator: '='` and `value: 'session_*'` will correctly perform wildcard matching — no need to explicitly store `LIKE`.
+
+**Escaping literal wildcards**: Use `\*` and `\?` when you need to match the actual `*` or `?` characters:
+
+```php
+// Matches the literal string "price_5*2"
+->condition('price_5\*2')  // \* = literal asterisk, stays as '='
+```
+
 ---
 
 ## Equality Operators
@@ -116,6 +133,9 @@ Rules::create('exact_number')
 > [!IMPORTANT]
 > String comparisons are **case-sensitive**: `'POST'` does not equal `'post'`. Use exact casing or normalize values before comparison.
 
+> [!NOTE]
+> When the value contains wildcards (`*`, `?`) or is a regex pattern (`/pattern/`), the `=` operator automatically upgrades to `LIKE` or `REGEXP` at runtime. See [Auto-Inference at Runtime](#auto-inference-at-runtime). To match a literal `*` or `?`, escape it with a backslash: `\*`, `\?`.
+
 ---
 
 ### != (Not Equals)
@@ -147,6 +167,9 @@ Rules::create('not_debug_mode')
     ->then()->custom('production_action')
     ->register();
 ```
+
+> [!NOTE]
+> Like `=`, the `!=` operator auto-upgrades to `NOT LIKE` for wildcards and `NOT REGEXP` for regex patterns. See [Auto-Inference at Runtime](#auto-inference-at-runtime).
 
 ---
 
