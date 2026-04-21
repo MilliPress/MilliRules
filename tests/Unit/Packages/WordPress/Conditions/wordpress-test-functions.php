@@ -13,8 +13,7 @@
 
 if (! function_exists('is_404')) {
     /**
-     * Simulate WordPress is_404() function.
-     * Always returns true for testing.
+     * Determines whether the query has resulted in a 404 (returns no results).
      */
     function is_404(): bool
     {
@@ -24,8 +23,7 @@ if (! function_exists('is_404')) {
 
 if (! function_exists('is_category')) {
     /**
-     * Simulate WordPress is_category() function.
-     * Returns true for 'news' or any array containing 'news'.
+     * Determines whether the query is for an existing category archive page.
      *
      * @param int|string|int[]|string[] $category Category ID, name, slug, or array of them.
      */
@@ -40,8 +38,7 @@ if (! function_exists('is_category')) {
 
 if (! function_exists('is_tax')) {
     /**
-     * Simulate WordPress is_tax() function.
-     * Returns true only for ('genre', 'sci-fi') arguments.
+     * Determines whether the query is for an existing custom taxonomy archive page.
      *
      * @param string|string[]           $taxonomy Taxonomy slug or array of slugs.
      * @param int|string|int[]|string[] $term     Term ID, name, slug, or array of them.
@@ -54,8 +51,7 @@ if (! function_exists('is_tax')) {
 
 if (! function_exists('is_singular')) {
     /**
-     * Simulate WordPress is_singular() function.
-     * Returns true only for 'page' argument.
+     * Determines whether the query is for an existing single post of any post type.
      *
      * @param string|string[] $post_types Post type or array of post types.
      */
@@ -67,9 +63,7 @@ if (! function_exists('is_singular')) {
 
 if (! function_exists('is_author')) {
     /**
-     * Simulate WordPress is_author() function.
-     * Returns true when called with no arguments (boolean mode)
-     * or when called with 'john'.
+     * Determines whether the query is for an existing author archive page.
      *
      * @param int|string $author Author ID or nicename.
      */
@@ -88,8 +82,7 @@ if (! function_exists('is_author')) {
 
 if (! function_exists('has_post_thumbnail')) {
     /**
-     * Simulate WordPress has_post_thumbnail() function.
-     * Always returns true for testing.
+     * Determines whether a post has an image attached.
      *
      * @param int|WP_Post $post Optional. Post ID or WP_Post object. Default is global `$post`.
      */
@@ -101,8 +94,7 @@ if (! function_exists('has_post_thumbnail')) {
 
 if (! function_exists('has_block')) {
     /**
-     * Simulate WordPress has_block() function.
-     * Returns true only for 'core/paragraph' block.
+     * Determines whether a $post or a string contains a specific block type.
      *
      * @param string           $block_name Full block type to look for.
      * @param int|string|WP_Post|null $post Optional. Post content, post ID, or WP_Post object.
@@ -115,8 +107,7 @@ if (! function_exists('has_block')) {
 
 if (! function_exists('has_term')) {
     /**
-     * Simulate WordPress has_term() function.
-     * Returns true only for ('news', 'category') arguments.
+     * Checks if the current post has any of given terms.
      *
      * @param string|int|array $term     The term name/id/slug or array of them.
      * @param string           $taxonomy The taxonomy name.
@@ -130,8 +121,7 @@ if (! function_exists('has_term')) {
 
 if (! function_exists('has_shortcode')) {
     /**
-     * Simulate WordPress has_shortcode() function.
-     * Returns true only for 'gallery' shortcode.
+     * Determines whether the passed content contains the specified shortcode.
      *
      * @param string $content Content to search for shortcodes.
      * @param string $tag     Shortcode tag to check.

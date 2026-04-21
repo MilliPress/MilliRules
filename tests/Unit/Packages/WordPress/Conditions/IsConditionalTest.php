@@ -232,6 +232,7 @@ class IsConditionalTest extends TestCase
         IsConditional::set_meta($meta);
 
         $array = $meta->to_array();
+        $this->assertStringContainsString('404', $array['description']);
         $this->assertSame(array( 'IS', 'IS NOT' ), $array['operators']);
         $this->assertSame(array(), $array['argument_mapping']);
         $this->assertSame(array(), $array['arguments']);
@@ -247,6 +248,7 @@ class IsConditionalTest extends TestCase
         IsConditional::set_meta($meta);
 
         $array = $meta->to_array();
+        $this->assertStringContainsString('category archive', $array['description']);
         $this->assertSame(array( 'IS', 'IS NOT', 'IN', 'NOT IN' ), $array['operators']);
         $this->assertSame(array( 'value' ), $array['argument_mapping']);
         $this->assertCount(1, $array['arguments']);

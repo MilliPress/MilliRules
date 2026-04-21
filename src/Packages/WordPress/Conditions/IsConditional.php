@@ -267,6 +267,11 @@ class IsConditional extends BaseCondition
             return;
         }
 
+        $description = self::parse_docblock_summary($ref->getDocComment() ?: '');
+        if ('' !== $description) {
+            $meta->description($description);
+        }
+
         $params = $ref->getParameters();
 
         if (empty($params)) {
@@ -376,6 +381,45 @@ class IsConditional extends BaseCondition
         }
 
         return $params;
+    }
+
+    /**
+     * Extract the summary line from a docblock.
+     *
+     * The summary is the first non-empty line after the opening `/**`.
+     * Stops at the first blank line, `@` tag, or closing `*​/`.
+     *
+     * @since 1.1.0
+     *
+     * @param string $doc The raw docblock string.
+     * @return string The summary text, or empty string if none found.
+     */
+    private static function parse_docblock_summary(string $doc): string
+    {
+        if ('' === $doc) {
+            return '';
+        }
+
+        // Strip opening /** and closing */, then split into lines.
+        $body = preg_replace('/^\/\*\*|\*\/$/s', '', $doc);
+        $lines = preg_split('/\r?\n/', $body);
+
+        $summary = '';
+        foreach ($lines as $line) {
+            // Strip leading whitespace and * prefix.
+            $line = preg_replace('/^\s*\*\s?/', '', $line);
+
+            // Stop at blank line or @tag.
+            if ('' !== $summary && ( '' === trim($line) || strpos(ltrim($line), '@') === 0 )) {
+                break;
+            }
+
+            if ('' !== trim($line) && strpos(ltrim($line), '@') !== 0) {
+                $summary .= ( '' !== $summary ? ' ' : '' ) . trim($line);
+            }
+        }
+
+        return $summary;
     }
 
     /**
