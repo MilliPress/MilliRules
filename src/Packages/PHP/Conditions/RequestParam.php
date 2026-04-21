@@ -101,8 +101,14 @@ class RequestParam extends BaseCondition
             return '';
         }
 
-        $value = $params[ $param_name ] ?? '';
-        return is_string($value) ? $value : '';
+        // Iterate with compare_values() to support wildcards and regex.
+        foreach ($params as $key => $value) {
+            if (self::compare_values((string) $key, $param_name, '=')) {
+                return is_string($value) ? $value : '';
+            }
+        }
+
+        return '';
     }
 
     /**

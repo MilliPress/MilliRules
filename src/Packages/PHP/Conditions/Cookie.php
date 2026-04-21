@@ -96,7 +96,7 @@ class Cookie extends BaseCondition
     public function matches(Context $context): bool
     {
         $cookie_name = $this->get_cookie_name();
-        $cookies = $this->get_cookies_from_context($context);
+        $cookies     = $this->get_cookies_from_context($context);
 
         // If no cookie name specified, check if any cookies exist.
         if (empty($cookie_name)) {
@@ -108,12 +108,9 @@ class Cookie extends BaseCondition
 
         if (! $check_value) {
             // Existence checks only.
-            $cookie_exists = $this->cookie_exists($cookie_name, $cookies);
+            $cookie_exists = null !== $this->find_cookie($cookie_name, $cookies);
 
-            // Handle operators for existence check.
-            if ('IS' === $this->operator || '=' === $this->operator || 'EXISTS' === $this->operator) {
-                return $cookie_exists;
-            } elseif ('IS NOT' === $this->operator || '!=' === $this->operator) {
+            if ('IS NOT' === $this->operator || '!=' === $this->operator || 'NOT EXISTS' === $this->operator) {
                 return ! $cookie_exists;
             }
 
@@ -141,9 +138,8 @@ class Cookie extends BaseCondition
         }
 
         $cookies = $this->get_cookies_from_context($context);
-        $value = $this->find_cookie_value($cookie_name, $cookies);
 
-        return is_string($value) ? $value : '';
+        return $this->find_cookie($cookie_name, $cookies) ?? '';
     }
 
     /**
@@ -204,67 +200,11 @@ class Cookie extends BaseCondition
     }
 
     /**
-     * Check if a cookie exists in the cookie array.
+     * Find a cookie by name pattern, returning its value.
      *
-     * Supports three matching modes:
-     * - Regex patterns (enclosed in forward slashes): /^session_[a-z]+$/
-     * - Wildcard patterns (* and ?): session_*, user_?
-     * - Exact match (case-insensitive): session_id
-     *
-     * @since 0.1.0
-     *
-     * @param string               $cookie_name The cookie name or pattern to search for.
-     * @param array<string,string> $cookies     The cookie array.
-     * @return bool True if a cookie exists, false otherwise.
-     */
-    private function cookie_exists(string $cookie_name, array $cookies): bool
-    {
-        // Check if the pattern is a regex (enclosed in /).
-        if (preg_match('/^\/.*\/$/', $cookie_name)) {
-            foreach ($cookies as $key => $value) {
-                if (@preg_match($cookie_name, $key) === 1) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // Check if the pattern contains wildcards (* or ?).
-        if (strpos($cookie_name, '*') !== false || strpos($cookie_name, '?') !== false) {
-            $regex = '/^' . str_replace(
-                array( '\\*', '\\?' ),
-                array( '.*', '.' ),
-                preg_quote($cookie_name, '/')
-            ) . '$/i';
-
-            foreach ($cookies as $key => $value) {
-                if (preg_match($regex, $key) === 1) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // Fall back to exact case-insensitive match.
-        $cookie_name_lower = strtolower($cookie_name);
-        foreach ($cookies as $key => $value) {
-            if (strtolower($key) === $cookie_name_lower) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Find cookie value by name or pattern.
-     *
-     * Supports three matching modes:
-     * - Regex patterns (enclosed in forward slashes): /^session_[a-z]+$/
-     * - Wildcard patterns (* and ?): session_*, user_?
-     * - Exact match (case-insensitive): session_id
-     *
-     * Returns the first matching cookie value.
+     * Delegates to BaseCondition::compare_values() for pattern matching,
+     * which auto-infers LIKE for wildcards (* and ?) and REGEXP for
+     * /regex/ patterns. Case-insensitive for exact and wildcard matches.
      *
      * @since 0.1.0
      *
@@ -272,38 +212,10 @@ class Cookie extends BaseCondition
      * @param array<string,string> $cookies     The cookie array.
      * @return string|null The cookie value if found, null otherwise.
      */
-    private function find_cookie_value(string $cookie_name, array $cookies): ?string
+    private function find_cookie(string $cookie_name, array $cookies): ?string
     {
-        // Check if the pattern is a regex (enclosed in /).
-        if (preg_match('/^\/.*\/$/', $cookie_name)) {
-            foreach ($cookies as $key => $value) {
-                if (@preg_match($cookie_name, $key) === 1) {
-                    return $value;
-                }
-            }
-            return null;
-        }
-
-        // Check if the pattern contains wildcards (* or ?).
-        if (strpos($cookie_name, '*') !== false || strpos($cookie_name, '?') !== false) {
-            $regex = '/^' . str_replace(
-                array( '\\*', '\\?' ),
-                array( '.*', '.' ),
-                preg_quote($cookie_name, '/')
-            ) . '$/i';
-
-            foreach ($cookies as $key => $value) {
-                if (preg_match($regex, $key) === 1) {
-                    return $value;
-                }
-            }
-            return null;
-        }
-
-        // Fall back to exact case-insensitive match.
-        $cookie_name_lower = strtolower($cookie_name);
         foreach ($cookies as $key => $value) {
-            if (strtolower($key) === $cookie_name_lower) {
+            if (self::compare_values(strtolower($key), strtolower($cookie_name), '=')) {
                 return $value;
             }
         }

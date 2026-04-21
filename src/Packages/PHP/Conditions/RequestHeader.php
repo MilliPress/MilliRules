@@ -99,12 +99,16 @@ class RequestHeader extends BaseCondition
             return '';
         }
 
-        // Headers are case-insensitive, normalize to lowercase.
-        $headers     = array_change_key_case($headers, CASE_LOWER);
-        $header_name = strtolower($header_name);
+        // HTTP headers are case-insensitive per spec.
+        // Iterate with compare_values() to support wildcards and regex.
+        $header_name_lower = strtolower($header_name);
+        foreach ($headers as $key => $value) {
+            if (self::compare_values(strtolower($key), $header_name_lower, '=')) {
+                return is_string($value) ? $value : '';
+            }
+        }
 
-        $value = $headers[ $header_name ] ?? '';
-        return is_string($value) ? $value : '';
+        return '';
     }
 
     /**
