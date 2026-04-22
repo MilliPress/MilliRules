@@ -706,6 +706,17 @@ class ArgumentSchema
             return null;
         }
 
+        // Array values: validate each element against the primary type.
+        if (is_array($value) && in_array('array', $this->accepts, true)) {
+            foreach ($value as $i => $item) {
+                $error = $this->validate($item);
+                if (null !== $error) {
+                    return sprintf("Argument '%s[%s]': %s", (string) $this->key, $i, $error);
+                }
+            }
+            return null;
+        }
+
         switch ($this->type) {
             case self::TYPE_STRING:
                 if (! is_scalar($value)) {
@@ -796,6 +807,11 @@ class ArgumentSchema
                 return $this->default;
             }
             return $this->type_zero_value();
+        }
+
+        // Array values pass through when 'array' is in the accepted types list.
+        if (is_array($value) && in_array('array', $this->accepts, true)) {
+            return $value;
         }
 
         switch ($this->type) {

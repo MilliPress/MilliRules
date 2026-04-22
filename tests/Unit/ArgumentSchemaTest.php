@@ -395,6 +395,39 @@ test('also_accepts() does not duplicate existing types', function () {
     expect($schema->get_accepts())->toBe(['string', 'array']);
 });
 
+test('validate() accepts array of valid elements when also_accepts array', function () {
+    $schema = (new ArgumentsBuilder())->string('k')->also_accepts('array');
+    expect($schema->validate(['one', 'two']))->toBeNull()
+        ->and($schema->validate('scalar'))->toBeNull();
+});
+
+test('validate() rejects array with invalid element against primary type', function () {
+    $schema = (new ArgumentsBuilder())->integer('k')->also_accepts('array');
+    expect($schema->validate([1, 'not_int', 3]))->toContain('k[1]')
+        ->and($schema->validate([1, 2, 3]))->toBeNull();
+});
+
+test('validate() enforces element bounds in array mode', function () {
+    $schema = (new ArgumentsBuilder())->string('k')->min(2)->also_accepts('array');
+    expect($schema->validate(['ab', 'x']))->toContain('k[1]')
+        ->and($schema->validate(['ab', 'cd']))->toBeNull();
+});
+
+test('validate() rejects array values when array is not accepted', function () {
+    $schema = (new ArgumentsBuilder())->string('k');
+    expect($schema->validate(['one', 'two']))->toContain('string');
+});
+
+test('sanitize() passes array through when also_accepts array', function () {
+    $schema = (new ArgumentsBuilder())->string('k')->also_accepts('array');
+    expect($schema->sanitize(['one', 'two']))->toBe(['one', 'two']);
+});
+
+test('sanitize() coerces array to empty string when array is not accepted', function () {
+    $schema = (new ArgumentsBuilder())->string('k');
+    expect($schema->sanitize(['one', 'two']))->toBe('');
+});
+
 // -----------------------------------------------------------------
 // to_array()
 // -----------------------------------------------------------------
