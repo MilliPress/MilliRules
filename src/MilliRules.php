@@ -58,7 +58,7 @@ class MilliRules
 	 * @since 0.4.0
 	 * @var string
 	 */
-	public const VERSION = '1.0.0'; // x-release-please-version
+	public const VERSION = '1.1.0'; // x-release-please-version
 
     /**
      * Private constructor prevents instantiation.
