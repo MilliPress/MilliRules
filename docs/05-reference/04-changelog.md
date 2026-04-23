@@ -6,6 +6,40 @@ menu_order: 40
 
 # Changelog
 
+## [1.1.0](https://github.com/MilliPress/MilliRules/compare/v1.0.0...v1.1.0) (2026-04-23)
+
+
+### Features
+
+* **actions:** Add value-level locking for paired actions via ActionMeta ([74edea9](https://github.com/MilliPress/MilliRules/commit/74edea900eba3fc89bb1864e78f756192efc66d1))
+* **actions:** Allow actions to declare metadata for UI-driven rule builders ([3919f2b](https://github.com/MilliPress/MilliRules/commit/3919f2b8482574df9f358b33b04c17ffd018db8d))
+* Add rule validation API and metadata discovery methods ([3ad448e](https://github.com/MilliPress/MilliRules/commit/3ad448e9bbf5911f7bf89311088370504f39ee85))
+* **conditions:** Add and() connector for combining condition groups with different match types ([3f37214](https://github.com/MilliPress/MilliRules/commit/3f37214cb905e98c2d03c972a3067d5c37ad1904))
+* **conditions:** Add format('pattern') to name fields that support wildcards ([c82baf3](https://github.com/MilliPress/MilliRules/commit/c82baf3b41809288bacec1d1d08fe1112939106b))
+* **conditions:** Add metadata to all built-in conditions and auto-generate for WordPress conditionals ([0ec5e35](https://github.com/MilliPress/MilliRules/commit/0ec5e35702c61a055962086eae8b684602279f09))
+* **conditions:** Add mode/accepts to schema, auto-infer pattern operators ([24dc931](https://github.com/MilliPress/MilliRules/commit/24dc9313fd94468d256c779260c3003ccf9455cb))
+* **conditions:** Allow conditions to declare metadata for UI-driven rule builders ([8c2cf46](https://github.com/MilliPress/MilliRules/commit/8c2cf463b42c09f2353812df671c36be20ba4930))
+* **conditions:** Parse condition description from WP function docblocks ([5db66d9](https://github.com/MilliPress/MilliRules/commit/5db66d9d71ac0ac0524069c0aab342376ad15bf9))
+* **rules:** Add rule-level locking to prevent overwriting or unregistering safety-critical rules ([ed64a28](https://github.com/MilliPress/MilliRules/commit/ed64a28c2f85555b10709cdb9fbd8dac7c34c6a7))
+* **schema:** Validate and sanitize array values via also_accepts('array') ([b60f5e6](https://github.com/MilliPress/MilliRules/commit/b60f5e63c5be718e4699ff5013beaf15febfa144))
+* **wp:** Group rules by hook priority and reuse engine across priorities ([45a5180](https://github.com/MilliPress/MilliRules/commit/45a518044b7185a314c216bb17502f3a57bcd5b2))
+
+
+### Bug Fixes
+
+* **actions:** Support named argument keys from data-stored rules ([5b3ac7c](https://github.com/MilliPress/MilliRules/commit/5b3ac7c9dfc71b0b59d6b2fbdf31b156a151b4df))
+* **conditions:** Rename fn_args to args and trim trailing empty strings ([d40a3c7](https://github.com/MilliPress/MilliRules/commit/d40a3c7ff200d45a96065b86ea68e39752103965))
+* Correct [@since](https://github.com/since) version tags from 1.2.0 to 1.1.0 ([e84498b](https://github.com/MilliPress/MilliRules/commit/e84498bd87abe434e37a6a65286ea86776625797))
+* **discovery:** Exclude handler base classes from condition catalog ([29186a8](https://github.com/MilliPress/MilliRules/commit/29186a815cf9f03e841610abfb6e8e8968669760))
+* **engine:** Resolve scoped lock keys from named action arguments ([50ef450](https://github.com/MilliPress/MilliRules/commit/50ef450ffb267d74a9d74b5c5a38d2b2c09a9c89))
+* **packages:** Deduplicate rules when required packages change ([d7105d3](https://github.com/MilliPress/MilliRules/commit/d7105d3842801759b914ef6b6842bd672fc1c556))
+
+
+### Refactoring
+
+* **conditions:** Remove boolean mode from Is/Has conditionals ([c3cffa6](https://github.com/MilliPress/MilliRules/commit/c3cffa68b695d873016f566f4ac2b54fa092fbfc))
+* **conditions:** Use compare_values() for name field pattern matching ([58a9a34](https://github.com/MilliPress/MilliRules/commit/58a9a3477151afc7da68756c97821c89eb8f59e8))
+
 ## [1.0.0](https://github.com/MilliPress/MilliRules/compare/v0.7.3...v1.0.0) (2026-03-31)
 
 
