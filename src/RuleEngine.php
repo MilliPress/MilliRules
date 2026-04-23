@@ -194,7 +194,7 @@ class RuleEngine
      * Used by the WP Package to run rules across multiple hook priorities
      * while keeping locks intact. Priority 20 locks carry to priority 9999.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      *
      * @param array<int, array<string, mixed>> $rules   The rules to execute.
      * @param Context                          $context The execution context.

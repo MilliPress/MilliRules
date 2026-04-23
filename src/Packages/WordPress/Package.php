@@ -53,7 +53,7 @@ class Package extends BasePackage
      * Reused across priority callbacks so locked actions carry over
      * from lower-priority rules to higher-priority ones.
      *
-     * @since 1.2.0
+     * @since 1.1.0
      * @var array<string, RuleEngine>
      */
     private array $engines = array();
