@@ -6,6 +6,13 @@ menu_order: 40
 
 # Changelog
 
+## [1.1.1](https://github.com/MilliPress/MilliRules/compare/v1.1.0...v1.1.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **discovery:** Find actions and conditions in Strauss-prefixed host plugins ([400ea12](https://github.com/MilliPress/MilliRules/commit/400ea120236d445b7936e9ef86c353fceae08a60))
+
 ## [1.1.0](https://github.com/MilliPress/MilliRules/compare/v1.0.0...v1.1.0) (2026-04-23)
 
 
