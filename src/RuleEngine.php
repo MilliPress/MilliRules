@@ -740,8 +740,10 @@ class RuleEngine
     /**
      * Resolve a namespace to a filesystem directory.
      *
-     * Uses Composer's ClassLoader PSR-4 prefix map when available.
-     * Falls back to deriving the path from the MilliRules src/ root.
+     * Tries Composer's ClassLoader PSR-4 prefix map first (validating that
+     * the resolved directory exists, so Strauss-rewritten prefixes don't
+     * short-circuit to stale paths), then its classmap, then derives the
+     * path from the MilliRules src/ root.
      *
      * @internal
      * @since 1.1.0
@@ -751,30 +753,46 @@ class RuleEngine
      */
     private static function namespace_to_directory(string $namespace): ?string
     {
-        // Try Composer's autoloader for PSR-4 prefix resolution.
         foreach (spl_autoload_functions() as $autoloader) {
             if (
-                is_array($autoloader)
-                && $autoloader[0] instanceof \Composer\Autoload\ClassLoader
+                ! is_array($autoloader)
+                || ! ($autoloader[0] instanceof \Composer\Autoload\ClassLoader)
             ) {
-                /** @var \Composer\Autoload\ClassLoader $loader */
-                $loader   = $autoloader[0];
-                $prefixes = $loader->getPrefixesPsr4();
+                continue;
+            }
 
-                foreach ($prefixes as $prefix => $dirs) {
-                    if (strpos($namespace . '\\', $prefix) === 0) {
-                        $relative = str_replace('\\', DIRECTORY_SEPARATOR, substr($namespace, strlen($prefix)));
-                        return rtrim($dirs[0], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $relative;
+            /** @var \Composer\Autoload\ClassLoader $loader */
+            $loader = $autoloader[0];
+
+            // 1. PSR-4 resolution — validate the directory exists so overly
+            //    generic host-plugin prefixes don't short-circuit the lookup.
+            foreach ($loader->getPrefixesPsr4() as $prefix => $dirs) {
+                if (strpos($namespace . '\\', $prefix) !== 0) {
+                    continue;
+                }
+                $relative = str_replace('\\', DIRECTORY_SEPARATOR, substr($namespace, strlen($prefix)));
+                foreach ($dirs as $dir) {
+                    $candidate = rtrim($dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $relative;
+                    if (is_dir($candidate)) {
+                        return $candidate;
                     }
+                }
+            }
+
+            // 2. Classmap fallback — first matching entry under the namespace
+            //    prefix; dirname() gives the enclosing directory.
+            $prefix = $namespace . '\\';
+            foreach ($loader->getClassMap() as $class => $file) {
+                if (strpos($class, $prefix) === 0) {
+                    return dirname($file);
                 }
             }
         }
 
-        // Fallback: derive from the MilliRules src/ root.
-        $src_dir = dirname(__DIR__);
+        // 3. Direct src/ fallback for unscoped MilliRules\ usage.
         if (strpos($namespace, 'MilliRules\\') === 0) {
             $relative = str_replace('\\', DIRECTORY_SEPARATOR, substr($namespace, strlen('MilliRules\\')));
-            return $src_dir . DIRECTORY_SEPARATOR . $relative;
+            return dirname(__DIR__) . DIRECTORY_SEPARATOR . $relative;
         }
 
         return null;
