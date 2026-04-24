@@ -215,7 +215,12 @@ class LockedRuleTest extends TestCase
                 'match_type' => 'all',
                 'conditions' => array(),
                 'actions'    => array(
-                    array('type' => 'set_cache', '_rule_id' => 'core-no-cache-post', 'enabled' => false, '_locked' => true),
+                    array(
+                        'type'     => 'set_cache',
+                        '_rule_id' => 'core-no-cache-post',
+                        'enabled'  => false,
+                        '_locked'  => true,
+                    ),
                 ),
             ),
             array(

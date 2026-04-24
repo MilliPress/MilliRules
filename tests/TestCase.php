@@ -82,7 +82,11 @@ abstract class TestCase extends PHPUnitTestCase
      */
     protected function assertNoErrorsLogged(string $message = ''): void
     {
-        $this->assertCount(0, $this->errorLogs, $message ?: 'Expected no errors to be logged, but found: ' . implode(', ', $this->errorLogs));
+        $this->assertCount(
+            0,
+            $this->errorLogs,
+            $message ?: 'Expected no errors to be logged, but found: ' . implode(', ', $this->errorLogs)
+        );
     }
 
     /**

@@ -20,10 +20,10 @@ class Logger
     /**
      * Logging levels
      */
-    const ERROR   = 1;
-    const WARNING = 2;
-    const INFO    = 3;
-    const DEBUG   = 4;
+    public const ERROR   = 1;
+    public const WARNING = 2;
+    public const INFO    = 3;
+    public const DEBUG   = 4;
 
     /**
      * Singleton instance

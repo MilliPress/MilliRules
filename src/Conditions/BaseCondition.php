@@ -296,7 +296,11 @@ abstract class BaseCondition implements ConditionInterface
         // 2. Restore escaped wildcards (\* \?) to placeholders before
         //    converting unescaped wildcards. preg_quote turns \ to \\,
         //    so \* becomes \\\* and \? becomes \\\?.
-        $regex = str_replace(array( '\\\\\\*', '\\\\\\?' ), array( '{{LITERAL_STAR}}', '{{LITERAL_QUESTION}}' ), $regex);
+        $regex = str_replace(
+            array( '\\\\\\*', '\\\\\\?' ),
+            array( '{{LITERAL_STAR}}', '{{LITERAL_QUESTION}}' ),
+            $regex
+        );
 
         // 3. Convert unescaped wildcards: * → .*, ? → .
         $regex = str_replace(array( '\\*', '\\?' ), array( '.*', '.' ), $regex);

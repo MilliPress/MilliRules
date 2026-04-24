@@ -237,6 +237,7 @@ class Cookie extends BaseCondition
             ->operators('=', '!=', 'EXISTS', 'NOT EXISTS')
             ->args()
                 ->string('name')->label('Cookie Name')->format('pattern')->required()
-                ->string('value')->label('Cookie Value')->description('Value to compare against. If not specified, condition checks for cookie existence only.');
+                ->string('value')->label('Cookie Value')
+                    ->description('Value to compare against. If not specified, condition checks for cookie existence only.');
     }
 }

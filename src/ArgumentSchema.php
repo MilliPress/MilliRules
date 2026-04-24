@@ -724,10 +724,18 @@ class ArgumentSchema
                 }
                 $length = strlen((string) $value);
                 if (null !== $this->min && $length < $this->min) {
-                    return sprintf("Argument '%s' must be at least %s characters", (string) $this->key, (string) $this->min);
+                    return sprintf(
+                        "Argument '%s' must be at least %s characters",
+                        (string) $this->key,
+                        (string) $this->min
+                    );
                 }
                 if (null !== $this->max && $length > $this->max) {
-                    return sprintf("Argument '%s' must be at most %s characters", (string) $this->key, (string) $this->max);
+                    return sprintf(
+                        "Argument '%s' must be at most %s characters",
+                        (string) $this->key,
+                        (string) $this->max
+                    );
                 }
                 return null;
 

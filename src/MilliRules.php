@@ -222,7 +222,9 @@ class MilliRules
                     if (in_array($package_name, $loaded_package_names, true)) {
                         $validated_packages[] = $package_name;
                     } else {
-                        Logger::warning("Package '{$package_name}' specified in allowed_packages but not loaded - skipping");
+                        Logger::warning(
+                            "Package '{$package_name}' specified in allowed_packages but not loaded - skipping"
+                        );
                     }
                 }
 

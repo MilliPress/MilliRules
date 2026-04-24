@@ -16,4 +16,17 @@
         -->
         <exclude name="PSR1.Methods.CamelCapsMethodName"/>
     </rule>
+
+    <!-- Extend line length to 160 characters. -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="160"/>
+            <property name="absoluteLineLimit" value="0"/>
+        </properties>
+    </rule>
+
+    <!-- Silence PSR1.SideEffects only under tests/. -->
+    <rule ref="PSR1.Files.SideEffects">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
 </ruleset>
