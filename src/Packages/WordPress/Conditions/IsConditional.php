@@ -354,12 +354,14 @@ class IsConditional extends BaseCondition
 
         // Match @param lines: type, $name, and the rest of the line as description start.
         // The type may contain unions (string|int), arrays (int[]), and generics.
-        if (! preg_match_all(
-            '/@param\s+(\S+)\s+\$(\w+)\s*(.*?)(?=\n\s*\*\s*@|\n\s*\*\/|\z)/s',
-            $doc,
-            $matches,
-            PREG_SET_ORDER
-        )) {
+        if (
+            ! preg_match_all(
+                '/@param\s+(\S+)\s+\$(\w+)\s*(.*?)(?=\n\s*\*\s*@|\n\s*\*\/|\z)/s',
+                $doc,
+                $matches,
+                PREG_SET_ORDER
+            )
+        ) {
             return array();
         }
 

@@ -8,6 +8,8 @@
  * @package MilliRules\Tests
  */
 
+namespace MilliRules\Tests\Unit\Actions;
+
 use MilliRules\Actions\BaseAction;
 use MilliRules\Context;
 
