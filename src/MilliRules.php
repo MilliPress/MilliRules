@@ -52,13 +52,13 @@ use MilliRules\Packages\WordPress\Package as WordPressPackage;
  */
 class MilliRules
 {
-	/**
-	 * MilliRules version.
-	 *
-	 * @since 0.4.0
-	 * @var string
-	 */
-	public const VERSION = '1.1.0'; // x-release-please-version
+    /**
+     * MilliRules version.
+     *
+     * @since 0.4.0
+     * @var string
+     */
+    public const VERSION = '1.1.0'; // x-release-please-version
 
     /**
      * Private constructor prevents instantiation.
