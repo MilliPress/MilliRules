@@ -421,13 +421,13 @@ class ConditionMeta
         return 'args';
     }
 
-	/**
-	 * Convert the metadata to an array, suitable for REST/JSON serialization.
-	 *
-	 * @since 1.1.0
-	 *
-	 * @return array<string, mixed>
-	 */
+    /**
+     * Convert the metadata to an array, suitable for REST/JSON serialization.
+     *
+     * @since 1.1.0
+     *
+     * @return array<string, mixed>
+     */
     public function to_array(): array
     {
         return array(

@@ -63,13 +63,13 @@ class RequestHeader extends BaseCondition
         return ['name', 'value'];
     }
 
-	/**
-	 * Get the condition type.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @return string The condition type identifier.
-	 */
+    /**
+     * Get the condition type.
+     *
+     * @since 0.1.0
+     *
+     * @return string The condition type identifier.
+     */
     public function get_type(): string
     {
         return 'request_header';
