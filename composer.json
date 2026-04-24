@@ -56,7 +56,9 @@
   "extra": {
     "hooks": {
       "config": {
-        "stop-on-failure": ["pre-push"]
+        "stop-on-failure": [
+          "pre-push"
+        ]
       },
       "pre-commit": [
         "composer test:fix"
