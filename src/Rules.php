@@ -1393,6 +1393,17 @@ class Rules
             }
         }
 
+        // If explicit_type is set, always include the corresponding package.
+        if (null !== $this->explicit_type && PackageManager::has_packages()) {
+            // Case-insensitive lookup: 'php' => 'PHP', 'wp' => 'WP', 'acorn' => 'Acorn', etc.
+            foreach (PackageManager::get_all_packages() as $package) {
+                if (strcasecmp($package->get_name(), $this->explicit_type) === 0) {
+                    $packages[] = $package->get_name();
+                    break;
+                }
+            }
+        }
+
         // Remove duplicates and 'Core'.
         $packages = array_unique($packages);
         $packages = array_filter(
@@ -1402,26 +1413,13 @@ class Rules
             }
         );
 
-        // If explicit_type is set, always include the corresponding package.
-        if (null !== $this->explicit_type) {
-            // Case-insensitive lookup: 'php' => 'PHP', 'wp' => 'WP', 'acorn' => 'Acorn', etc.
-            if (PackageManager::has_packages()) {
-                foreach (PackageManager::get_all_packages() as $package) {
-                    if (strcasecmp($package->get_name(), $this->explicit_type) === 0) {
-                        $packages[] = $package->get_name();
-                        break;
-                    }
-                }
-            }
-        }
-
         // Sort and re-index.
         sort($packages);
         return array_values($packages);
     }
 
     /**
-     * Detect packages from a conditions array, recursing into groups.
+     * Detect packages from a condition array, recursing into groups.
      *
      * @since 1.1.0
      *
