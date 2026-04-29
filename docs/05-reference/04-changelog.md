@@ -6,6 +6,13 @@ menu_order: 40
 
 # Changelog
 
+## [1.1.2](https://github.com/MilliPress/MilliRules/compare/v1.1.1...v1.1.2) (2026-04-29)
+
+
+### Bug Fixes
+
+* prevent duplicate package registration when explicit type matches auto-detected package ([29becd4](https://github.com/MilliPress/MilliRules/commit/29becd4228818fdda9958db430e23cd24ef52076))
+
 ## [1.1.1](https://github.com/MilliPress/MilliRules/compare/v1.1.0...v1.1.1) (2026-04-24)
 
 
