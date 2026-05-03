@@ -6,6 +6,13 @@ menu_order: 40
 
 # Changelog
 
+## [1.1.3](https://github.com/MilliPress/MilliRules/compare/v1.1.2...v1.1.3) (2026-05-03)
+
+
+### Bug Fixes
+
+* defer rules referencing unloaded packages instead of misregistering as Core ([2ce0628](https://github.com/MilliPress/MilliRules/commit/2ce0628db0925689cced5ab7794aded9aaef0310))
+
 ## [1.1.2](https://github.com/MilliPress/MilliRules/compare/v1.1.1...v1.1.2) (2026-04-29)
 
 
