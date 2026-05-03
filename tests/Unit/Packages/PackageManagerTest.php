@@ -1119,4 +1119,177 @@ class PackageManagerTest extends TestCase
         // Should return WP resolver (higher priority)
         $this->assertSame($wpResolver, $resolver);
     }
+
+    // ============================================
+    // Pending Rules / Unresolved Namespace Tests
+    // ============================================
+
+    /**
+     * @param array<int, array<string,mixed>> $actions
+     * @param array<string, mixed>  $metadata_overrides
+     * @return array{rule: array<string,mixed>, metadata: array<string,mixed>}
+     */
+    private function buildRuleEntry(string $id, array $actions, array $metadata_overrides = []): array
+    {
+        $rule = [
+            'id' => $id,
+            'title' => 'Test ' . $id,
+            'match_type' => 'all',
+            'conditions' => [],
+            'actions' => $actions,
+        ];
+
+        $metadata = array_merge([
+            'required_packages' => [],
+            'unresolved_namespaces' => [],
+            'explicit_type' => null,
+            'type' => 'php',
+            'order' => 10,
+            'enabled' => true,
+        ], $metadata_overrides);
+
+        return ['rule' => $rule, 'metadata' => $metadata];
+    }
+
+    public function testRegisterRuleWithUnresolvedNamespacesIsDeferred(): void
+    {
+        $entry = $this->buildRuleEntry('rule-deferred', [
+            ['type' => 'add_flag'],
+        ], [
+            'required_packages' => [],
+            'unresolved_namespaces' => ['MilliRules\\Packages\\WordPress\\Actions\\AddFlag'],
+        ]);
+
+        PackageManager::register_rule($entry['rule'], $entry['metadata']);
+
+        $pending = PackageManager::get_pending_rules();
+        $this->assertCount(1, $pending);
+        $this->assertSame('rule-deferred', $pending[0]['rule']['id']);
+
+        // Should also surface in get_unresolved_pending().
+        $unresolved = PackageManager::get_unresolved_pending();
+        $this->assertCount(1, $unresolved);
+    }
+
+    public function testRegisterRuleWithKnownButUnloadedPackageIsDeferred(): void
+    {
+        // Package is registered but never loaded.
+        $package = $this->createMockPackage('PendingPkg', ['Pending\\Ns\\']);
+        PackageManager::register_package($package);
+
+        $entry = $this->buildRuleEntry('rule-pkg-unloaded', [
+            ['type' => 'do_thing'],
+        ], [
+            'required_packages' => ['PendingPkg'],
+        ]);
+
+        PackageManager::register_rule($entry['rule'], $entry['metadata']);
+
+        $pending = PackageManager::get_pending_rules();
+        $this->assertCount(1, $pending);
+
+        // Should NOT show up in unresolved-only view (different defer cause).
+        $this->assertCount(0, PackageManager::get_unresolved_pending());
+    }
+
+    public function testCoreOnlyRuleRegistersImmediately(): void
+    {
+        $entry = $this->buildRuleEntry('rule-core', [
+            ['type' => 'callback'],
+        ], [
+            'required_packages' => [],
+            'unresolved_namespaces' => [],
+        ]);
+
+        PackageManager::register_rule($entry['rule'], $entry['metadata']);
+
+        $this->assertCount(0, PackageManager::get_pending_rules());
+    }
+
+    public function testFinalizePendingRulesEmitsWarningForUnresolved(): void
+    {
+        $entry = $this->buildRuleEntry('rule-typo', [
+            ['type' => 'add_flagg'],
+        ], [
+            'unresolved_namespaces' => ['MilliRules\\Actions\\AddFlagg'],
+        ]);
+
+        PackageManager::register_rule($entry['rule'], $entry['metadata']);
+
+        $still_pending = PackageManager::finalize_pending_rules();
+        $this->assertSame(1, $still_pending);
+
+        // The rule stays pending; finalize doesn't drop it.
+        $this->assertCount(1, PackageManager::get_pending_rules());
+    }
+
+    public function testFinalizePendingRulesEmitsWarningForUnloadedPackage(): void
+    {
+        $package = $this->createMockPackage('NeverLoaded', ['Never\\']);
+        PackageManager::register_package($package);
+
+        $entry = $this->buildRuleEntry('rule-stuck', [
+            ['type' => 'noop'],
+        ], [
+            'required_packages' => ['NeverLoaded'],
+        ]);
+
+        PackageManager::register_rule($entry['rule'], $entry['metadata']);
+
+        $still_pending = PackageManager::finalize_pending_rules();
+        $this->assertSame(1, $still_pending);
+    }
+
+    public function testRegisterPendingRulesProcessesQueueWhenPackageLoads(): void
+    {
+        // Custom action so re-detection can resolve it (no real class exists for 'late_action').
+        \MilliRules\Rules::register_action('late_action', function () {
+            return null;
+        });
+
+        $package = $this->createMockPackage('LateLoad', ['LateLoad\\Ns\\']);
+        PackageManager::register_package($package);
+
+        $entry = $this->buildRuleEntry('rule-late', [
+            ['type' => 'late_action'],
+        ], [
+            'required_packages' => ['LateLoad'],
+        ]);
+
+        PackageManager::register_rule($entry['rule'], $entry['metadata']);
+        $this->assertCount(1, PackageManager::get_pending_rules());
+
+        // Loading the package triggers register_pending_rules() automatically.
+        PackageManager::load_packages(['LateLoad']);
+
+        $this->assertCount(0, PackageManager::get_pending_rules());
+        $this->assertCount(1, $package->get_rules());
+        $this->assertSame('rule-late', $package->get_rules()[0]['id']);
+    }
+
+    public function testGetUnresolvedPendingFiltersByDeferralCause(): void
+    {
+        \MilliRules\Rules::register_action('a_action', function () {
+            return null;
+        });
+
+        $unloaded_pkg = $this->createMockPackage('Unloaded', ['Unloaded\\']);
+        PackageManager::register_package($unloaded_pkg);
+
+        $a = $this->buildRuleEntry('rule-a', [['type' => 'a_action']], [
+            'required_packages' => ['Unloaded'],
+        ]);
+        $b = $this->buildRuleEntry('rule-b', [['type' => 'mystery']], [
+            'unresolved_namespaces' => ['Mystery\\Ns\\Class'],
+        ]);
+
+        PackageManager::register_rule($a['rule'], $a['metadata']);
+        PackageManager::register_rule($b['rule'], $b['metadata']);
+
+        $this->assertCount(2, PackageManager::get_pending_rules());
+
+        $unresolved = PackageManager::get_unresolved_pending();
+        $this->assertCount(1, $unresolved);
+        $this->assertSame('rule-b', $unresolved[0]['rule']['id']);
+    }
 }

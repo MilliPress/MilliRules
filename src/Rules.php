@@ -1231,8 +1231,10 @@ class Rules
             return false;
         }
 
-        // Auto-detect required packages.
-        $required_packages = $this->detect_required_packages();
+        // Auto-detect required packages and any unresolved namespaces.
+        $detection             = self::detect_packages_for_rule($this->rule, $this->explicit_type);
+        $required_packages     = $detection['resolved'];
+        $unresolved_namespaces = $detection['unresolved'];
 
         // Determine type (explicit or auto-detected).
         if (null !== $this->explicit_type) {
@@ -1252,10 +1254,12 @@ class Rules
 
         // Build metadata.
         $metadata = array(
-            'required_packages' => $required_packages,
-            'type'              => $type,
-            'order'             => $this->rule['order'],
-            'enabled'           => $this->rule['enabled'],
+            'required_packages'     => $required_packages,
+            'unresolved_namespaces' => $unresolved_namespaces,
+            'explicit_type'         => $this->explicit_type,
+            'type'                  => $type,
+            'order'                 => $this->rule['order'],
+            'enabled'               => $this->rule['enabled'],
         );
 
         // Add hook info only for 'wp' type.
@@ -1318,19 +1322,19 @@ class Rules
     // ====================================
 
     /**
-     * Map a fully-qualified class name to its package name.
+     * Map a fully qualified class name to its package name.
      *
-     * Tries PackageManager first for dynamically registered packages,
-     * then falls back to hard-coded namespace map.
+     * Returns 'Core' for MilliRules\Conditions\ / MilliRules\Actions\ classes,
+     * a package name for any registered namespace, or null when unknown so the
+     * caller can defer instead of silently labeling it Core.
      *
      * @since 0.1.0
      *
      * @param string $class_name Fully-qualified class name.
-     * @return string Package name or 'Core' if no match found.
+     * @return string|null Package name, 'Core' for Core namespaces, or null if unresolved.
      */
-    private function map_class_to_package(string $class_name): string
+    private static function map_class_to_package(string $class_name): ?string
     {
-        // Try PackageManager first if packages are registered.
         if (PackageManager::has_packages()) {
             $package_name = PackageManager::map_namespace_to_package($class_name);
             if (null !== $package_name) {
@@ -1338,37 +1342,38 @@ class Rules
             }
         }
 
-        // Fall back to hard-coded map.
         foreach (self::$namespace_package_map as $namespace => $package_name) {
             if (strpos($class_name, $namespace) === 0) {
                 return $package_name;
             }
         }
 
-        // Default to Core if no match.
-        return 'Core';
+        return null;
     }
 
     /**
-     * Detect required packages from rule conditions and actions.
+     * Detect required packages and unresolved namespaces for a rule array.
      *
-     * Analyzes all conditions and actions to determine which packages they belong to.
-     * Returns a unique, sorted list of package names (excluding 'Core').
+     * Static, so PackageManager::register_pending_rules() can re-run detection
+     * against a stored rule array without needing a Rules builder instance.
      *
-     * @since 0.1.0
+     * @since 1.2.0
      *
-     * @return array<int, string> Array of required package names.
+     * @param array<string, mixed> $rule          The rule configuration array.
+     * @param string|null          $explicit_type Type passed to Rules::create($type), if any.
+     * @return array{resolved: array<int, string>, unresolved: array<int, string>}
      */
-    private function detect_required_packages(): array
+    public static function detect_packages_for_rule(array $rule, ?string $explicit_type = null): array
     {
-        $packages = array();
+        $packages   = array();
+        $unresolved = array();
 
-        // Detect packages from conditions (supports nested groups).
-        $conditions = $this->rule['conditions'] ?? array();
-        $this->detect_condition_packages($conditions, $packages);
+        $conditions = $rule['conditions'] ?? array();
+        if (is_array($conditions)) {
+            self::collect_condition_packages($conditions, $packages, $unresolved);
+        }
 
-        // Detect packages from actions.
-        $actions = $this->rule['actions'] ?? array();
+        $actions = $rule['actions'] ?? array();
         if (is_array($actions)) {
             foreach ($actions as $action) {
                 if (! is_array($action)) {
@@ -1380,67 +1385,84 @@ class Rules
                     continue;
                 }
 
-                // Check if custom action.
                 if (self::has_custom_action($type)) {
-                    // Custom actions are Core.
                     continue;
                 }
 
-                // Convert type to class name and map to package.
                 $class_name = RuleEngine::type_to_class_name($type, 'Actions');
-                $package    = $this->map_class_to_package($class_name);
-                $packages[] = $package;
-            }
-        }
+                $package    = self::resolve_package_for_class($class_name);
 
-        // If explicit_type is set, always include the corresponding package.
-        if (null !== $this->explicit_type && PackageManager::has_packages()) {
-            // Case-insensitive lookup: 'php' => 'PHP', 'wp' => 'WP', 'acorn' => 'Acorn', etc.
-            foreach (PackageManager::get_all_packages() as $package) {
-                if (strcasecmp($package->get_name(), $this->explicit_type) === 0) {
-                    $packages[] = $package->get_name();
-                    break;
+                if (null === $package) {
+                    $unresolved[] = $class_name;
+                } else {
+                    $packages[] = $package;
                 }
             }
         }
 
-        // Remove duplicates and 'Core'.
-        $packages = array_unique($packages);
-        $packages = array_filter(
-            $packages,
-            function ($package) {
-                return $package !== 'Core';
-            }
-        );
+        if (null !== $explicit_type) {
+            $matched = false;
 
-        // Sort and re-index.
+            if (PackageManager::has_packages()) {
+                foreach (PackageManager::get_all_packages() as $package) {
+                    if (strcasecmp($package->get_name(), $explicit_type) === 0) {
+                        $packages[] = $package->get_name();
+                        $matched    = true;
+                        break;
+                    }
+                }
+            }
+
+            // 'php' and 'wp' are detection labels (see detect_type()), not always
+            // registered packages — never treat them as unresolved.
+            if (! $matched && ! in_array(strtolower($explicit_type), array('php', 'wp'), true)) {
+                $unresolved[] = '__explicit_type:' . $explicit_type;
+            }
+        }
+
+        $packages = array_values(
+            array_filter(
+                array_unique($packages),
+                static function ($package) {
+                    return $package !== 'Core';
+                }
+            )
+        );
         sort($packages);
-        return array_values($packages);
+
+        $unresolved = array_values(array_unique($unresolved));
+        sort($unresolved);
+
+        return array(
+            'resolved'   => $packages,
+            'unresolved' => $unresolved,
+        );
     }
 
     /**
-     * Detect packages from a condition array, recursing into groups.
+     * Recursively collect packages from conditions, descending into groups.
      *
-     * @since 1.1.0
+     * @since 1.2.0
      *
-     * @param array<int, mixed>    $conditions The conditions array (may contain groups).
-     * @param array<int, string>   &$packages  The packages array to append to.
+     * @param array<int, mixed>  $conditions The conditions array (may contain groups).
+     * @param array<int, string> $packages   Accumulator for resolved package names.
+     * @param array<int, string> $unresolved Accumulator for class names with no known package.
      * @return void
      */
-    private function detect_condition_packages(array $conditions, array &$packages): void
+    private static function collect_condition_packages(array $conditions, array &$packages, array &$unresolved): void
     {
         foreach ($conditions as $condition) {
             if (! is_array($condition)) {
                 continue;
             }
 
-            // Check if this is a condition group (has match_type + conditions, no type).
+            // Condition group: match_type + conditions, no type.
             if (
                 isset($condition['match_type'], $condition['conditions'])
                 && ! isset($condition['type'])
             ) {
                 $group_conditions = is_array($condition['conditions']) ? $condition['conditions'] : array();
-                $this->detect_condition_packages($group_conditions, $packages);
+                self::collect_condition_packages($group_conditions, $packages, $unresolved);
                 continue;
             }
 
@@ -1449,17 +1471,44 @@ class Rules
                 continue;
             }
 
-            // Check if custom condition.
             if (self::has_custom_condition($type)) {
-                // Custom conditions are Core.
                 continue;
             }
 
-            // Convert type to class name and map to package.
             $class_name = RuleEngine::type_to_class_name($type, 'Conditions');
-            $package    = $this->map_class_to_package($class_name);
-            $packages[] = $package;
+            $package    = self::resolve_package_for_class($class_name);
+
+            if (null === $package) {
+                $unresolved[] = $class_name;
+            } else {
+                $packages[] = $package;
+            }
         }
+    }
+
+    /**
+     * Resolve a class to its package, treating Core matches with non-existent
+     * classes as unresolved.
+     *
+     * RuleEngine::type_to_class_name() falls back to MilliRules\Actions\* /
+     * MilliRules\Conditions\* when no namespace knows the type — that lexically
+     * matches Core but the class doesn't actually exist. The class_exists()
+     * check distinguishes "real Core class" from "package not loaded yet".
+     *
+     * @since 1.2.0
+     *
+     * @param string $class_name Fully-qualified class name to resolve.
+     * @return string|null Package name, 'Core', or null if unresolved.
+     */
+    private static function resolve_package_for_class(string $class_name): ?string
+    {
+        $package = self::map_class_to_package($class_name);
+
+        if ('Core' === $package && ! class_exists($class_name)) {
+            return null;
+        }
+
+        return $package;
     }
 
     /**

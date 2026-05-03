@@ -22,6 +22,7 @@
 namespace MilliRules\Packages;
 
 use MilliRules\Logger;
+use MilliRules\Rules;
 
 /**
  * Class PackageManager
@@ -462,41 +463,39 @@ class PackageManager
     /**
      * Register a rule by delegating to appropriate packages.
      *
-     * Extracts package names from metadata['required_packages'] and
-     * delegates to those packages via their register_rule() method.
-     *
-     * If a rule requires packages that are not yet loaded, the rule is
-     * added to a pending queue and will be registered automatically when
-     * the packages are loaded.
+     * Defers when unresolved_namespaces is non-empty or a required package
+     * isn't loaded yet. Deferred rules are re-evaluated by register_pending_rules().
      *
      * @since 0.1.0
      *
      * @param array<string, mixed> $rule     The rule configuration.
-     * @param array<string, mixed> $metadata Additional metadata including 'required_packages'.
+     * @param array<string, mixed> $metadata Includes 'required_packages' and 'unresolved_namespaces'.
      * @return void
      */
     public static function register_rule(array $rule, array $metadata): void
     {
-        $required_packages = $metadata['required_packages'] ?? array();
-        $rule_id           = $rule['id'] ?? 'unknown';
+        $required_packages     = $metadata['required_packages'] ?? array();
+        $unresolved_namespaces = $metadata['unresolved_namespaces'] ?? array();
+        $rule_id               = $rule['id'] ?? 'unknown';
 
-        // Check if all required packages are loaded.
-        $all_packages_loaded = true;
-        foreach ($required_packages as $package_name) {
-            if (! self::is_package_loaded($package_name)) {
-                $all_packages_loaded = false;
-                break;
-            }
-        }
-
-        // If not all packages are loaded, defer registration.
-        if (! $all_packages_loaded) {
+        if (! empty($unresolved_namespaces)) {
             self::$pending_rules[] = array(
                 'rule'              => $rule,
                 'metadata'          => $metadata,
                 'required_packages' => $required_packages,
             );
             return;
+        }
+
+        foreach ($required_packages as $package_name) {
+            if (! self::is_package_loaded($package_name)) {
+                self::$pending_rules[] = array(
+                    'rule'              => $rule,
+                    'metadata'          => $metadata,
+                    'required_packages' => $required_packages,
+                );
+                return;
+            }
         }
 
         // Remove rule from packages it's no longer targeting.
@@ -555,14 +554,10 @@ class PackageManager
     }
 
     /**
-     * Process pending rules and register those whose packages are now loaded.
+     * Re-evaluate pending rules and register any that can now be resolved.
      *
-     * Iterates through the pending rules queue and attempts to register each rule
-     * whose required packages are all loaded. Successfully registered rules are
-     * removed from the queue.
-     *
-     * This method is called automatically after packages are loaded, but can also
-     * be called manually if needed.
+     * Called automatically after each package loads. Re-runs detection against
+     * the current namespace registry so previously-unknown classes can resolve.
      *
      * @since 0.1.0
      *
@@ -574,40 +569,70 @@ class PackageManager
         $remaining_rules  = array();
 
         foreach (self::$pending_rules as $pending) {
-            $rule_id    = $pending['rule']['id'] ?? 'unknown';
-            $all_loaded = true;
+            $rule          = $pending['rule'];
+            $metadata      = $pending['metadata'];
+            $rule_id       = $rule['id'] ?? 'unknown';
+            $explicit_type = $metadata['explicit_type'] ?? null;
 
-            // Check if all required packages are now loaded.
-            foreach ($pending['required_packages'] as $package_name) {
+            $detection             = Rules::detect_packages_for_rule($rule, $explicit_type);
+            $required_packages     = $detection['resolved'];
+            $unresolved_namespaces = $detection['unresolved'];
+
+            // Re-detection only sees conditions/actions/explicit_type — it can't
+            // see the 'WP' that Rules::register() appends from rule type detection
+            // (e.g. ->on() without WP conditions). Preserve original packages.
+            foreach ($pending['required_packages'] as $original_pkg) {
+                if (! in_array($original_pkg, $required_packages, true)) {
+                    $required_packages[] = $original_pkg;
+                }
+            }
+            sort($required_packages);
+
+            $metadata['required_packages']     = $required_packages;
+            $metadata['unresolved_namespaces'] = $unresolved_namespaces;
+
+            if (! empty($unresolved_namespaces)) {
+                $remaining_rules[] = array(
+                    'rule'              => $rule,
+                    'metadata'          => $metadata,
+                    'required_packages' => $required_packages,
+                );
+                continue;
+            }
+
+            $all_loaded = true;
+            foreach ($required_packages as $package_name) {
                 if (! self::is_package_loaded($package_name)) {
                     $all_loaded = false;
                     break;
                 }
             }
 
-            if ($all_loaded) {
-                // Remove rule from packages it's no longer targeting.
-                if ('unknown' !== $rule_id) {
-                    foreach (self::$packages as $pkg_name => $pkg) {
-                        if (! in_array($pkg_name, $pending['required_packages'], true)) {
-                            $pkg->unregister_rule($rule_id);
-                        }
-                    }
-                }
-
-                // Register in target packages.
-                foreach ($pending['required_packages'] as $package_name) {
-                    if (isset(self::$packages[ $package_name ])) {
-                        self::$packages[ $package_name ]->register_rule($pending['rule'], $pending['metadata']);
-                    } else {
-                        Logger::warning("Cannot register rule '{$rule_id}' - package '{$package_name}' not registered");
-                    }
-                }
-                $registered_count++;
-            } else {
-                // Keep in queue for next time.
-                $remaining_rules[] = $pending;
+            if (! $all_loaded) {
+                $remaining_rules[] = array(
+                    'rule'              => $rule,
+                    'metadata'          => $metadata,
+                    'required_packages' => $required_packages,
+                );
+                continue;
             }
+
+            if ('unknown' !== $rule_id) {
+                foreach (self::$packages as $pkg_name => $pkg) {
+                    if (! in_array($pkg_name, $required_packages, true)) {
+                        $pkg->unregister_rule($rule_id);
+                    }
+                }
+            }
+
+            foreach ($required_packages as $package_name) {
+                if (isset(self::$packages[ $package_name ])) {
+                    self::$packages[ $package_name ]->register_rule($rule, $metadata);
+                } else {
+                    Logger::warning("Cannot register rule '{$rule_id}' - package '{$package_name}' not registered");
+                }
+            }
+            $registered_count++;
         }
 
         self::$pending_rules = $remaining_rules;
@@ -628,6 +653,72 @@ class PackageManager
     public static function get_pending_rules(): array
     {
         return self::$pending_rules;
+    }
+
+    /**
+     * Get pending rules deferred specifically due to unknown class namespaces
+     * (as opposed to known packages that simply aren't loaded yet).
+     *
+     * @since 1.2.0
+     *
+     * @return array<int, array{rule: array<string, mixed>, metadata: array<string, mixed>, required_packages: array<int, string>}>
+     */
+    public static function get_unresolved_pending(): array
+    {
+        $unresolved = array();
+
+        foreach (self::$pending_rules as $pending) {
+            if (! empty($pending['metadata']['unresolved_namespaces'] ?? array())) {
+                $unresolved[] = $pending;
+            }
+        }
+
+        return $unresolved;
+    }
+
+    /**
+     * Final-pass pending rule registration with warnings for anything stuck.
+     *
+     * Call once the package system is fully initialized (e.g. on 'wp_loaded' or
+     * at the end of CLI bootstrap). Deferral during boot is silent; this is the
+     * point where unresolved rules become loud.
+     *
+     * @since 1.2.0
+     *
+     * @return int Number of rules still pending after the final pass.
+     */
+    public static function finalize_pending_rules(): int
+    {
+        self::register_pending_rules();
+
+        $still_pending = count(self::$pending_rules);
+
+        foreach (self::$pending_rules as $pending) {
+            $rule_id               = $pending['rule']['id'] ?? 'unknown';
+            $unresolved_namespaces = $pending['metadata']['unresolved_namespaces'] ?? array();
+            $required_packages     = $pending['required_packages'] ?? array();
+
+            if (! empty($unresolved_namespaces)) {
+                Logger::warning(
+                    "Rule '{$rule_id}' could not be registered - unresolved class namespaces: " .
+                    implode(', ', $unresolved_namespaces) .
+                    '. Check for typo\'d action/condition types or missing package registrations.'
+                );
+            } else {
+                $missing = array();
+                foreach ($required_packages as $package_name) {
+                    if (! self::is_package_loaded($package_name)) {
+                        $missing[] = $package_name;
+                    }
+                }
+                Logger::warning(
+                    "Rule '{$rule_id}' could not be registered - required packages not loaded: " .
+                    implode(', ', $missing)
+                );
+            }
+        }
+
+        return $still_pending;
     }
 
     /**

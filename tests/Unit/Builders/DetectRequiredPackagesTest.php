@@ -88,9 +88,17 @@ function makePhpPackageStub(): PackageInterface
 
 function invokeDetectRequiredPackages(Rules $rule): array
 {
-    $method = new ReflectionMethod(Rules::class, 'detect_required_packages');
-    $method->setAccessible(true);
-    return $method->invoke($rule);
+    $rule_array_prop = new ReflectionProperty(Rules::class, 'rule');
+    $rule_array_prop->setAccessible(true);
+    $explicit_type_prop = new ReflectionProperty(Rules::class, 'explicit_type');
+    $explicit_type_prop->setAccessible(true);
+
+    $detection = Rules::detect_packages_for_rule(
+        $rule_array_prop->getValue($rule),
+        $explicit_type_prop->getValue($rule)
+    );
+
+    return $detection['resolved'];
 }
 
 test('explicit type matching auto-detected package yields exactly one entry', function () {
