@@ -6,6 +6,13 @@ menu_order: 40
 
 # Changelog
 
+## [1.1.4](https://github.com/MilliPress/MilliRules/compare/v1.1.3...v1.1.4) (2026-05-04)
+
+
+### Bug Fixes
+
+* execute WordPress-package rules via MilliRules::execute_rules() ([8c46c56](https://github.com/MilliPress/MilliRules/commit/8c46c5649d18f29335eea5f88cfedf8260f5bf3c))
+
 ## [1.1.3](https://github.com/MilliPress/MilliRules/compare/v1.1.2...v1.1.3) (2026-05-03)
 
 
