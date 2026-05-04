@@ -228,14 +228,14 @@ class RuleEngine
     {
         $this->stats['rules_processed']++;
 
-        // Validate package availability.
-        if (! $this->validate_rule_packages($rule, $this->available_packages)) {
-            $this->stats['rules_skipped']++;
+        // Check if the rule is enabled.
+        if (isset($rule['_metadata']['enabled']) && ! $rule['_metadata']['enabled']) {
             return;
         }
 
-        // Check if the rule is enabled.
-        if (isset($rule['enabled']) && ! $rule['enabled']) {
+        // Validate package availability.
+        if (! $this->validate_rule_packages($rule, $this->available_packages)) {
+            $this->stats['rules_skipped']++;
             return;
         }
 

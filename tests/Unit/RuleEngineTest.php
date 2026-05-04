@@ -237,7 +237,7 @@ test('rule engine skips disabled rules', function () {
     $rules = [
         [
             'id' => 'disabled-rule',
-            'enabled' => false,
+            '_metadata' => ['enabled' => false],
             'conditions' => [
                 ['type' => 'test_condition']
             ],
