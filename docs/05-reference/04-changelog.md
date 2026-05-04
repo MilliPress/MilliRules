@@ -6,6 +6,13 @@ menu_order: 40
 
 # Changelog
 
+## [1.1.5](https://github.com/MilliPress/MilliRules/compare/v1.1.4...v1.1.5) (2026-05-04)
+
+
+### Bug Fixes
+
+* honor -&gt;enabled(false) for non-WordPress rules ([ca54b36](https://github.com/MilliPress/MilliRules/commit/ca54b360aaf0e9bb876bd6648521376c76afd595))
+
 ## [1.1.4](https://github.com/MilliPress/MilliRules/compare/v1.1.3...v1.1.4) (2026-05-04)
 
 
