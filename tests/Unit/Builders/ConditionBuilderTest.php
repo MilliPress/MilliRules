@@ -335,3 +335,115 @@ test('three groups chained with two and() calls', function () {
     $result = $engine->execute([$rule], new Context());
     expect($result['rules_matched'])->toBe(1);
 });
+
+/**
+ * Array-form when_all / when_any / when_none.
+ *
+ * Downstream consumers (e.g. MilliCache's settings-driven user rules at
+ * src/Rules/Bootstrap.php) build rules via the array form rather than the
+ * fluent builder. A regression here would silently break user-defined rules,
+ * so pin the contract: the array form must produce the same registered
+ * rule structure and same evaluation outcome as the fluent equivalent.
+ */
+test('when_all array form produces same structure and outcome as fluent form', function () {
+    Rules::register_condition('array_form_true', fn($args, Context $c) => true);
+    Rules::register_action('array_form_marker', function ($args, Context $c) {
+        $c->set('marker', ($args['tag'] ?? 'unknown'));
+    });
+
+    $array_rules_instance = Rules::create('array-form-all')
+        ->when_all([
+            ['type' => 'array_form_true'],
+        ])
+        ->then([
+            ['type' => 'array_form_marker', 'tag' => 'array'],
+        ]);
+
+    // Keep the Rules instance separately — fluent chains terminate on
+    // ActionBuilder, not Rules, so we cannot read $rule off the chain end.
+    // Also: ActionBuilder collects actions internally and only transfers
+    // them to Rules via auto-delegation on a Rules method (e.g. register()),
+    // so we transfer explicitly with set_actions() to keep this test
+    // free of registry side effects.
+    $fluent_rules_instance = Rules::create('fluent-form-all');
+    $action_builder = $fluent_rules_instance
+        ->when_all()
+            ->custom('array_form_true', fn(Context $c) => true)
+        ->then()
+            ->custom('array_form_marker', function (Context $c) {
+                $c->set('marker', 'fluent');
+            });
+    $fluent_rules_instance->set_actions($action_builder->get_actions());
+
+    $reflection = new ReflectionClass(Rules::class);
+    $prop = $reflection->getProperty('rule');
+    $prop->setAccessible(true);
+    $array_rule = $prop->getValue($array_rules_instance);
+    $fluent_rule = $prop->getValue($fluent_rules_instance);
+
+    // Structure: same match_type and same conditions shape.
+    expect($array_rule['match_type'])->toBe('all')
+        ->and($fluent_rule['match_type'])->toBe('all')
+        ->and($array_rule['conditions'])->toHaveCount(1)
+        ->and($fluent_rule['conditions'])->toHaveCount(1)
+        ->and($array_rule['conditions'][0]['type'])->toBe('array_form_true')
+        ->and($fluent_rule['conditions'][0]['type'])->toBe('array_form_true');
+
+    // Evaluation: both rules match and run their action under the same context.
+    $engine = new RuleEngine();
+    $result = $engine->execute([$array_rule, $fluent_rule], new Context());
+    expect($result['rules_matched'])->toBe(2)
+        ->and($result['actions_executed'])->toBe(2);
+});
+
+test('when_any array form matches when at least one condition is true', function () {
+    Rules::register_condition('any_form_true', fn($args, Context $c) => true);
+    Rules::register_condition('any_form_false', fn($args, Context $c) => false);
+    Rules::register_action('any_form_action', fn($args, Context $c) => null);
+
+    $array_builder = Rules::create('array-form-any')
+        ->when_any([
+            ['type' => 'any_form_false'],
+            ['type' => 'any_form_true'],
+        ])
+        ->then([
+            ['type' => 'any_form_action'],
+        ]);
+
+    $reflection = new ReflectionClass(Rules::class);
+    $prop = $reflection->getProperty('rule');
+    $prop->setAccessible(true);
+    $rule = $prop->getValue($array_builder);
+
+    expect($rule['match_type'])->toBe('any')
+        ->and($rule['conditions'])->toHaveCount(2);
+
+    $engine = new RuleEngine();
+    $result = $engine->execute([$rule], new Context());
+    expect($result['rules_matched'])->toBe(1);
+});
+
+test('when_none array form matches when all conditions are false', function () {
+    Rules::register_condition('none_form_false', fn($args, Context $c) => false);
+    Rules::register_action('none_form_action', fn($args, Context $c) => null);
+
+    $array_builder = Rules::create('array-form-none')
+        ->when_none([
+            ['type' => 'none_form_false'],
+        ])
+        ->then([
+            ['type' => 'none_form_action'],
+        ]);
+
+    $reflection = new ReflectionClass(Rules::class);
+    $prop = $reflection->getProperty('rule');
+    $prop->setAccessible(true);
+    $rule = $prop->getValue($array_builder);
+
+    expect($rule['match_type'])->toBe('none')
+        ->and($rule['conditions'])->toHaveCount(1);
+
+    $engine = new RuleEngine();
+    $result = $engine->execute([$rule], new Context());
+    expect($result['rules_matched'])->toBe(1);
+});
