@@ -499,25 +499,15 @@ class Package extends BasePackage
     }
 
     /**
-     * Get all rules registered with this package grouped by hook.
+     * Get rules grouped by hook name.
      *
-     * Returns rules organized by WordPress hook name, preventing execution via
-     * manual MilliRules::execute_rules() calls (which expect a flat array).
-     * This ensures rules only fire when their specific WordPress hooks are triggered.
-     *
-     * Note: Intentionally returns grouped array instead of flat array to prevent
-     * direct rule execution. Rules must execute via WordPress hooks.
-     *
-     * @since 0.1.0
+     * @since 1.1.3
      *
      * @return array<string, array<int, array<string, mixed>>> Array of rules grouped by hook name.
      *         Structure: ['hook_name' => [rule1, rule2, ...]]
-     *
-     * @phpstan-ignore-next-line
-     */
-    public function get_rules(): array
+    */
+    public function get_rules_by_hook(): array
     {
-        // Flatten [$hook][$priority] back to [$hook] => [rules].
         $by_hook = array();
         foreach ($this->rules_by_hook as $hook => $priorities) {
             $by_hook[ $hook ] = array();

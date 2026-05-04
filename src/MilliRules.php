@@ -251,12 +251,26 @@ class MilliRules
                 );
             }
 
-            // Collect rules from each package.
+            // Dedup by id: rules registered to multiple packages execute once.
+            $seen_ids = array();
             foreach ($packages as $package) {
                 try {
                     $package_rules = $package->get_rules();
-                    if (is_array($package_rules)) {
-                        $all_rules = array_merge($all_rules, $package_rules);
+                    if (! is_array($package_rules)) {
+                        continue;
+                    }
+                    foreach ($package_rules as $rule) {
+                        if (! is_array($rule)) {
+                            continue;
+                        }
+                        $rule_id = $rule['id'] ?? null;
+                        if (is_string($rule_id) && $rule_id !== '') {
+                            if (isset($seen_ids[ $rule_id ])) {
+                                continue;
+                            }
+                            $seen_ids[ $rule_id ] = true;
+                        }
+                        $all_rules[] = $rule;
                     }
                 } catch (\Exception $e) {
                     $package_name = $package->get_name();
