@@ -158,8 +158,10 @@ abstract class BaseCondition implements ConditionInterface
     {
         $actual_value = $this->get_actual_value($context);
 
-        // Handle array values with match_type logic.
-        if (is_array($this->value)) {
+		// Handle array values with match_type logic.
+        $is_array_operator = in_array($this->operator, array('IN', 'NOT IN'), true);
+
+        if (is_array($this->value) && ! $is_array_operator) {
             return $this->check_multiple_values($actual_value, $this->value);
         }
 

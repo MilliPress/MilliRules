@@ -331,6 +331,59 @@ class BaseConditionTest extends TestCase
         $this->assertFalse(BaseCondition::compare_values('apple', ['apple', 'banana'], 'NOT IN'));
     }
 
+    /**
+     * NOT IN with array value via matches() — actual not in list returns true.
+     */
+    public function testNotInOperatorWithArrayValueMatchesWhenNotInList(): void
+    {
+        $condition = $this->createTestCondition([
+            'operator' => 'NOT IN',
+            'value' => ['apple', 'banana'],
+            '_test_actual_value' => 'grape',
+        ]);
+
+        $this->assertTrue($condition->matches(new Context()));
+    }
+
+    /**
+     * Regression: NOT IN with array value must return false when actual IS in
+     * the array. Previously, matches() decomposed array values via
+     * check_multiple_values with default match_type='any' — element-wise
+     * !in_array(actual, [single_element]) was true for every non-matching
+     * element, so 'any' aggregated to true even when actual was in the array.
+     */
+    public function testNotInOperatorWithArrayValueMissesWhenInList(): void
+    {
+        $condition = $this->createTestCondition([
+            'operator' => 'NOT IN',
+            'value' => ['apple', 'banana'],
+            '_test_actual_value' => 'apple',
+        ]);
+
+        $this->assertFalse($condition->matches(new Context()));
+    }
+
+    /**
+     * IN with single-element array should behave identically to scalar
+     * equality on that value.
+     */
+    public function testSingleElementInArrayBehavesLikeScalarEquality(): void
+    {
+        $matchingCondition = $this->createTestCondition([
+            'operator' => 'IN',
+            'value' => ['test'],
+            '_test_actual_value' => 'test',
+        ]);
+        $this->assertTrue($matchingCondition->matches(new Context()));
+
+        $nonMatchingCondition = $this->createTestCondition([
+            'operator' => 'IN',
+            'value' => ['test'],
+            '_test_actual_value' => 'other',
+        ]);
+        $this->assertFalse($nonMatchingCondition->matches(new Context()));
+    }
+
     // ============================================
     // Existence Operators Tests
     // ============================================
