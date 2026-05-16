@@ -6,6 +6,19 @@ menu_order: 40
 
 # Changelog
 
+## [1.1.6](https://github.com/MilliPress/MilliRules/compare/v1.1.5...v1.1.6) (2026-05-16)
+
+
+### Features
+
+* add current_site condition for multisite blog targeting ([ee02693](https://github.com/MilliPress/MilliRules/commit/ee0269375718d44d8925796106851d6ba0061837))
+* register rules from array config via Rules::register_rule() ([2e4a8a5](https://github.com/MilliPress/MilliRules/commit/2e4a8a51b8064c2d5e3843f114f2bd8675e1562e))
+
+
+### Bug Fixes
+
+* honor NOT IN semantics for conditions with array values ([1da7e65](https://github.com/MilliPress/MilliRules/commit/1da7e65e97ff53a650c656a6254dac3154b57c82))
+
 ## [1.1.5](https://github.com/MilliPress/MilliRules/compare/v1.1.4...v1.1.5) (2026-05-04)
 
 
