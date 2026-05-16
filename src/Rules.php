@@ -1226,25 +1226,157 @@ class Rules
      */
     public function register(): bool
     {
-        if (! self::validate_rule($this->rule)) {
-            Logger::error('Failed to validate rule: ' . ( $this->rule['id'] ?? 'unknown' ));
+        $rule = $this->rule;
+
+        // Carry instance-only state into the array form so the canonical
+        // entry point sees the same configuration the fluent builder did.
+        $rule['hook']     = $this->hook;
+        $rule['priority'] = $this->hook_priority;
+
+        return self::register_rule($rule, $this->explicit_type);
+    }
+
+    /**
+     * Register a rule from an array configuration.
+     *
+     * Canonical public entry point for rule registration. Produces identical
+     * registry state to the equivalent fluent chain — the fluent builder
+     * delegates here. Use this when rules are loaded from settings/UI storage
+     * where the rule is already an array.
+     *
+     * Input schema (top-level keys):
+     * - id          (string, required)   Rule identifier.
+     * - title       (string, optional)   Human-readable title. Default: ''.
+     * - order       (int, optional)      Execution order. Default: 10.
+     * - enabled     (bool, optional)     Whether the rule runs. Default: true.
+     * - locked      (bool, optional)     Lock the rule definition itself.
+     * - hook        (string, optional)   WordPress hook to bind to. Default: 'wp'.
+     * - priority    (int, optional)      Hook priority. Default: 10.
+     * - match_type  (string, optional)   'all' | 'any' | 'none'. Default: 'all'.
+     * - conditions  (array, optional)    Conditions array (same shape as fluent).
+     * - actions     (array, optional)    Actions array. Per-action `locked: true`
+     *                                    is translated to internal `_locked`.
+     *
+     * The internal `_locked` form is also accepted (passthrough) on both rule
+     * and action entries so the fluent builder can delegate here cleanly.
+     *
+     * Missing keys take the documented defaults — callers migrating from a
+     * different convention (e.g. treating missing `enabled` as disabled) must
+     * pass explicit values to opt out.
+     *
+     * @since 1.2.0
+     *
+     * @param array<string, mixed> $rule Rule configuration array.
+     * @param string|null          $type Optional explicit type ('php' or 'wp'). Default: auto-detect.
+     * @return bool True on success, false on validation failure.
+     */
+    public static function register_rule(array $rule, ?string $type = null): bool
+    {
+        $id = $rule['id'] ?? null;
+        if (! is_string($id) || '' === $id) {
+            Logger::error('register_rule: rule is missing a valid id');
             return false;
         }
 
+        $normalized = array(
+            'id'         => $id,
+            'title'      => ( isset($rule['title']) && is_string($rule['title']) ) ? $rule['title'] : '',
+            'order'      => array_key_exists('order', $rule) ? (int) $rule['order'] : 10,
+            'enabled'    => array_key_exists('enabled', $rule) ? (bool) $rule['enabled'] : true,
+            'match_type' => ( isset($rule['match_type']) && is_string($rule['match_type']) ) ? $rule['match_type'] : 'all',
+            'conditions' => ( isset($rule['conditions']) && is_array($rule['conditions']) ) ? $rule['conditions'] : array(),
+            'actions'    => ( isset($rule['actions']) && is_array($rule['actions']) ) ? self::normalize_action_locks($rule['actions']) : array(),
+            '_metadata'  => array(),
+        );
+
+        // Rule-level lock — accept public 'locked' (documented) and internal
+        // '_locked' (used by the fluent builder when it delegates here).
+        if (! empty($rule['locked']) || ! empty($rule['_locked'])) {
+            $normalized['_locked'] = true;
+        }
+
+        $hook          = ( isset($rule['hook']) && is_string($rule['hook']) ) ? $rule['hook'] : 'wp';
+        $hook_priority = array_key_exists('priority', $rule) ? (int) $rule['priority'] : 10;
+
+        if (! self::validate_rule($normalized)) {
+            Logger::error('Failed to validate rule: ' . $id);
+            return false;
+        }
+
+        return self::finalize_registration($normalized, $type, $hook, $hook_priority);
+    }
+
+    /**
+     * Translate the public `locked` flag on action entries to internal `_locked`.
+     *
+     * The fluent ActionBuilder writes `_locked` directly; array-form callers use
+     * the public `locked` key. Existing `_locked` values are preserved.
+     *
+     * @since 1.2.0
+     *
+     * @param array<int, mixed> $actions Raw actions array from the caller.
+     * @return array<int, array<string, mixed>> Normalized actions.
+     */
+    private static function normalize_action_locks(array $actions): array
+    {
+        $normalized = array();
+        foreach ($actions as $action) {
+            if (! is_array($action)) {
+                continue;
+            }
+            if (array_key_exists('locked', $action)) {
+                if (! empty($action['locked'])) {
+                    $action['_locked'] = true;
+                }
+                unset($action['locked']);
+            }
+            $normalized[] = $action;
+        }
+        return $normalized;
+    }
+
+    /**
+     * Finalize registration of a normalized rule.
+     *
+     * Shared tail of register_rule(). Runs package detection, type resolution,
+     * metadata assembly, and hands the rule to PackageManager. Assumes its
+     * input has already been normalized and validated.
+     *
+     * @since 1.2.0
+     *
+     * @param array<string, mixed> $rule          Normalized rule array.
+     * @param string|null          $explicit_type Type the caller passed, if any.
+     * @param string               $hook          Hook the rule binds to.
+     * @param int                  $hook_priority Hook priority.
+     * @return bool True on success, false on metadata failure.
+     */
+    private static function finalize_registration(
+        array $rule,
+        ?string $explicit_type,
+        string $hook,
+        int $hook_priority
+    ): bool {
         // Auto-detect required packages and any unresolved namespaces.
-        $detection             = self::detect_packages_for_rule($this->rule, $this->explicit_type);
+        $detection             = self::detect_packages_for_rule($rule, $explicit_type);
         $required_packages     = $detection['resolved'];
         $unresolved_namespaces = $detection['unresolved'];
 
         // Determine type (explicit or auto-detected).
-        if (null !== $this->explicit_type) {
-            $type = $this->explicit_type;
+        if (null !== $explicit_type) {
+            $type = $explicit_type;
         } else {
-            $type = $this->detect_type($required_packages);
+            $type = self::detect_type($required_packages, $hook, $hook_priority);
         }
 
         // Validate type conflicts and potentially override type.
-        $type = $this->validate_type_conflicts($type, $required_packages);
+        $type = self::validate_type_conflicts(
+            $type,
+            $required_packages,
+            $explicit_type,
+            $hook,
+            $hook_priority,
+            $rule['id']
+        );
 
         // Auto-add WP package if type is 'wp' and not already included.
         // This handles cases where hooks are used (->on()) but no WP conditions/actions are present.
@@ -1256,33 +1388,27 @@ class Rules
         $metadata = array(
             'required_packages'     => $required_packages,
             'unresolved_namespaces' => $unresolved_namespaces,
-            'explicit_type'         => $this->explicit_type,
+            'explicit_type'         => $explicit_type,
             'type'                  => $type,
-            'order'                 => $this->rule['order'],
-            'enabled'               => $this->rule['enabled'],
+            'order'                 => $rule['order'],
+            'enabled'               => $rule['enabled'],
         );
 
         // Add hook info only for 'wp' type.
         if ($type === 'wp') {
-            $metadata['hook']          = $this->hook;
-            $metadata['hook_priority'] = $this->hook_priority;
+            $metadata['hook']          = $hook;
+            $metadata['hook_priority'] = $hook_priority;
         }
 
         // Store metadata in rule.
-        $this->rule['_metadata'] = $metadata;
+        $rule['_metadata'] = $metadata;
 
         // Remove order and enabled from top-level (now in metadata).
-        unset($this->rule['order']);
-        unset($this->rule['enabled']);
-
-        // Validate metadata is properly formed (defensive programming).
-        if (! is_array($this->rule['_metadata'])) {
-            Logger::error('Failed to create metadata for rule: ' . ( $this->rule['id'] ?? 'unknown' ));
-            return false;
-        }
+        unset($rule['order']);
+        unset($rule['enabled']);
 
         // Register the rule with new signature (rule + metadata).
-        PackageManager::register_rule($this->rule, $this->rule['_metadata']);
+        PackageManager::register_rule($rule, $metadata);
 
         return true;
     }
@@ -1526,12 +1652,14 @@ class Rules
      * @since 0.1.0
      *
      * @param array<int, string> $required_packages Array of required package names.
+     * @param string             $hook              Hook the rule binds to.
+     * @param int                $hook_priority     Hook priority.
      * @return string Rule type: 'php' or 'wp'.
      */
-    private function detect_type(array $required_packages): string
+    private static function detect_type(array $required_packages, string $hook, int $hook_priority): string
     {
         // Check if explicit hook was set (non-default values).
-        if ($this->hook !== 'wp' || $this->hook_priority !== 10) {
+        if ($hook !== 'wp' || $hook_priority !== 10) {
             // Explicit hook usage implies WordPress context.
             return 'wp';
         }
@@ -1568,14 +1696,22 @@ class Rules
      *
      * @param string             $type              The determined rule type.
      * @param array<int, string> $required_packages Array of required package names.
+     * @param string|null        $explicit_type     Type passed by the caller, if any.
+     * @param string             $hook              Hook the rule binds to.
+     * @param int                $hook_priority     Hook priority.
+     * @param string             $rule_id           Rule identifier (for log messages).
      * @return string The validated (and potentially corrected) rule type.
      */
-    private function validate_type_conflicts(string $type, array $required_packages): string
-    {
-        $rule_id = $this->rule['id'] ?? 'unknown';
-
+    private static function validate_type_conflicts(
+        string $type,
+        array $required_packages,
+        ?string $explicit_type,
+        string $hook,
+        int $hook_priority,
+        string $rule_id
+    ): string {
         // Validation 1: Explicit type='php' with WordPress packages.
-        if ($this->explicit_type === 'php' && in_array('WordPress', $required_packages, true)) {
+        if ($explicit_type === 'php' && in_array('WordPress', $required_packages, true)) {
             Logger::warning(
                 "Rule '{$rule_id}' has explicit type='php' but requires WordPress package - " .
                 'this may not work as expected. Consider using type=\'wp\' or omitting type parameter for auto-detection.'
@@ -1584,9 +1720,9 @@ class Rules
         }
 
         // Validation 2: Explicit type='php' with ->on() usage.
-        if ($this->explicit_type === 'php' && ( $this->hook !== 'wp' || $this->hook_priority !== 10 )) {
+        if ($explicit_type === 'php' && ( $hook !== 'wp' || $hook_priority !== 10 )) {
             Logger::warning(
-                "Rule '{$rule_id}' has explicit type='php' but uses WordPress hook '{$this->hook}' - " .
+                "Rule '{$rule_id}' has explicit type='php' but uses WordPress hook '{$hook}' - " .
                 'auto-changing type to \'wp\' as hooks require WordPress context.'
             );
 
