@@ -131,3 +131,21 @@ if (! function_exists('has_shortcode')) {
         return $tag === 'gallery';
     }
 }
+
+// -----------------------------------------------------------------------------
+// Multisite helpers
+// -----------------------------------------------------------------------------
+
+if (! function_exists('get_current_blog_id')) {
+    /**
+     * Retrieves the current site ID.
+     *
+     * Reads from $GLOBALS['millirules_test_current_blog_id'] so tests can
+     * vary the simulated blog ID per case. Defaults to 1 (single-site
+     * default) when the global is unset.
+     */
+    function get_current_blog_id(): int
+    {
+        return (int) ( $GLOBALS['millirules_test_current_blog_id'] ?? 1 );
+    }
+}
