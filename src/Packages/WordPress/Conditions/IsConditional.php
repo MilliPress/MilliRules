@@ -369,11 +369,11 @@ class IsConditional extends BaseCondition
         foreach ($matches as $match) {
             // Clean up the description: strip leading * from continuation lines,
             // collapse whitespace, and trim.
-            $desc = preg_replace('/\n\s*\*\s*/', ' ', $match[3]);
-            $desc = trim(preg_replace('/\s+/', ' ', $desc));
+            $desc = (string) preg_replace('/\n\s*\*\s*/', ' ', $match[3]);
+            $desc = trim((string) preg_replace('/\s+/', ' ', $desc));
 
             // Strip "Optional." prefix — the schema's required flag handles this.
-            $desc = preg_replace('/^Optional\.\s*/i', '', $desc);
+            $desc = (string) preg_replace('/^Optional\.\s*/i', '', $desc);
 
             $params[] = array(
                 'type'        => $match[1],
@@ -403,13 +403,13 @@ class IsConditional extends BaseCondition
         }
 
         // Strip opening /** and closing */, then split into lines.
-        $body = preg_replace('/^\/\*\*|\*\/$/s', '', $doc);
+        $body = (string) preg_replace('/^\/\*\*|\*\/$/s', '', $doc);
         $lines = preg_split('/\r?\n/', $body) ?: array();
 
         $summary = '';
         foreach ($lines as $line) {
             // Strip leading whitespace and * prefix.
-            $line = preg_replace('/^\s*\*\s?/', '', $line);
+            $line = (string) preg_replace('/^\s*\*\s?/', '', $line);
 
             // Stop at blank line or @tag.
             if ('' !== $summary && ( '' === trim($line) || strpos(ltrim($line), '@') === 0 )) {
