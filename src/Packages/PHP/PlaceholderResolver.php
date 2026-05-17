@@ -140,7 +140,7 @@ class PlaceholderResolver extends BasePlaceholderResolver
     {
         // Handle request category with nested paths.
         if ('request' === $category && ! empty($parts)) {
-            return $this->resolve_nested($this->context['request'] ?? array(), $parts);
+            return $this->resolve_nested($this->context->get('request', array()), $parts);
         }
 
         // Delegate to parent for other categories.

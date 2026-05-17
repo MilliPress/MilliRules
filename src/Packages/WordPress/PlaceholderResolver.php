@@ -96,7 +96,7 @@ class PlaceholderResolver extends PhpPlaceholderResolver
     {
         // Handle 'wp' category with nested paths.
         if ('wp' === $category && ! empty($parts)) {
-            return $this->resolve_nested($this->context['wp'] ?? array(), $parts);
+            return $this->resolve_nested($this->context->get('wp', array()), $parts);
         }
 
         // Delegate to parent for other categories (request, cookie, param, header).
