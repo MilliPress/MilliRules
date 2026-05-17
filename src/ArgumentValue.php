@@ -117,7 +117,7 @@ class ArgumentValue
         }
 
         if (is_array($value)) {
-            return json_encode($value);
+            return (string) json_encode($value);
         }
 
         if (is_object($value)) {

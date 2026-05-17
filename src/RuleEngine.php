@@ -753,7 +753,7 @@ class RuleEngine
      */
     private static function namespace_to_directory(string $namespace): ?string
     {
-        foreach (spl_autoload_functions() as $autoloader) {
+        foreach (spl_autoload_functions() ?: array() as $autoloader) {
             if (
                 ! is_array($autoloader)
                 || ! ($autoloader[0] instanceof \Composer\Autoload\ClassLoader)

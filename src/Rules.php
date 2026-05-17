@@ -1205,7 +1205,7 @@ class Rules
         $snake_method = $this->normalize_method_name($method);
 
         if ($snake_method !== $method && method_exists($this, $snake_method)) {
-            return call_user_func_array(array( $this, $snake_method ), $args);
+            return $this->{$snake_method}(...$args);
         }
 
         throw new \BadMethodCallException("Method {$method} does not exist on " . static::class);

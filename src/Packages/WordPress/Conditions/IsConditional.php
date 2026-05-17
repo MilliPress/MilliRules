@@ -404,7 +404,7 @@ class IsConditional extends BaseCondition
 
         // Strip opening /** and closing */, then split into lines.
         $body = preg_replace('/^\/\*\*|\*\/$/s', '', $doc);
-        $lines = preg_split('/\r?\n/', $body);
+        $lines = preg_split('/\r?\n/', $body) ?: array();
 
         $summary = '';
         foreach ($lines as $line) {
@@ -437,7 +437,7 @@ class IsConditional extends BaseCondition
      */
     private static function type_includes_array(string $type): bool
     {
-        $parts = preg_split('/[|&]/', $type);
+        $parts = preg_split('/[|&]/', $type) ?: array();
 
         foreach ($parts as $part) {
             $part = trim($part);
