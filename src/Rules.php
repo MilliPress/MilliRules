@@ -292,7 +292,8 @@ class Rules
      */
     public static function register_condition(string $type, callable $callback): ConditionMeta
     {
-        if (! is_callable($callback)) {
+        // Preserves the documented InvalidArgumentException contract even though the type hint also guards this.
+        if (! is_callable($callback)) { // @phpstan-ignore function.alreadyNarrowedType
             throw new \InvalidArgumentException("Callback for condition type '{$type}' is not callable"); // phpcs:ignore WordPress.Security.EscapeOutput
         }
 
@@ -372,7 +373,8 @@ class Rules
      */
     public static function register_action(string $type, callable $callback): ActionMeta
     {
-        if (! is_callable($callback)) {
+        // Preserves the documented InvalidArgumentException contract even though the type hint also guards this.
+        if (! is_callable($callback)) { // @phpstan-ignore function.alreadyNarrowedType
             throw new \InvalidArgumentException("Callback for action type '{$type}' is not callable"); // phpcs:ignore WordPress.Security.EscapeOutput
         }
 

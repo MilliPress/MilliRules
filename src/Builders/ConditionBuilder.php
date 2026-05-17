@@ -73,7 +73,7 @@ use MilliRules\RuleEngine;
  *
  * Finalization Methods (delegated to Rules):
  * @method Rules and() Finalize current condition group and chain the next via when_all()/when_any()/when_none()
- * @method ActionBuilder then(?array $actions = null) Start building actions or set actions directly
+ * @method ActionBuilder then(array<int, array<string, mixed>>|null $actions = null) Start building actions or set actions directly
  *
  * Auto-delegation:
  * When a Rules method is called (e.g., ->then(), ->register()), automatically transfers conditions to Rules

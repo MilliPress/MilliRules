@@ -206,7 +206,8 @@ class Request extends BaseContext
         // Try getallheaders() if available.
         if (function_exists('getallheaders')) {
             $result = getallheaders();
-            $headers = is_array($result) ? $result : array();
+            // Stubs type getallheaders() as array, but it returns false on some SAPIs.
+            $headers = is_array($result) ? $result : array(); // @phpstan-ignore function.alreadyNarrowedType
         } else {
             // Fallback: Parse headers from $_SERVER.
             foreach ($_SERVER as $key => $value) {
