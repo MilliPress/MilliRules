@@ -365,7 +365,7 @@ use MilliRules\Context;
 public function get_placeholder_resolver(Context $context) {
     return function($placeholder_parts) use ($context) {
         // $placeholder_parts = ['my_custom', 'category', 'key']
-        // From placeholder: {my_custom:category:key}
+        // From placeholder: {my_custom.category.key}
 
         if ($placeholder_parts[0] !== 'my_custom') {
             return null; // Not for this package
@@ -391,7 +391,7 @@ Rules::create('use_custom_placeholder')
     ->when()->request_url('/api/*')
     ->then()
         ->custom('log', [
-            'message' => 'Site: {my_custom:site:name}, Users: {my_custom:stats:total_users}'
+            'message' => 'Site: {my_custom.site.name}, Users: {my_custom.stats.total_users}'
         ])
     ->register();
 ```
@@ -601,7 +601,7 @@ class UpgradeMembershipAction extends BaseAction {
 
         // Resolve message with placeholders
         $message = $this->resolve_value(
-            $this->config['message'] ?? 'Upgraded to {membership:user:level}'
+            $this->config['message'] ?? 'Upgraded to {membership.user.level}'
         );
 
         error_log($message);
@@ -796,8 +796,8 @@ public function register_providers(Context $context): void {
  * - membership.user.features: Available features
  *
  * Placeholders:
- * - {membership:user:level}: User's membership level
- * - {membership:user:status}: Membership status
+ * - {membership.user.level}: User's membership level
+ * - {membership.user.status}: Membership status
  */
 class MembershipPackage extends BasePackage {
     // ...

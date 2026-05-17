@@ -6,7 +6,7 @@ menu_order: 50
 
 # Dynamic Placeholders
 
-Placeholders allow you to inject dynamic runtime values into your rules. Instead of hardcoding values, you can reference contextual data using a simple colon-separated syntax that gets resolved during rule execution.
+Placeholders allow you to inject dynamic runtime values into your rules. Instead of hardcoding values, you can reference contextual data using a simple dot-notation syntax that gets resolved during rule execution.
 
 ## What Are Placeholders?
 
@@ -25,10 +25,10 @@ Placeholders are special tokens enclosed in curly braces that get replaced with 
 
 ## Placeholder Syntax
 
-The placeholder syntax uses colon-separated parts to navigate the context hierarchy:
+The placeholder syntax uses dot-separated parts to navigate the context hierarchy:
 
 ```
-{category:subcategory:key}
+{category.subcategory.key}
 ```
 
 - `category` - Top-level context category (request, user, post, cookie, etc.)
@@ -40,7 +40,7 @@ The placeholder syntax uses colon-separated parts to navigate the context hierar
 ```php
 '{request.uri}'              // $context['request']['uri']
 '{request.method}'           // $context['request']['method']
-'{request:headers:host}'     // $context['request']['headers']['host']
+'{request.headers.host}'     // $context['request']['headers']['host']
 '{user.id}'                  // $context['user']['id']
 '{post.title}'               // $context['post']['title']
 '{cookie.session_id}'        // $context['cookie']['session_id']
@@ -69,14 +69,14 @@ Access HTTP request data from the PHP package context.
 #### Request Headers
 
 ```php
-'{request:headers:content-type}'    // Content-Type header
-'{request:headers:authorization}'   // Authorization header
-'{request:headers:accept}'          // Accept header
-'{request:headers:user-agent}'      // User-Agent header
+'{request.headers.content-type}'    // Content-Type header
+'{request.headers.authorization}'   // Authorization header
+'{request.headers.accept}'          // Accept header
+'{request.headers.user-agent}'      // User-Agent header
 ```
 
 > [!NOTE]
-> Header names in placeholders are case-insensitive: `{request:headers:Content-Type}` and `{request:headers:content-type}` are equivalent.
+> Header names in placeholders are case-insensitive: `{request.headers.Content-Type}` and `{request.headers.content-type}` are equivalent.
 
 #### Examples
 
@@ -286,7 +286,7 @@ Rules::create('custom_header')
     ->then()
         ->custom('set_header', [
             'name' => 'X-Request-ID',
-            'value' => '{request:headers:x-request-id}'  // Forward header value
+            'value' => '{request.headers.x-request-id}'  // Forward header value
         ])
     ->register();
 ```
@@ -401,7 +401,7 @@ Rules::create('use_option_placeholder')
     ->when()->request_url('/test')
     ->then()
         ->custom('log_custom', [
-            'message' => 'Site tagline: {custom:option:blogdescription}'
+            'message' => 'Site tagline: {custom.option.blogdescription}'
         ])
     ->register();
 ```
@@ -435,8 +435,8 @@ Rules::register_placeholder('env', function($context, $parts) {
 // Usage:
 // {env.name}           → 'production'
 // {env.debug}          → true/false
-// {env:var:API_KEY}    → getenv('API_KEY')
-// {env:server:http_host} → $_SERVER['HTTP_HOST']
+// {env.var.API_KEY}    → getenv('API_KEY')
+// {env.server.http_host} → $_SERVER['HTTP_HOST']
 ```
 
 ---
@@ -490,10 +490,10 @@ Access array values:
 
 ```php
 // Access first role
-'{user:roles:0}'        // First role
+'{user.roles.0}'        // First role
 
 // Access header values
-'{request:headers:accept}' // Accept header
+'{request.headers.accept}' // Accept header
 ```
 
 ### Object Property Access
@@ -502,15 +502,15 @@ Access public properties and magic properties on objects using dot notation:
 
 ```php
 // Access public object properties
-'{hook:args:0:ID}'           // WP_Post object's ID property
-'{hook:args:0:post_title}'   // WP_Post object's post_title property
-'{hook:args:0:post_author}'  // WP_Post object's post_author property
+'{hook.args.0.ID}'           // WP_Post object's ID property
+'{hook.args.0.post_title}'   // WP_Post object's post_title property
+'{hook.args.0.post_author}'  // WP_Post object's post_author property
 
 // Access magic properties (via __get() method)
-'{hook:args:2:permalink}'    // WP_Post object's permalink (magic property)
+'{hook.args.2.permalink}'    // WP_Post object's permalink (magic property)
 
 // Mixed array and object access
-'{hook:args:2:ID}'          // Third argument (index 2) → object's ID property
+'{hook.args.2.ID}'          // Third argument (index 2) → object's ID property
 ```
 
 #### WordPress Hook Examples
@@ -533,7 +533,7 @@ Rules::create('clear_on_publish')
         ->hook_arg(0, '==', 'publish')  // New status is 'publish'
     ->then()
         ->custom('clear_post_cache', [
-            'url' => '{hook:args:2:permalink}'  // Access WP_Post's permalink property
+            'url' => '{hook.args.2.permalink}'  // Access WP_Post's permalink property
         ])
     ->register();
 ```
@@ -544,14 +544,14 @@ Combine array and object access for complex data structures:
 
 ```php
 // WordPress comment object in an array
-'{comments:0:comment_author}'       // First comment's author
-'{comments:0:comment_content}'      // First comment's content
+'{comments.0.comment_author}'       // First comment's author
+'{comments.0.comment_content}'      // First comment's content
 
 // API response with nested objects
-'{api:response:data:items:0:id}'    // First item's ID from API response
+'{api.response.data.items.0.id}'    // First item's ID from API response
 
 // Custom data structures
-'{data:user:profile:settings}'      // Access nested object properties
+'{data.user.profile.settings}'      // Access nested object properties
 ```
 
 #### How It Works
@@ -573,7 +573,7 @@ Understanding how placeholders are resolved:
    ↓
 2. BaseAction::resolve_value() detects placeholder
    ↓
-3. PlaceholderResolver splits by colons: ['request', 'uri']
+3. PlaceholderResolver splits by dots: ['request', 'uri']
    ↓
 4. Looks up category 'request' in registered resolvers
    ↓
@@ -639,10 +639,10 @@ Rules::register_action('validated_action', function($args, Context $context) {
  * Custom Placeholder: {payment.gateway}
  * Returns the active payment gateway name
  *
- * Custom Placeholder: {payment:status:order_id}
+ * Custom Placeholder: {payment.status.order_id}
  * Returns the payment status for a given order ID
  *
- * Example: {payment:status:123} → 'completed'
+ * Example: {payment.status.123} → 'completed'
  */
 Rules::register_placeholder('payment', function($context, $parts) {
     // Implementation...
@@ -682,12 +682,12 @@ Rules::register_action('safe_wp_action', function($args, Context $context) {
 
 ```php
 // ❌ Wrong - missing braces
-'value' => 'request:uri'
+'value' => 'request.uri'
 
-// ❌ Wrong - incorrect separator
-'value' => '{request.uri}'
+// ❌ Wrong - incorrect separator (colons are not supported)
+'value' => '{request:uri}'
 
-// ✅ Correct - proper syntax
+// ✅ Correct - proper syntax (dot-notation)
 'value' => '{request.uri}'
 ```
 
