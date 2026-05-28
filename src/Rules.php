@@ -288,15 +288,9 @@ class Rules
      * @param callable(array<string, mixed>, Context): bool $callback The callback function that receives args array and Context.
      *                                                  Signature: function(array $args, Context $context): bool
      * @return ConditionMeta Fluent metadata declaration for the registered condition.
-     * @throws \InvalidArgumentException If callback is not callable.
      */
     public static function register_condition(string $type, callable $callback): ConditionMeta
     {
-        // Preserves the documented InvalidArgumentException contract even though the type hint also guards this.
-        if (! is_callable($callback)) { // @phpstan-ignore function.alreadyNarrowedType
-            throw new \InvalidArgumentException("Callback for condition type '{$type}' is not callable"); // phpcs:ignore WordPress.Security.EscapeOutput
-        }
-
         self::$custom_conditions[ $type ] = $callback;
 
         $meta = new ConditionMeta($type);
@@ -369,15 +363,9 @@ class Rules
      * @param callable(array<string, mixed>, Context): void $callback The callback function that receives args array and Context.
      *                                                  Signature: function(array $args, Context $context): void
      * @return ActionMeta Fluent metadata declaration for the registered action.
-     * @throws \InvalidArgumentException If callback is not callable.
      */
     public static function register_action(string $type, callable $callback): ActionMeta
     {
-        // Preserves the documented InvalidArgumentException contract even though the type hint also guards this.
-        if (! is_callable($callback)) { // @phpstan-ignore function.alreadyNarrowedType
-            throw new \InvalidArgumentException("Callback for action type '{$type}' is not callable"); // phpcs:ignore WordPress.Security.EscapeOutput
-        }
-
         self::$custom_actions[ $type ] = $callback;
 
         $meta = new ActionMeta($type);
