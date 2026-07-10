@@ -94,6 +94,17 @@ class PackageManager
     private static array $pending_rules = array();
 
     /**
+     * Rule IDs whose registration replaced an already-registered same-ID rule.
+     *
+     * Registration order is meaningful (e.g. built-ins before user rules), so
+     * a same-ID registration landing on an unlocked existing rule is an override.
+     *
+     * @since 1.2.0
+     * @var array<string, bool>
+     */
+    private static array $overridden_rule_ids = array();
+
+    /**
      * Register a package with the manager.
      *
      * Stores package instance and maps its namespaces for fast lookup.
@@ -499,9 +510,11 @@ class PackageManager
         }
 
         // Remove rule from packages it's no longer targeting.
-        // This handles the case where a rule override changes required_packages
+        // This handles the case where a rule overrides changes required_packages
         // (e.g., from WP to PHP), preventing duplicates across packages.
         if ('unknown' !== $rule_id) {
+            self::track_override($rule_id);
+
             foreach (self::$packages as $pkg_name => $pkg) {
                 if (! in_array($pkg_name, $required_packages, true)) {
                     $pkg->unregister_rule($rule_id);
@@ -618,6 +631,8 @@ class PackageManager
             }
 
             if ('unknown' !== $rule_id) {
+                self::track_override($rule_id);
+
                 foreach (self::$packages as $pkg_name => $pkg) {
                     if (! in_array($pkg_name, $required_packages, true)) {
                         $pkg->unregister_rule($rule_id);
@@ -653,6 +668,40 @@ class PackageManager
     public static function get_pending_rules(): array
     {
         return self::$pending_rules;
+    }
+
+    /**
+     * Record a rule ID as an override when it replaces a registered rule.
+     *
+     * @since 1.2.0
+     *
+     * @param string $rule_id The rule ID being registered.
+     * @return void
+     */
+    private static function track_override(string $rule_id): void
+    {
+        foreach (self::$packages as $package) {
+            foreach (self::flatten_rules($package->get_rules()) as $existing) {
+                if (($existing['id'] ?? null) === $rule_id) {
+                    if (empty($existing['_locked'])) {
+                        self::$overridden_rule_ids[ $rule_id ] = true;
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * Get IDs of rules that overrode a previously registered same-ID rule.
+     *
+     * @since 1.2.0
+     *
+     * @return array<int, string> Overriding rule IDs.
+     */
+    public static function get_overridden_rule_ids(): array
+    {
+        return array_keys(self::$overridden_rule_ids);
     }
 
     /**
@@ -828,6 +877,9 @@ class PackageManager
         // Clear pending rules queue.
         self::$pending_rules = array();
 
+        // Clear override tracking.
+        self::$overridden_rule_ids = array();
+
         // Note: We keep $packages and $namespace_registry intact.
         // This allows packages to be re-loaded without re-registration.
     }
@@ -867,11 +919,12 @@ class PackageManager
         }
 
         // Now clear all static arrays.
-        self::$packages           = array();
-        self::$loaded_packages    = array();
-        self::$namespace_registry = array();
-        self::$namespace_cache    = array();
-        self::$pending_rules      = array();
+        self::$packages            = array();
+        self::$loaded_packages     = array();
+        self::$namespace_registry  = array();
+        self::$namespace_cache     = array();
+        self::$pending_rules       = array();
+        self::$overridden_rule_ids = array();
     }
 
     /**

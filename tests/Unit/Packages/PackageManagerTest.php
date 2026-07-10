@@ -887,6 +887,55 @@ class PackageManagerTest extends TestCase
     }
 
     // ============================================
+    // Override Tracking Tests
+    // ============================================
+
+    /**
+     * Register a package with a single rule already in place.
+     */
+    private function registerPackageWithRule(array $rule): void
+    {
+        PackageManager::register_package($this->createMockPackage('Pkg'));
+        PackageManager::load_packages(['Pkg']);
+        PackageManager::register_rule($rule, ['required_packages' => ['Pkg']]);
+    }
+
+    public function testFirstRegistrationIsNotAnOverride(): void
+    {
+        $this->registerPackageWithRule(['id' => 'rule1']);
+
+        $this->assertSame([], PackageManager::get_overridden_rule_ids());
+    }
+
+    public function testReregisteringSameIdTracksOverride(): void
+    {
+        $this->registerPackageWithRule(['id' => 'rule1']);
+        PackageManager::register_rule(['id' => 'rule2'], ['required_packages' => ['Pkg']]);
+        PackageManager::register_rule(['id' => 'rule1'], ['required_packages' => ['Pkg']]);
+
+        $this->assertSame(['rule1'], PackageManager::get_overridden_rule_ids());
+    }
+
+    public function testLockedRuleCollisionIsNotTrackedAsOverride(): void
+    {
+        $this->registerPackageWithRule(['id' => 'rule1', '_locked' => true]);
+        PackageManager::register_rule(['id' => 'rule1'], ['required_packages' => ['Pkg']]);
+
+        $this->assertSame([], PackageManager::get_overridden_rule_ids());
+    }
+
+    public function testClearResetsOverrideTracking(): void
+    {
+        $this->registerPackageWithRule(['id' => 'rule1']);
+        PackageManager::register_rule(['id' => 'rule1'], ['required_packages' => ['Pkg']]);
+        $this->assertSame(['rule1'], PackageManager::get_overridden_rule_ids());
+
+        PackageManager::clear();
+
+        $this->assertSame([], PackageManager::get_overridden_rule_ids());
+    }
+
+    // ============================================
     // Clear and Reset Tests
     // ============================================
 
