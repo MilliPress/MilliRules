@@ -708,7 +708,7 @@ class PackageManager
      * Get pending rules deferred specifically due to unknown class namespaces
      * (as opposed to known packages that simply aren't loaded yet).
      *
-     * @since 1.2.0
+     * @since 1.1.6
      *
      * @return array<int, array{rule: array<string, mixed>, metadata: array<string, mixed>, required_packages: array<int, string>}>
      */
@@ -732,7 +732,7 @@ class PackageManager
      * at the end of CLI bootstrap). Deferral during boot is silent; this is the
      * point where unresolved rules become loud.
      *
-     * @since 1.2.0
+     * @since 1.1.6
      *
      * @return int Number of rules still pending after the final pass.
      */
