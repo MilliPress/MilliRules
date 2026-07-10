@@ -233,8 +233,9 @@ class Package extends BasePackage
             );
             return;
         }
-        if (null !== $rule_id) {
-            $this->remove_rule_by_id($rule_id);
+        // Removing an existing rule here means this registration replaced it.
+        if (null !== $rule_id && $this->remove_rule_by_id($rule_id)) {
+            $rule['_overridden'] = true;
         }
 
         // Group by hook + priority.

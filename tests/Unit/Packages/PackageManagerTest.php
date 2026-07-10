@@ -3,6 +3,7 @@
 namespace MilliRules\Tests\Unit\Packages;
 
 use MilliRules\Tests\TestCase;
+use MilliRules\Packages\BasePackage;
 use MilliRules\Packages\PackageManager;
 use MilliRules\Packages\PackageInterface;
 use MilliRules\Context;
@@ -891,11 +892,44 @@ class PackageManagerTest extends TestCase
     // ============================================
 
     /**
-     * Register a package with a single rule already in place.
+     * Create a real BasePackage subclass.
+     *
+     * Override tracking depends on BasePackage's replace-on-same-ID semantics,
+     * which the PackageInterface mock above does not implement.
+     */
+    private function createRealPackage(string $name): BasePackage
+    {
+        return new class ($name) extends BasePackage {
+            private string $packageName;
+
+            public function __construct(string $name)
+            {
+                $this->packageName = $name;
+            }
+
+            public function get_name(): string
+            {
+                return $this->packageName;
+            }
+
+            public function get_namespaces(): array
+            {
+                return [];
+            }
+
+            public function is_available(): bool
+            {
+                return true;
+            }
+        };
+    }
+
+    /**
+     * Register a single package holding one rule.
      */
     private function registerPackageWithRule(array $rule): void
     {
-        PackageManager::register_package($this->createMockPackage('Pkg'));
+        PackageManager::register_package($this->createRealPackage('Pkg'));
         PackageManager::load_packages(['Pkg']);
         PackageManager::register_rule($rule, ['required_packages' => ['Pkg']]);
     }
@@ -922,6 +956,44 @@ class PackageManagerTest extends TestCase
         PackageManager::register_rule(['id' => 'rule1'], ['required_packages' => ['Pkg']]);
 
         $this->assertSame([], PackageManager::get_overridden_rule_ids());
+    }
+
+    public function testUnregisteringAnOverridingRuleStopsReportingIt(): void
+    {
+        $this->registerPackageWithRule(['id' => 'rule1']);
+        PackageManager::register_rule(['id' => 'rule1'], ['required_packages' => ['Pkg']]);
+        $this->assertSame(['rule1'], PackageManager::get_overridden_rule_ids());
+
+        PackageManager::unregister_rule('rule1');
+
+        $this->assertSame([], PackageManager::get_overridden_rule_ids());
+    }
+
+    public function testFreshRuleAfterUnregisterIsNotAnOverride(): void
+    {
+        $this->registerPackageWithRule(['id' => 'rule1']);
+        PackageManager::register_rule(['id' => 'rule1'], ['required_packages' => ['Pkg']]);
+        PackageManager::unregister_rule('rule1');
+
+        PackageManager::register_rule(['id' => 'rule1'], ['required_packages' => ['Pkg']]);
+
+        $this->assertSame([], PackageManager::get_overridden_rule_ids());
+    }
+
+    public function testRuleMovedToAnotherPackageIsAnOverride(): void
+    {
+        PackageManager::register_package($this->createRealPackage('PkgA'));
+        PackageManager::register_package($this->createRealPackage('PkgB'));
+        PackageManager::load_packages(['PkgA', 'PkgB']);
+
+        PackageManager::register_rule(['id' => 'rule1'], ['required_packages' => ['PkgA']]);
+        $this->assertSame([], PackageManager::get_overridden_rule_ids());
+
+        // Re-registering under a different package replaces the PkgA copy.
+        PackageManager::register_rule(['id' => 'rule1'], ['required_packages' => ['PkgB']]);
+
+        $this->assertSame(['rule1'], PackageManager::get_overridden_rule_ids());
+        $this->assertNull($this->findRuleById(PackageManager::get_package('PkgA')->get_rules(), 'rule1'));
     }
 
     public function testClearResetsOverrideTracking(): void
