@@ -6,6 +6,18 @@ menu_order: 40
 
 # Changelog
 
+## [1.2.0](https://github.com/MilliPress/MilliRules/compare/v1.1.6...v1.2.0) (2026-07-10)
+
+
+### Features
+
+* expose which rules override an earlier rule of the same ID ([e1d04d9](https://github.com/MilliPress/MilliRules/commit/e1d04d9341142f699258770a4e545af88e4f81e2))
+
+
+### Refactoring
+
+* mark overrides on the rule instead of a side array ([4fe9ac7](https://github.com/MilliPress/MilliRules/commit/4fe9ac71909dc98c33b7f99793c61225c9f3720f))
+
 ## [1.1.6](https://github.com/MilliPress/MilliRules/compare/v1.1.5...v1.1.6) (2026-05-28)
 
 
