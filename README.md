@@ -1,5 +1,9 @@
 # MilliRules
 
+[![CI](https://github.com/MilliPress/MilliRules/actions/workflows/ci.yml/badge.svg)](https://github.com/MilliPress/MilliRules/actions/workflows/ci.yml)
+[![Discord](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?logo=discord&logoColor=white)](https://discord.gg/mx8HAXaKGY)
+[![GitHub Discussions](https://img.shields.io/github/discussions/MilliPress/MilliRules?logo=github&label=Discussions)](https://github.com/MilliPress/MilliRules/discussions)
+
 A flexible, framework-agnostic rule evaluation engine for PHP 7.4+.
 
 ## Overview
@@ -42,6 +46,12 @@ Rules::create('api_check')
 ## Documentation
 
 See the [full documentation](https://millipress.com/docs/millirules/) for detailed guides and API reference.
+
+## Community
+
+The [Discord](https://discord.gg/mx8HAXaKGY) server and [GitHub Discussions](https://github.com/MilliPress/MilliRules/discussions) are places to swap setups, trade tips, and share your ideas for where MilliRules should head next. We're listening.
+
+For bug reports, open a [GitHub issue](https://github.com/MilliPress/MilliRules/issues).
 
 ## License
 

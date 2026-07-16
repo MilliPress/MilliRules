@@ -567,7 +567,7 @@ class RuleEngine
             if ($callback) {
                 try {
                     return new Conditions\Callback($type, $callback, $config, $this->context);
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     Logger::error('Error creating callback condition: ' . $e->getMessage());
                     return null;
                 }
@@ -578,16 +578,15 @@ class RuleEngine
         // Convert: is_user_logged_in → IsUserLoggedIn.
         $class_name = self::type_to_class_name($type, 'Conditions');
 
-        // Check if the class exists.
-        if (! class_exists($class_name)) {
+        // Check if the class exists and implements the expected interface.
+        if (! class_exists($class_name) || ! is_a($class_name, ConditionInterface::class, true)) {
             Logger::error('Unknown condition type: ' . $type);
             return null;
         }
 
         try {
-            $instance = new $class_name($config, $this->context);
-            return $instance instanceof ConditionInterface ? $instance : null;
-        } catch (\Exception $e) {
+            return new $class_name($config, $this->context);
+        } catch (\Throwable $e) {
             Logger::error('Error creating condition: ' . $e->getMessage());
             return null;
         }
@@ -618,7 +617,7 @@ class RuleEngine
             if ($callback) {
                 try {
                     return new Actions\Callback($type, $callback, $config, $this->context);
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     Logger::error('Error creating callback action: ' . $e->getMessage());
                     return null;
                 }
@@ -629,16 +628,15 @@ class RuleEngine
         // Convert: add_flag → AddFlag.
         $class_name = self::type_to_class_name($type, 'Actions');
 
-        // Check if the class exists.
-        if (! class_exists($class_name)) {
+        // Check if the class exists and implements the expected interface.
+        if (! class_exists($class_name) || ! is_a($class_name, ActionInterface::class, true)) {
             Logger::error('Unknown action type: ' . $type);
             return null;
         }
 
         try {
-            $instance = new $class_name($config, $this->context);
-            return $instance instanceof ActionInterface ? $instance : null;
-        } catch (\Exception $e) {
+            return new $class_name($config, $this->context);
+        } catch (\Throwable $e) {
             Logger::error('Error creating action: ' . $e->getMessage());
             return null;
         }
