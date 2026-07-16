@@ -6,6 +6,13 @@ menu_order: 40
 
 # Changelog
 
+## [1.2.1](https://github.com/MilliPress/MilliRules/compare/v1.2.0...v1.2.1) (2026-07-16)
+
+
+### Bug Fixes
+
+* never let a foreign condition or action class fatal the request ([45c11bf](https://github.com/MilliPress/MilliRules/commit/45c11bf9a351e5d3e0ad2499774b1bb42adf3f14))
+
 ## [1.2.0](https://github.com/MilliPress/MilliRules/compare/v1.1.6...v1.2.0) (2026-07-10)
 
 
