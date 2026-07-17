@@ -235,7 +235,7 @@ class Logger
 
         if ($count > 1) {
             $summary = sprintf(
-                'MilliRules [INFO]: Previous message repeated %d times over %d seconds',
+                '[MilliRules] [INFO]: Previous message repeated %d times over %d seconds',
                 $count - 1,
                 $time_elapsed
             );
@@ -268,7 +268,7 @@ class Logger
 
         // Format message
         $level_name     = $this->get_level_name($level);
-        $formatted_msg  = "MilliRules [{$level_name}]: {$message}";
+        $formatted_msg  = "[MilliRules] [{$level_name}]: {$message}";
 
         // Add context if provided
         if (! empty($context)) {
