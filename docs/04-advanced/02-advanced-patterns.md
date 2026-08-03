@@ -1,6 +1,6 @@
 ---
 title: 'Advanced Patterns'
-post_excerpt: 'Master advanced MilliRules techniques including early execution, performance optimization, debugging strategies, and complex rule patterns.'
+description: 'Advanced MilliRules techniques: early execution before WordPress loads, performance-ordered conditions, debugging with execution stats, and testing rules.'
 menu_order: 20
 ---
 

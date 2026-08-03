@@ -1,6 +1,6 @@
 ---
 title: 'Building Rules with the Fluent API'
-post_excerpt: 'Master the MilliRules fluent API for creating powerful rules with chained methods, match types, and flexible condition building.'
+description: 'Compose custom rules with the MilliRules fluent PHP API: chain when/then methods, combine match types in condition groups, and hook into WordPress.'
 menu_order: 30
 ---
 

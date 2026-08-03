@@ -1,6 +1,6 @@
 ---
 title: 'Dynamic Placeholders'
-post_excerpt: 'Use dynamic placeholders to inject runtime values into your MilliRules conditions and actions with flexible context-based resolution.'
+description: 'Inject runtime values into MilliRules actions with placeholders like {request.uri} and {user.login}, plus custom resolvers for your own PHP context data.'
 menu_order: 50
 ---
 

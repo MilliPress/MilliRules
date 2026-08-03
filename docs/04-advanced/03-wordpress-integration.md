@@ -1,6 +1,6 @@
 ---
 title: 'WordPress Integration Guide'
-post_excerpt: 'Complete guide to integrating MilliRules with WordPress including hooks, queries, plugins, themes, and WordPress-specific best practices.'
+description: 'Integrate the MilliRules PHP rules engine with WordPress: hook-based execution, is_* conditional tags, hook arguments in context, and WooCommerce patterns.'
 menu_order: 30
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: 'Understanding the Package System'
-post_excerpt: 'Deep dive into MilliRules package architecture, including PHP and WordPress packages, auto-loading, dependencies, and the PackageManager.'
+description: 'How MilliRules packages bundle conditions, actions, and context providers: the PHP and WordPress packages, dependency resolution, and lazy context loading.'
 menu_order: 20
 ---
 

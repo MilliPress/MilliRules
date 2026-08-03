@@ -1,6 +1,6 @@
 ---
 title: 'Creating Your First Rule'
-post_excerpt: 'Learn how to create your first MilliRules rule with this hands-on tutorial featuring a complete WordPress example.'
+description: 'Build your first MilliRules rule step by step: a WordPress example with URL conditions, a custom logging action, and fixes for common beginner mistakes.'
 menu_order: 30
 ---
 

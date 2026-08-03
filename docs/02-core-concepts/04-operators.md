@@ -1,6 +1,6 @@
 ---
 title: 'Operators and Pattern Matching'
-post_excerpt: 'Complete guide to MilliRules operators including equality, comparison, pattern matching with wildcards and regex, and boolean logic.'
+description: 'Guide to all 13 MilliRules matching operators: equality, comparison, LIKE wildcards, REGEXP, and fixes when the value does not match the pattern you expect.'
 menu_order: 40
 ---
 

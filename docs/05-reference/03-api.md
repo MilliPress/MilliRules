@@ -1,6 +1,6 @@
 ---
 title: 'Complete API Reference'
-post_excerpt: 'Comprehensive API reference for all MilliRules classes, methods, interfaces, and functions with parameters, return types, and usage examples.'
+description: 'Full API documentation for MilliRules: every public class and method with parameters, return types, and PHP examples, from Rules::create() to ArgumentSchema.'
 menu_order: 30
 ---
 

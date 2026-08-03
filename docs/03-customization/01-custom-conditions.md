@@ -1,6 +1,6 @@
 ---
 title: 'Creating Custom Conditions'
-post_excerpt: 'Learn how to create custom conditions in MilliRules using callback functions or BaseCondition classes for flexible conditional logic.'
+description: 'Four ways to create custom conditions in MilliRules: inline callbacks, registered PHP closures, and BaseCondition classes with operator and metadata support.'
 menu_order: 10
 ---
 

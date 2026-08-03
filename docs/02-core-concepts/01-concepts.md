@@ -1,6 +1,6 @@
 ---
-title: 'Core Concepts - Rules, Conditions, and Actions'
-post_excerpt: 'Understand the fundamental architecture of MilliRules including rules, conditions, actions, context, and the package system.'
+title: 'Rules, Conditions, and Actions'
+description: 'How MilliRules works under the hood: rules combine conditions and actions, execute in order against a shared context, and use locking to prevent overrides.'
 menu_order: 10
 ---
 

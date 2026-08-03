@@ -1,6 +1,6 @@
 ---
 title: 'Built-in Actions Reference'
-post_excerpt: 'Learn about MilliRules action system, including custom callback actions, class-based actions, and creating reusable action patterns.'
+description: 'How the MilliRules action system works: callback and class-based actions, execution order, context access, and reusable patterns for redirects and caching.'
 menu_order: 20
 ---
 

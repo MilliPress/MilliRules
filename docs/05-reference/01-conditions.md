@@ -1,6 +1,6 @@
 ---
 title: 'Built-in Conditions Reference'
-post_excerpt: 'Complete reference guide for all built-in MilliRules conditions including PHP request conditions and WordPress-specific conditions.'
+description: 'Reference for every built-in MilliRules condition: PHP request URL, method, header, cookie, and constant checks plus WordPress is_* and has_* conditionals.'
 menu_order: 10
 ---
 

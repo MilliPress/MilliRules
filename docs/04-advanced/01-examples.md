@@ -1,6 +1,6 @@
 ---
 title: 'Real-World Examples'
-post_excerpt: 'Complete, working examples of MilliRules implementations including caching, access control, redirects, content manipulation, and more.'
+description: 'Complete MilliRules examples for WordPress: page caching, access control, API rate limiting, feature flags, WooCommerce rules, and a full membership system.'
 menu_order: 10
 ---
 

@@ -8,7 +8,7 @@
       "package-name": "millipress/millirules",
       "include-component-in-tag": false,
       "changelog-path": "docs/05-reference/04-changelog.md",
-      "changelog-header": "---\ntitle: 'Changelog'\npost_excerpt: 'Version-by-version breakdown of new features, bug fixes, refactoring, and API changes in MilliRules.'\nmenu_order: 40\n---\n",
+      "changelog-header": "---\ntitle: 'MilliRules Changelog'\ndescription: 'Version history for the MilliRules PHP rules engine: new features, bug fixes, and breaking changes for every release, from 0.1.0 to the current version.'\nmenu_order: 40\n---\n",
       "extra-files": [
         {
           "type": "generic",

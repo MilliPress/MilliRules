@@ -1,6 +1,6 @@
 ---
 title: 'Creating Custom Actions'
-post_excerpt: 'Learn how to create custom actions in MilliRules using callback functions or ActionInterface classes for flexible, reusable functionality.'
+description: 'Create custom actions in MilliRules with PHP callbacks or BaseAction classes: typed argument access, placeholder resolution, and metadata for UI rule builders.'
 menu_order: 20
 ---
 

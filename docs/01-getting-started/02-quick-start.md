@@ -1,6 +1,6 @@
 ---
 title: 'Quick Start Guide'
-post_excerpt: 'Get MilliRules up and running in minutes with this step-by-step installation and initialization guide.'
+description: 'Install MilliRules via Composer and initialize the PHP rules engine in minutes, with package auto-detection, verification steps, and common pitfalls to avoid.'
 menu_order: 20
 ---
 

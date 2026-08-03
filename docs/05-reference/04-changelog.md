@@ -1,6 +1,6 @@
 ---
 title: 'MilliRules Changelog'
-post_excerpt: 'Version-by-version breakdown of new features, bug fixes, refactoring, and API changes in MilliRules.'
+description: 'Version history for the MilliRules PHP rules engine: new features, bug fixes, and breaking changes for every release, from 0.1.0 to the current version.'
 menu_order: 40
 ---
 

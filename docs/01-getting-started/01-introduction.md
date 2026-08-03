@@ -1,6 +1,6 @@
 ---
 title: 'Introduction to MilliRules'
-post_excerpt: 'Discover MilliRules, a powerful rule engine for PHP and WordPress that simplifies conditional logic with an elegant fluent API.'
+description: 'MilliRules is a declarative PHP rules engine for WordPress and any PHP app. Define conditions and actions with a fluent when/then API instead of if-else chains.'
 menu_order: 10
 ---
 

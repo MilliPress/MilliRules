@@ -1,6 +1,6 @@
 ---
 title: 'Creating Custom Packages'
-post_excerpt: 'Learn how to create custom MilliRules packages with conditions, actions, context building, and placeholder resolvers for complete extensibility.'
+description: 'Bundle custom conditions, actions, context providers, and placeholder resolvers into reusable MilliRules packages, with a complete PHP membership example.'
 menu_order: 30
 ---
 
