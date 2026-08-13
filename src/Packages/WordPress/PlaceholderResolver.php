@@ -67,6 +67,22 @@ class PlaceholderResolver extends PhpPlaceholderResolver
      */
     protected function register_wordpress_resolvers(): void
     {
+        self::register_placeholders();
+    }
+
+    /**
+     * Register this package's placeholder resolvers.
+     *
+     * Includes the PHP package's, which this resolver inherits.
+     *
+     * @since 1.3.0
+     *
+     * @return void
+     */
+    public static function register_placeholders(): void
+    {
+        parent::register_placeholders();
+
         // WordPress resolver: {post.id}, {user.login}, {query.is_singular}, {constants.WP_DEBUG}
         self::register_placeholder(
             'wp',
@@ -75,8 +91,7 @@ class PlaceholderResolver extends PhpPlaceholderResolver
                     return null;
                 }
 
-                // Use the resolve_nested helper to navigate nested paths.
-                return $this->resolve_nested($context['wp'], $parts);
+                return self::walk_path($context['wp'], $parts);
             }
         );
     }

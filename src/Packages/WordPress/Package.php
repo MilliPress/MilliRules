@@ -120,6 +120,20 @@ class Package extends BasePackage
     }
 
     /**
+     * Register this package's namespaces and placeholder resolvers.
+     *
+     * @since 1.3.0
+     *
+     * @return void
+     */
+    public function register_namespaces(): void
+    {
+        parent::register_namespaces();
+
+        PlaceholderResolver::register_placeholders();
+    }
+
+    /**
      * Check if this package is available in the current environment.
      *
      * WordPress package is available if WordPress functions exist.

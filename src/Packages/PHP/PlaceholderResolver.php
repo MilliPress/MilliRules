@@ -60,6 +60,21 @@ class PlaceholderResolver extends BasePlaceholderResolver
      */
     protected function register_default_resolvers(): void
     {
+        self::register_placeholders();
+    }
+
+    /**
+     * Register this package's placeholder resolvers.
+     *
+     * Called when the package registers, so the set does not depend on whether
+     * a resolver has been instantiated anywhere.
+     *
+     * @since 1.3.0
+     *
+     * @return void
+     */
+    public static function register_placeholders(): void
+    {
         // Cookie resolver: {cookie:name}
         self::register_placeholder(
             'cookie',
@@ -160,6 +175,20 @@ class PlaceholderResolver extends BasePlaceholderResolver
      * @return mixed|null The resolved value or null if not found.
      */
     protected function resolve_nested($data, array $parts)
+    {
+        return self::walk_path($data, $parts);
+    }
+
+    /**
+     * Resolve nested path in an array, without an instance.
+     *
+     * @since 1.3.0
+     *
+     * @param mixed              $data  The data to navigate.
+     * @param array<int, string> $parts The path parts.
+     * @return mixed|null The resolved value or null if not found.
+     */
+    protected static function walk_path($data, array $parts)
     {
         $current = $data;
 

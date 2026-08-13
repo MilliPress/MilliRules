@@ -7,6 +7,7 @@ use MilliRules\Context;
 use MilliRules\PlaceholderResolver as BasePlaceholderResolver;
 use MilliRules\Packages\PHP\Package as PhpPackage;
 use MilliRules\Packages\PHP\PlaceholderResolver as PhpPlaceholderResolver;
+use MilliRules\Packages\WordPress\Package as WordPressPackage;
 use MilliRules\Packages\WordPress\PlaceholderResolver as WordPressPlaceholderResolver;
 
 /**
@@ -210,6 +211,33 @@ class PackagePlaceholderResolverTest extends TestCase
         } finally {
             $_SERVER = $original;
         }
+    }
+
+    /**
+     * Registering the package must be enough; no resolver instance needed.
+     */
+    public function testPackageRegistrationRegistersPlaceholders(): void
+    {
+        $this->assertSame([], BasePlaceholderResolver::get_registered_placeholders());
+
+        ( new PhpPackage() )->register_namespaces();
+
+        $registered = BasePlaceholderResolver::get_registered_placeholders();
+
+        $this->assertContains('cookie', $registered);
+        $this->assertContains('param', $registered);
+        $this->assertContains('header', $registered);
+    }
+
+    public function testWordPressPackageRegistrationRegistersItsPlaceholders(): void
+    {
+        ( new WordPressPackage() )->register_namespaces();
+
+        $registered = BasePlaceholderResolver::get_registered_placeholders();
+
+        $this->assertContains('wp', $registered);
+        // Inherited from the PHP resolver.
+        $this->assertContains('cookie', $registered);
     }
 
     /**
