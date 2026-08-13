@@ -42,6 +42,42 @@ class User extends BaseContext
     }
 
     /**
+     * The keys a user exposes.
+     *
+     * @since 1.3.0
+     *
+     * @return array<int, string> The known user keys.
+     */
+    public function get_keys(): array
+    {
+        return array( 'id', 'login', 'email', 'roles', 'logged_in' );
+    }
+
+    /**
+     * Get the human-readable label.
+     *
+     * @since 1.3.0
+     *
+     * @return string The label.
+     */
+    public function get_label(): string
+    {
+        return 'Current User';
+    }
+
+    /**
+     * Get the description.
+     *
+     * @since 1.3.0
+     *
+     * @return string The description.
+     */
+    public function get_description(): string
+    {
+        return 'The current user, for example {user.id} or {user.logged_in}.';
+    }
+
+    /**
      * Build the user context data.
      *
      * @since 0.1.0

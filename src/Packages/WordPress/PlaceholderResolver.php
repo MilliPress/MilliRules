@@ -32,7 +32,7 @@ use MilliRules\Packages\PHP\PlaceholderResolver as PhpPlaceholderResolver;
  * - {user.logged_in} - Whether user is logged in
  * - {user.login} - User login name
  * - {user.email} - User email
- * - {user.display_name} - User display name
+ * - {user.roles} - User roles
  * - {query.post_type} - Query variable (post type)
  * - {query.paged} - Query variable (pagination)
  * - {query.s} - Query variable (search term)

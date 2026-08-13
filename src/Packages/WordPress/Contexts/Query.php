@@ -22,6 +22,8 @@ use MilliRules\Contexts\BaseContext;
  * Allows access to WordPress query variables like post_type, paged, s, m, etc.
  * Used by QueryVar condition to check specific query variables.
  *
+ * Declares no keys: plugins add their own via the query_vars filter.
+ *
  * @since 0.1.0
  */
 class Query extends BaseContext
@@ -36,6 +38,30 @@ class Query extends BaseContext
     public function get_key(): string
     {
         return 'query';
+    }
+
+    /**
+     * Get the human-readable label.
+     *
+     * @since 1.3.0
+     *
+     * @return string The label.
+     */
+    public function get_label(): string
+    {
+        return 'Query Var';
+    }
+
+    /**
+     * Get the description.
+     *
+     * @since 1.3.0
+     *
+     * @return string The description.
+     */
+    public function get_description(): string
+    {
+        return 'A WordPress query variable by name, for example {query.post_type}.';
     }
 
     /**

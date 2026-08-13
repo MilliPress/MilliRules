@@ -12,8 +12,15 @@
 use MilliRules\Rules;
 use MilliRules\RuleEngine;
 use MilliRules\Context;
+use MilliRules\PlaceholderResolver;
 use MilliRules\Actions\ActionMeta;
 use MilliRules\Conditions\ConditionMeta;
+use MilliRules\Contexts\BaseContext;
+use MilliRules\Packages\PHP\PlaceholderResolver as PhpPlaceholderResolver;
+use MilliRules\Packages\WordPress\Contexts\Post as WpPost;
+use MilliRules\Packages\WordPress\Contexts\Query as WpQuery;
+use MilliRules\Packages\WordPress\Contexts\Term as WpTerm;
+use MilliRules\Packages\WordPress\Contexts\User as WpUser;
 
 // -----------------------------------------------------------------
 // Helper: clear all static registries between tests
@@ -46,6 +53,8 @@ function clearRulesState(): void
             $property->setValue(null, array());
         }
     }
+
+    PlaceholderResolver::reset();
 }
 
 beforeEach(function () {
@@ -629,4 +638,162 @@ test('validate returns empty array for valid rule', function () {
     ]);
 
     expect($errors)->toBe([]);
+});
+
+// =================================================================
+// get_all_placeholder_metas()
+// =================================================================
+
+test('get_all_placeholder_metas discovers context classes', function () {
+    $metas = Rules::get_all_placeholder_metas();
+
+    expect(array_keys($metas))->toContain('request', 'param', 'cookie', 'header');
+    expect($metas['request']['source'])->toBe('context');
+});
+
+test('get_all_placeholder_metas does not change once a package resolver exists', function () {
+    // The package resolvers register cookie/param/header from their constructor.
+    $before = Rules::get_all_placeholder_metas();
+
+    new PhpPlaceholderResolver(new Context());
+
+    expect(Rules::get_all_placeholder_metas())->toBe($before);
+});
+
+test('get_all_placeholder_metas keeps context metadata when a resolver shares its name', function () {
+    // 'cookie' exists twice: as a context class and as a package resolver.
+    new PhpPlaceholderResolver(new Context());
+
+    $metas = Rules::get_all_placeholder_metas();
+
+    expect($metas['cookie']['source'])->toBe('context');
+    expect($metas['cookie']['label'])->toBe('Cookie');
+});
+
+test('get_all_placeholder_metas labels every built-in context', function () {
+    $metas = Rules::get_all_placeholder_metas();
+
+    expect($metas['request']['label'])->toBe('Request');
+    expect($metas['header']['label'])->toBe('Request Header');
+    expect($metas['param']['label'])->toBe('Request Parameter');
+});
+
+test('every discovered context describes itself', function () {
+    $metas = Rules::get_all_placeholder_metas();
+
+    foreach ($metas as $category => $meta) {
+        expect($meta['description'])->toBeString();
+
+        if ('context' === $meta['source']) {
+            expect($meta['description'])->not->toBe('', "context '{$category}' has no description");
+        }
+    }
+});
+
+test('context descriptions name a concrete placeholder', function () {
+    $metas = Rules::get_all_placeholder_metas();
+
+    expect($metas['param']['description'])->toContain('{param.');
+    expect($metas['cookie']['description'])->toContain('{cookie.');
+    // request and header overlap, so each points at the other.
+    expect($metas['header']['description'])->toContain('{request.headers}');
+    expect($metas['request']['description'])->toContain('{request.headers.accept}');
+});
+
+test('a custom-registered placeholder has an empty description', function () {
+    Rules::register_placeholder('tenant', function (Context $context, array $parts) {
+        return 'acme';
+    });
+
+    $metas = Rules::get_all_placeholder_metas();
+
+    expect($metas['tenant']['description'])->toBe('');
+});
+
+test('get_all_placeholder_metas leaves out a context this environment cannot answer', function () {
+    // The WordPress contexts gate on WordPress being loaded.
+    $metas = Rules::get_all_placeholder_metas();
+
+    expect($metas)->not->toHaveKey('post');
+});
+
+test('get_all_placeholder_metas reports a closed key set only where there is one', function () {
+    // A cookie is named by the caller; the request is not.
+    $metas = Rules::get_all_placeholder_metas();
+
+    expect($metas['request']['keys'])->toContain('host', 'uri', 'headers');
+    expect($metas['request']['keys'])->not->toContain('param');
+    expect($metas['cookie']['keys'])->toBe([]);
+});
+
+test('get_all_placeholder_metas includes a placeholder a plugin registered', function () {
+    Rules::register_placeholder('tenant', function (Context $context, array $parts) {
+        return 'acme';
+    });
+
+    $metas = Rules::get_all_placeholder_metas();
+
+    expect($metas)->toHaveKey('tenant');
+    expect($metas['tenant']['source'])->toBe('custom');
+    expect($metas['tenant']['keys'])->toBe([]);
+});
+
+test('get_all_placeholder_metas discovers a context a plugin registered', function () {
+    RuleEngine::register_namespace('Contexts', 'MilliRules\\Tests\\Unit\\Fixtures\\Contexts');
+
+    $metas = Rules::get_all_placeholder_metas();
+
+    expect($metas)->toHaveKey('tenant_ctx');
+    expect($metas['tenant_ctx']['source'])->toBe('context');
+    expect($metas['tenant_ctx']['label'])->toBe('Tenant');
+    expect($metas['tenant_ctx']['keys'])->toBe(['id', 'plan']);
+});
+
+test('get_all_placeholder_metas survives a foreign context that throws', function () {
+    RuleEngine::register_namespace('Contexts', 'MilliRules\\Tests\\Unit\\Fixtures\\Contexts');
+
+    $metas = Rules::get_all_placeholder_metas();
+
+    expect($metas)->not->toHaveKey('broken_constructor');
+    expect($metas)->not->toHaveKey('broken_keys');
+    expect($metas)->toHaveKey('request');
+    expect($metas)->toHaveKey('tenant_ctx');
+});
+
+// =================================================================
+// BaseContext::get_keys() / get_label() / get_description()
+// =================================================================
+
+test('WordPress contexts declare their key sets', function () {
+    // is_available() keeps these out of the catalog in a bare PHP process.
+    $context = new Context();
+
+    expect((new WpPost($context))->get_keys())
+        ->toBe(['id', 'type', 'status', 'author', 'parent', 'name', 'title']);
+    expect((new WpUser($context))->get_keys())
+        ->toBe(['id', 'login', 'email', 'roles', 'logged_in']);
+    expect((new WpTerm($context))->get_keys())
+        ->toBe(['id', 'slug', 'name', 'taxonomy']);
+});
+
+test('query vars stay open-ended because plugins can add their own', function () {
+    expect((new WpQuery(new Context()))->get_keys())->toBe([]);
+});
+
+test('a context without a label falls back to its key', function () {
+    $context = new class (new Context()) extends BaseContext {
+        public function get_key(): string
+        {
+            return 'unlabelled';
+        }
+
+        protected function build(): array
+        {
+            return array();
+        }
+    };
+
+    expect($context->get_label())->toBe('unlabelled');
+    expect($context->get_keys())->toBe([]);
+    expect($context->get_description())->toBe('');
 });

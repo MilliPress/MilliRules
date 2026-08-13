@@ -116,6 +116,8 @@ abstract class BasePackage implements PackageInterface
                 Rules::register_namespace('Conditions', $namespace);
             } elseif (strpos($namespace, '\\Actions') !== false) {
                 Rules::register_namespace('Actions', $namespace);
+            } elseif (strpos($namespace, '\\Contexts') !== false) {
+                Rules::register_namespace('Contexts', $namespace);
             }
         }
     }

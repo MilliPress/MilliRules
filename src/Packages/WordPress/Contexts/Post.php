@@ -44,6 +44,44 @@ class Post extends BaseContext
     }
 
     /**
+     * The keys a post exposes.
+     *
+     * Listed, not read off build(), whose shape varies with the queried object.
+     *
+     * @since 1.3.0
+     *
+     * @return array<int, string> The known post keys.
+     */
+    public function get_keys(): array
+    {
+        return array( 'id', 'type', 'status', 'author', 'parent', 'name', 'title' );
+    }
+
+    /**
+     * Get the human-readable label.
+     *
+     * @since 1.3.0
+     *
+     * @return string The label.
+     */
+    public function get_label(): string
+    {
+        return 'Post';
+    }
+
+    /**
+     * Get the description.
+     *
+     * @since 1.3.0
+     *
+     * @return string The description.
+     */
+    public function get_description(): string
+    {
+        return 'The queried post, for example {post.id} or {post.type}.';
+    }
+
+    /**
      * Build the post context data.
      *
      * @since 0.1.0

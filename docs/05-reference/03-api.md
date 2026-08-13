@@ -698,6 +698,62 @@ foreach ($actions as $type => $meta) {
 
 ---
 
+##### `get_all_placeholder_metas(): array`
+
+Get every placeholder category a rule value may use, as `{category.key}`.
+
+Placeholders come from two places, and a caller that wants to tell a valid placeholder from a mistyped one needs both:
+
+- **Context classes** found in the registered `Contexts` namespaces (`source: 'context'`)
+- **Categories registered** with [`register_placeholder()`](#register_placeholderstring-category-callable-resolver) (`source: 'custom'`)
+
+This matters because an unresolvable placeholder is **left in the value verbatim** rather than raising an error — so `{reqest.host}` silently turns a per-visitor value into a constant string. Validate against this catalog before storing a rule.
+
+An empty `keys` array means the key is chosen by the caller rather than by the context — a cookie name, a query parameter, a WordPress query var. A non-empty `keys` array is closed: anything outside it will not resolve.
+
+Contexts that are unavailable in the current environment are omitted, so a bare PHP process does not advertise `{post.id}`. Where a context class and a custom resolver share a name, the context wins, since it is the one carrying a label and a key set.
+
+Results are **not** cached: custom resolvers can be registered at any point in the request.
+
+`description` is one sentence naming a concrete `{category.key}`, written for both a person choosing a placeholder in a rule builder and an AI client that has to pick one without guessing. It is empty for a custom resolver, which has no way to supply one. The strings are raw English by design — consumers exclude vendored dependencies from POT extraction, so translate on your side and use these as the fallback.
+
+**Returns**: `array<string, array{label: string, description: string, keys: array<int, string>, source: string}>` — map of category to metadata
+
+**Example**:
+```php
+$placeholders = Rules::get_all_placeholder_metas();
+
+foreach ($placeholders as $category => $meta) {
+    echo $category;              // 'request'
+    echo $meta['label'];         // 'Request'
+    echo $meta['description'];   // 'The current HTTP request, for example {request.host} ...'
+    print_r($meta['keys']);      // ['method', 'uri', 'scheme', 'host', ...]
+    echo $meta['source'];        // 'context'
+}
+
+// Reject a mistyped placeholder before the rule is stored.
+function placeholder_is_known(string $placeholder): bool {
+    $catalog = Rules::get_all_placeholder_metas();
+    [$category, $key] = array_pad(explode('.', $placeholder, 2), 2, '');
+
+    if (! isset($catalog[$category])) {
+        return false;
+    }
+
+    $keys = $catalog[$category]['keys'];
+
+    // Empty keys = caller-named (cookie, param, header, query var).
+    return empty($keys) || in_array($key, $keys, true);
+}
+
+placeholder_is_known('request.host');      // true
+placeholder_is_known('reqest.host');       // false — mistyped category
+placeholder_is_known('request.hostname');  // false — not a request key
+placeholder_is_known('cookie.anything');   // true  — caller-named
+```
+
+---
+
 ##### `validate(array $rule): array`
 
 Validate a rule configuration against the engine's registry.

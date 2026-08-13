@@ -92,6 +92,32 @@ class PlaceholderResolver
     }
 
     /**
+     * The placeholder categories registered by plugins and themes.
+     *
+     * @since 1.3.0
+     *
+     * @return array<int, string> The registered category names.
+     */
+    public static function get_registered_placeholders(): array
+    {
+        return array_keys(self::$custom_resolvers);
+    }
+
+    /**
+     * Drop every registered custom resolver.
+     *
+     * The registry is static; use this for tests needing isolation.
+     *
+     * @since 1.3.0
+     *
+     * @return void
+     */
+    public static function reset(): void
+    {
+        self::$custom_resolvers = array();
+    }
+
+    /**
      * Get the value for a placeholder.
      *
      * Ensures the relevant context section is loaded before resolving.

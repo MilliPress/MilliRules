@@ -41,6 +41,42 @@ class Term extends BaseContext
     }
 
     /**
+     * The keys a term exposes.
+     *
+     * @since 1.3.0
+     *
+     * @return array<int, string> The known term keys.
+     */
+    public function get_keys(): array
+    {
+        return array( 'id', 'slug', 'name', 'taxonomy' );
+    }
+
+    /**
+     * Get the human-readable label.
+     *
+     * @since 1.3.0
+     *
+     * @return string The label.
+     */
+    public function get_label(): string
+    {
+        return 'Term';
+    }
+
+    /**
+     * Get the description.
+     *
+     * @since 1.3.0
+     *
+     * @return string The description.
+     */
+    public function get_description(): string
+    {
+        return 'The queried term, for example {term.slug} or {term.taxonomy}.';
+    }
+
+    /**
      * Build the term context data.
      *
      * @since 0.1.0

@@ -37,6 +37,30 @@ class Cookie extends BaseContext
     }
 
     /**
+     * Get the human-readable label.
+     *
+     * @since 1.3.0
+     *
+     * @return string The label.
+     */
+    public function get_label(): string
+    {
+        return 'Cookie';
+    }
+
+    /**
+     * Get the description.
+     *
+     * @since 1.3.0
+     *
+     * @return string The description.
+     */
+    public function get_description(): string
+    {
+        return 'A cookie by name, for example {cookie.geo_country}.';
+    }
+
+    /**
      * Build the cookie context data.
      *
      * Captures $_COOKIE at execution time (when context is actually needed)

@@ -138,6 +138,60 @@ public function register_providers(Context $context): void {
 
 **Benefit**: Data is only retrieved when `$context->get('my_custom.value1')` is called.
 
+### Class-Based Context Provider
+
+A context placed in your package's `Contexts` namespace is discovered automatically, and — unlike a closure — it can describe itself to the placeholder catalog returned by `Rules::get_all_placeholder_metas()`.
+
+```php
+namespace MyPlugin\Contexts;
+
+use MilliRules\Contexts\BaseContext;
+
+class Tenant extends BaseContext {
+    public function get_key(): string {
+        return 'tenant';
+    }
+
+    // Shown in rule-builder UIs. Defaults to the key.
+    public function get_label(): string {
+        return 'Tenant';
+    }
+
+    // One sentence naming a concrete {category.key}. Read by a person picking
+    // a placeholder and by AI clients choosing one. Defaults to ''.
+    public function get_description(): string {
+        return 'The current tenant, for example {tenant.plan}.';
+    }
+
+    // The keys {tenant.*} accepts. Return an empty array (the default) when
+    // the key is chosen by the caller, as with a cookie name.
+    public function get_keys(): array {
+        return ['id', 'plan', 'seats'];
+    }
+
+    // Skipped everywhere if the environment can't answer it.
+    public function is_available(): bool {
+        return function_exists('my_plugin_current_tenant');
+    }
+
+    protected function build(): array {
+        $tenant = my_plugin_current_tenant();
+
+        return [
+            'tenant' => [
+                'id'    => $tenant->id,
+                'plan'  => $tenant->plan,
+                'seats' => $tenant->seats,
+            ],
+        ];
+    }
+}
+```
+
+**Declare `get_keys()` whenever the set is closed.** An unresolvable placeholder is left in the value verbatim rather than raising an error, so `{tenant.pln}` would silently become the literal string `{tenant.pln}` instead of the plan. Declaring the keys lets a rule builder reject the typo before the rule is stored.
+
+Return keys as a **fixed list**, not one derived from `build()`, unless `build()` returns the same shape unconditionally — a catalog whose shape changed with the current request would be useless for validating a stored rule.
+
 ### Dynamic Context Provider
 
 ```php

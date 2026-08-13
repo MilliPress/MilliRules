@@ -47,6 +47,48 @@ class Request extends BaseContext
     }
 
     /**
+     * Get the human-readable label.
+     *
+     * @since 1.3.0
+     *
+     * @return string The label.
+     */
+    public function get_label(): string
+    {
+        return 'Request';
+    }
+
+    /**
+     * Get the description.
+     *
+     * @since 1.3.0
+     *
+     * @return string The description.
+     */
+    public function get_description(): string
+    {
+        return 'The current HTTP request, for example {request.host} or {request.method}. '
+            . 'Headers are a nested map, so {request.headers.accept} resolves too.';
+    }
+
+    /**
+     * The keys the request exposes.
+     *
+     * Read off build(), which returns one unconditional literal, so the two
+     * cannot drift apart.
+     *
+     * @since 1.3.0
+     *
+     * @return array<int, string> The known request keys.
+     */
+    public function get_keys(): array
+    {
+        $data = $this->build();
+
+        return array_keys(is_array($data['request'] ?? null) ? $data['request'] : array());
+    }
+
+    /**
      * Build the request context data.
      *
      * Captures $_SERVER at execution time (when context is actually needed)

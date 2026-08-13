@@ -131,6 +131,48 @@ abstract class BaseContext
     }
 
     /**
+     * The keys this context exposes, for placeholders such as {request.host}.
+     *
+     * Override wherever the set is closed. Empty means the key is chosen by the
+     * caller, as with a cookie name.
+     *
+     * @since 1.3.0
+     *
+     * @return array<int, string> Known keys, or empty when any key is valid.
+     */
+    public function get_keys(): array
+    {
+        return array();
+    }
+
+    /**
+     * A human-readable name for this context.
+     *
+     * @since 1.3.0
+     *
+     * @return string Defaults to the context key.
+     */
+    public function get_label(): string
+    {
+        return $this->get_key();
+    }
+
+    /**
+     * What this context offers, in one sentence naming an example key.
+     *
+     * Raw English, no translation function: consumers exclude vendored
+     * dependencies from POT extraction, so translate on their side.
+     *
+     * @since 1.3.0
+     *
+     * @return string Empty when the context does not describe itself.
+     */
+    public function get_description(): string
+    {
+        return '';
+    }
+
+    /**
      * Check if this context is available in the current environment.
      *
      * Override to check for required functions, classes, or globals before

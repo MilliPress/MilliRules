@@ -100,20 +100,32 @@ class RuleEngine
             'MilliRules\Packages\WordPress\Conditions',
         ),
         'Actions'    => array( 'MilliRules\Actions' ),
+        'Contexts'   => array(
+            'MilliRules\Packages\PHP\Contexts',
+            'MilliRules\Packages\WordPress\Contexts',
+        ),
     );
 
     /**
-     * Register a namespace for condition/action resolution.
+     * The namespace types that can be registered and scanned.
+     *
+     * @since 1.3.0
+     * @var array<int, string>
+     */
+    public const NAMESPACE_TYPES = array( 'Conditions', 'Actions', 'Contexts' );
+
+    /**
+     * Register a namespace for condition/action/context resolution.
      *
      * @since 0.1.0
      *
-     * @param string $type      The type: 'Conditions' or 'Actions'.
+     * @param string $type      The type: 'Conditions', 'Actions' or 'Contexts'.
      * @param string $namespace The namespace to search (e.g., 'MyPlugin\Conditions').
      * @return void
      */
     public static function register_namespace(string $type, string $namespace): void
     {
-        if (! in_array($type, array( 'Conditions', 'Actions' ), true)) {
+        if (! in_array($type, self::NAMESPACE_TYPES, true)) {
             return;
         }
 
@@ -666,7 +678,8 @@ class RuleEngine
      * Discover all class-based type strings for a given namespace type.
      *
      * Scans all registered namespace directories for PHP files whose classes
-     * extend the appropriate base class (BaseCondition or BaseAction).
+     * extend the appropriate base class (BaseCondition, BaseAction or
+     * BaseContext).
      *
      * Uses the Composer autoloader (PSR-4) to resolve namespace prefixes to
      * directories. Falls back to the MilliRules src/ directory for the
@@ -675,18 +688,27 @@ class RuleEngine
      * @internal
      * @since 1.1.0
      *
-     * @param string $type 'Conditions' or 'Actions'.
+     * @param string $type 'Conditions', 'Actions' or 'Contexts'.
      * @return array<string, string> Map of type string => fully-qualified class name.
      */
     public static function scan_namespace_types(string $type): array
     {
-        $base_class = 'Conditions' === $type
-            ? Conditions\BaseCondition::class
-            : Actions\BaseAction::class;
+        $base_classes = array(
+            'Conditions' => Conditions\BaseCondition::class,
+            'Actions'    => Actions\BaseAction::class,
+            'Contexts'   => Contexts\BaseContext::class,
+        );
+
+        if (! isset($base_classes[ $type ])) {
+            return array();
+        }
+
+        $base_class = $base_classes[ $type ];
 
         $skip = array(
             Conditions\BaseCondition::class,
             Actions\BaseAction::class,
+            Contexts\BaseContext::class,
             Conditions\Callback::class,
             Actions\Callback::class,
             'MilliRules\Conditions\ConditionInterface',

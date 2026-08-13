@@ -4,6 +4,7 @@ namespace MilliRules\Tests;
 
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 use MilliRules\Packages\PackageManager;
+use MilliRules\PlaceholderResolver;
 
 /**
  * Base TestCase class with helper methods and WordPress function mocks
@@ -33,6 +34,9 @@ abstract class TestCase extends PHPUnitTestCase
 
         // Clear PackageManager state between tests
         PackageManager::reset();
+
+        // Clear statically registered placeholder resolvers between tests
+        PlaceholderResolver::reset();
 
         // Reset error logs
         $this->errorLogs = [];

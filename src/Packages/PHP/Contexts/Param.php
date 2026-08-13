@@ -37,6 +37,30 @@ class Param extends BaseContext
     }
 
     /**
+     * Get the human-readable label.
+     *
+     * @since 1.3.0
+     *
+     * @return string The label.
+     */
+    public function get_label(): string
+    {
+        return 'Request Parameter';
+    }
+
+    /**
+     * Get the description.
+     *
+     * @since 1.3.0
+     *
+     * @return string The description.
+     */
+    public function get_description(): string
+    {
+        return 'A URL query parameter by name, for example {param.utm_source}.';
+    }
+
+    /**
      * Build the param context data.
      *
      * Captures $_GET at execution time (when context is actually needed)

@@ -32,7 +32,7 @@ use MilliRules\Packages\PackageManager;
  * Registration Methods:
  * - Rules::register_condition()    - Register custom condition callbacks
  * - Rules::register_action()       - Register custom action callbacks
- * - Rules::register_namespace()    - Register namespaces for condition/action resolution
+ * - Rules::register_namespace()    - Register namespaces for condition/action/context resolution
  * - Rules::register_placeholder()  - Register custom placeholder resolvers
  *
  * Utility Methods:
@@ -383,16 +383,16 @@ class Rules
      * Register a namespace for condition/action resolution.
      *
      * Allows packages and plugins to register custom namespaces for the RuleEngine
-     * to search when resolving condition and action types.
+     * to search when resolving condition, action and context types.
      *
      * When a package name is provided, the namespace is also mapped to that package
      * for automatic package detection. This ensures rules using conditions/actions
      * from this namespace are correctly associated with the specified package.
      *
      * @since 0.1.0
-     * @since 0.1.0
+     * @since 1.3.0 Accepts the 'Contexts' type.
      *
-     * @param string      $type      The type: 'Conditions' or 'Actions'.
+     * @param string      $type      The type: 'Conditions', 'Actions' or 'Contexts'.
      * @param string      $namespace The namespace to search (e.g., 'MyPlugin\\Conditions').
      * @param string|null $package   Optional package name this namespace belongs to (e.g., 'WP', 'PHP').
      * @return void
@@ -746,6 +746,67 @@ class Rules
         }
 
         self::$all_condition_metas_cache = $result;
+        return $result;
+    }
+
+    /**
+     * Every placeholder category a rule value may use, as `{category.key}`.
+     *
+     * Collected from context classes in the registered Contexts namespaces and
+     * from categories registered with register_placeholder(). Callers need both
+     * to tell a valid placeholder from a mistyped one, since an unresolvable
+     * placeholder is left in the value verbatim.
+     *
+     * Context classes win over custom resolvers of the same name: they carry the
+     * label, description and key set. `keys` and `description` are empty where
+     * nothing declares them.
+     *
+     * @since 1.3.0
+     *
+     * @return array<string, array{label: string, description: string, keys: array<int, string>, source: string}>
+     */
+    public static function get_all_placeholder_metas(): array
+    {
+        $context = new Context();
+        $result  = array();
+
+        foreach (RuleEngine::scan_namespace_types('Contexts') as $class) {
+            if (! is_subclass_of($class, Contexts\BaseContext::class)) {
+                continue;
+            }
+
+            // A foreign context must not be able to fatal the catalog.
+            try {
+                $instance = new $class($context);
+
+                if (! $instance->is_available()) {
+                    continue;
+                }
+
+                $result[ $instance->get_key() ] = array(
+                    'label'       => $instance->get_label(),
+                    'description' => $instance->get_description(),
+                    'keys'        => array_values($instance->get_keys()),
+                    'source'      => 'context',
+                );
+            } catch (\Throwable $e) {
+                Logger::error('Error reading context placeholder meta from ' . $class . ': ' . $e->getMessage());
+            }
+        }
+
+        foreach (PlaceholderResolver::get_registered_placeholders() as $placeholder) {
+            if (isset($result[ $placeholder ])) {
+                continue;
+            }
+
+            $result[ $placeholder ] = array(
+                'label'       => $placeholder,
+                'description' => '',
+                'keys'        => array(),
+                'source'      => 'custom',
+            );
+        }
+
         return $result;
     }
 

@@ -161,19 +161,31 @@ Rules::create('process_request')
 
 ---
 
+### Header Placeholders
+
+Access request headers. Header names are matched case-insensitively.
+
+```php
+'{header.accept}'          // Accept header
+'{header.user-agent}'      // User-Agent header
+'{header.x-forwarded-for}' // X-Forwarded-For header
+```
+
+---
+
 ### WordPress Placeholders
 
 Access WordPress-specific data (available only when WordPress package is loaded).
 
 #### User Placeholders
 
-| Placeholder           | Description        | Example Value     |
-|-----------------------|--------------------|-------------------|
-| `{user.id}`           | User ID            | `123`             |
-| `{user.login}`        | User login name    | `john_doe`        |
-| `{user.email}`        | User email         | `john@example.com`|
-| `{user.display_name}` | Display name       | `John Doe`        |
-| `{user.roles}`        | User roles (array) | `administrator`   |
+| Placeholder         | Description        | Example Value     |
+|---------------------|--------------------|-------------------|
+| `{user.id}`         | User ID            | `123`             |
+| `{user.login}`      | User login name    | `john_doe`        |
+| `{user.email}`      | User email         | `john@example.com`|
+| `{user.roles}`      | User roles (array) | `administrator`   |
+| `{user.logged_in}`  | Whether logged in  | `1`, `` (empty)   |
 
 #### Post Placeholders
 
@@ -184,6 +196,17 @@ Access WordPress-specific data (available only when WordPress package is loaded)
 | `{post.type}`   | Post type    | `post`, `page`     |
 | `{post.status}` | Post status  | `publish`, `draft` |
 | `{post.author}` | Author ID    | `123`              |
+| `{post.parent}` | Parent ID    | `0`, `12`          |
+| `{post.name}`   | Post slug    | `my-blog-post`     |
+
+#### Term Placeholders
+
+| Placeholder       | Description   | Example Value |
+|-------------------|---------------|---------------|
+| `{term.id}`       | Term ID       | `7`           |
+| `{term.slug}`     | Term slug     | `news`        |
+| `{term.name}`     | Term name     | `News`        |
+| `{term.taxonomy}` | Taxonomy name | `category`    |
 
 #### Query Variable Placeholders
 
@@ -702,6 +725,32 @@ Rules::register_action('safe_wp_action', function($args, Context $context) {
 '{Request:URI}'
 '{REQUEST:URI}'
 ```
+
+---
+
+## Discovering Available Placeholders
+
+The set of placeholders depends on which packages are loaded and what plugins have registered, so it is not a fixed list. Ask the engine:
+
+```php
+$placeholders = Rules::get_all_placeholder_metas();
+
+// [
+//   'request' => [
+//       'label'       => 'Request',
+//       'description' => 'The current HTTP request, for example {request.host} ...',
+//       'keys'        => ['method', 'uri', ...],
+//       'source'      => 'context',
+//   ],
+//   ...
+// ]
+```
+
+An empty `keys` array means the key is chosen by you — a cookie name, a query parameter, a query var. A non-empty one is closed, so anything outside it will not resolve.
+
+This matters because an unresolvable placeholder is **left in the value verbatim** (see [Missing Context Data](#1-missing-context-data) above) — a typo like `{reqest.host}` fails silently, turning a per-visitor value into a constant string. If you build rules from user input, validate against this catalog first.
+
+See the [API reference](../05-reference/03-api.md#get_all_placeholder_metas-array) for the full contract.
 
 ---
 

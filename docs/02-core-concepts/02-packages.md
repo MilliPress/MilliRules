@@ -162,7 +162,6 @@ The **WordPress Package** provides WordPress-specific functionality.
     'id' => 1,
     'login' => 'admin',
     'email' => 'admin@example.com',
-    'display_name' => 'Administrator',
     'roles' => ['administrator'],
     'logged_in' => true,
 ],
