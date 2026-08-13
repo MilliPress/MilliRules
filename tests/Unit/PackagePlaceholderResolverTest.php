@@ -5,6 +5,7 @@ namespace MilliRules\Tests\Unit;
 use MilliRules\Tests\TestCase;
 use MilliRules\Context;
 use MilliRules\PlaceholderResolver as BasePlaceholderResolver;
+use MilliRules\Packages\PHP\Package as PhpPackage;
 use MilliRules\Packages\PHP\PlaceholderResolver as PhpPlaceholderResolver;
 use MilliRules\Packages\WordPress\PlaceholderResolver as WordPressPlaceholderResolver;
 
@@ -151,6 +152,115 @@ class PackagePlaceholderResolverTest extends TestCase
         $resolver = new PhpPlaceholderResolver($this->createExecutionContext($context));
 
         $this->assertEquals('John', $resolver->resolve('{user.name}'));
+    }
+
+    // ============================================
+    // Resolution against the contexts the engine builds
+    // ============================================
+
+    /**
+     * A context carrying the PHP package's own providers, as a real request has.
+     */
+    private function createPackageContext(): Context
+    {
+        $context = new Context();
+        ( new PhpPackage() )->register_context_providers($context);
+
+        return $context;
+    }
+
+    public function testPhpResolverReadsTheCookieContext(): void
+    {
+        $original = $_COOKIE;
+        $_COOKIE  = [ 'Session_ID' => 'abc123' ];
+
+        try {
+            $resolver = new PhpPlaceholderResolver($this->createPackageContext());
+
+            $this->assertEquals('abc123', $resolver->resolve('{cookie.session_id}'));
+            $this->assertEquals('{cookie.missing}', $resolver->resolve('{cookie.missing}'));
+        } finally {
+            $_COOKIE = $original;
+        }
+    }
+
+    public function testPhpResolverReadsTheParamContext(): void
+    {
+        $original = $_GET;
+        $_GET     = [ 'plan' => 'pro' ];
+
+        try {
+            $resolver = new PhpPlaceholderResolver($this->createPackageContext());
+
+            $this->assertEquals('pro', $resolver->resolve('{param.plan}'));
+        } finally {
+            $_GET = $original;
+        }
+    }
+
+    public function testPhpResolverReadsTheHeaderContext(): void
+    {
+        $original                = $_SERVER;
+        $_SERVER['HTTP_ACCEPT']  = 'text/html';
+
+        try {
+            $resolver = new PhpPlaceholderResolver($this->createPackageContext());
+
+            $this->assertEquals('text/html', $resolver->resolve('{header.accept}'));
+        } finally {
+            $_SERVER = $original;
+        }
+    }
+
+    /**
+     * Registering the package resolvers must not change any answer.
+     *
+     * They register into a static registry from their constructor, and the
+     * base resolver consults custom resolvers first — so a package resolver
+     * built anywhere reroutes resolution for the whole process, including for
+     * the base resolvers BaseAction and BaseCondition already hold.
+     */
+    public function testPackageResolverDoesNotChangeWhatPlaceholdersResolveTo(): void
+    {
+        $originalCookie         = $_COOKIE;
+        $originalGet            = $_GET;
+        $originalServer         = $_SERVER;
+        $_COOKIE                = [ 'session_id' => 'abc123' ];
+        $_GET                   = [ 'plan' => 'pro' ];
+        $_SERVER['HTTP_ACCEPT'] = 'text/html';
+
+        try {
+            $placeholders = [
+                '{cookie.session_id}',
+                '{param.plan}',
+                '{header.accept}',
+                '{request.method}',
+            ];
+
+            // What BaseAction and BaseCondition construct.
+            $base = new BasePlaceholderResolver($this->createPackageContext());
+
+            $before = [];
+            foreach ($placeholders as $placeholder) {
+                $before[ $placeholder ] = $base->resolve($placeholder);
+            }
+
+            new PhpPlaceholderResolver($this->createPackageContext());
+
+            $after = [];
+            foreach ($placeholders as $placeholder) {
+                $after[ $placeholder ] = $base->resolve($placeholder);
+            }
+
+            $this->assertSame($before, $after);
+            $this->assertSame('abc123', $before['{cookie.session_id}']);
+            $this->assertSame('pro', $before['{param.plan}']);
+            $this->assertSame('text/html', $before['{header.accept}']);
+        } finally {
+            $_COOKIE = $originalCookie;
+            $_GET    = $originalGet;
+            $_SERVER = $originalServer;
+        }
     }
 
     // ============================================

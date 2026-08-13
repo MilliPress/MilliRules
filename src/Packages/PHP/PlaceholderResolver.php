@@ -54,6 +54,7 @@ class PlaceholderResolver extends BasePlaceholderResolver
      * Register default HTTP placeholder resolvers.
      *
      * @since 0.1.0
+     * @since 1.3.0 Read the contexts, which is where the data actually is.
      *
      * @return void
      */
@@ -68,7 +69,7 @@ class PlaceholderResolver extends BasePlaceholderResolver
                 }
 
                 $cookie_name = $parts[0];
-                $cookies = $context['request']['cookies'] ?? array();
+                $cookies = $context['cookie'] ?? $context['request']['cookies'] ?? array();
 
                 if (! is_array($cookies)) {
                     return null;
@@ -91,7 +92,7 @@ class PlaceholderResolver extends BasePlaceholderResolver
                 }
 
                 $param_name = $parts[0];
-                $params = $context['request']['params'] ?? array();
+                $params = $context['param'] ?? $context['request']['params'] ?? array();
 
                 if (! is_array($params)) {
                     return null;
@@ -110,7 +111,7 @@ class PlaceholderResolver extends BasePlaceholderResolver
                 }
 
                 $header_name = $parts[0];
-                $headers = $context['request']['headers'] ?? array();
+                $headers = $context['header'] ?? $context['request']['headers'] ?? array();
 
                 if (! is_array($headers)) {
                     return null;
