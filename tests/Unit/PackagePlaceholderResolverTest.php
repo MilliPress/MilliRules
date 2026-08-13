@@ -214,6 +214,79 @@ class PackagePlaceholderResolverTest extends TestCase
     }
 
     /**
+     * The context keys built so far, sorted.
+     *
+     * @return array<int, string>
+     */
+    private function builtContexts(Context $context): array
+    {
+        $keys = array_keys($context->to_array());
+        sort($keys);
+
+        return $keys;
+    }
+
+    public function testRegisteringThePackageBuildsNoContexts(): void
+    {
+        $package = new PhpPackage();
+        $context = new Context();
+
+        $package->register_namespaces();
+        $package->register_context_providers($context);
+
+        $this->assertSame([], $this->builtContexts($context));
+
+        new PhpPlaceholderResolver($context);
+
+        $this->assertSame([], $this->builtContexts($context));
+    }
+
+    public function testEachPlaceholderBuildsOnlyTheContextItNeeds(): void
+    {
+        $originalCookie = $_COOKIE;
+        $originalGet    = $_GET;
+        $_COOKIE        = [ 'session_id' => 'abc123' ];
+        $_GET           = [ 'plan' => 'pro' ];
+
+        try {
+            $context  = $this->createPackageContext();
+            $resolver = new PhpPlaceholderResolver($context);
+
+            $resolver->resolve('{request.host}');
+            $this->assertSame([ 'request' ], $this->builtContexts($context));
+
+            $resolver->resolve('{cookie.session_id}');
+            $this->assertSame([ 'cookie', 'request' ], $this->builtContexts($context));
+
+            $resolver->resolve('{param.plan}');
+            $this->assertSame([ 'cookie', 'param', 'request' ], $this->builtContexts($context));
+        } finally {
+            $_COOKIE = $originalCookie;
+            $_GET    = $originalGet;
+        }
+    }
+
+    /**
+     * The header context declares request as a dependency rather than
+     * duplicating its SAPI fallbacks, so it pulls that one in with it.
+     */
+    public function testHeaderPlaceholderBuildsItsDependencyAndNothingElse(): void
+    {
+        $original               = $_SERVER;
+        $_SERVER['HTTP_ACCEPT'] = 'text/html';
+
+        try {
+            $context = $this->createPackageContext();
+
+            ( new PhpPlaceholderResolver($context) )->resolve('{header.accept}');
+
+            $this->assertSame([ 'header', 'request' ], $this->builtContexts($context));
+        } finally {
+            $_SERVER = $original;
+        }
+    }
+
+    /**
      * Registering the package must be enough; no resolver instance needed.
      */
     public function testPackageRegistrationRegistersPlaceholders(): void
