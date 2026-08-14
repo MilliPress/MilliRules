@@ -13,7 +13,6 @@
 
 namespace MilliRules;
 
-use MilliRules\Logger;
 use MilliRules\Actions\ActionMeta;
 use MilliRules\Conditions\ConditionMeta;
 use MilliRules\Builders\ConditionBuilder;
@@ -1429,6 +1428,17 @@ class Rules
             $rule['id']
         );
 
+        // A php-typed rule registered after the PHP phase has run can never
+        // execute: that phase happens once, before the framework loads. Move it
+        // to the WordPress phase, where it still governs the response.
+        if ('php' === $type && PackageManager::has_executed('PHP')) {
+            Logger::debug(
+                "Rule '{$rule['id']}' registered after the PHP phase ran - running it in the WordPress phase instead."
+            );
+
+            $type = 'wp';
+        }
+
         // Auto-add WP package if type is 'wp' and not already included.
         // This handles cases where hooks are used (->on()) but no WP conditions/actions are present.
         if ($type === 'wp' && ! in_array('WP', $required_packages, true)) {
@@ -1762,7 +1772,7 @@ class Rules
         string $rule_id
     ): string {
         // Validation 1: Explicit type='php' with WordPress packages.
-        if ($explicit_type === 'php' && in_array('WordPress', $required_packages, true)) {
+        if ($explicit_type === 'php' && in_array('WP', $required_packages, true)) {
             Logger::warning(
                 "Rule '{$rule_id}' has explicit type='php' but requires WordPress package - " .
                 'this may not work as expected. Consider using type=\'wp\' or omitting type parameter for auto-detection.'

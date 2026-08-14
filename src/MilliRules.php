@@ -210,7 +210,9 @@ class MilliRules
             }
 
             // Step 2: Validate and filter allowed_packages.
-            if (! empty($allowed_packages)) {
+            $filtered = ! empty($allowed_packages);
+
+            if ($filtered) {
                 $loaded_package_names = PackageManager::get_loaded_package_names();
                 $validated_packages   = array();
 
@@ -236,6 +238,15 @@ class MilliRules
                     Logger::warning('No valid packages in allowed_packages filter - no rules will execute');
                 }
             }
+
+            // The phase has run even when it had no rules to run, and a rule
+            // registered afterward must not be left waiting for it. Read from
+            // the caller's intent, not the validated list: a filter that named
+            // nothing loaded validates to empty, and treating that as "no
+            // filter" would mark every package as having run.
+            PackageManager::mark_executed(
+                $filtered ? $allowed_packages : PackageManager::get_loaded_package_names()
+            );
 
             // Step 3: Collect rules from packages.
             $all_rules = array();
