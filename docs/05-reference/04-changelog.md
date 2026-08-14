@@ -6,6 +6,27 @@ menu_order: 40
 
 # Changelog
 
+## [1.3.0](https://github.com/MilliPress/MilliRules/compare/v1.2.1...v1.3.0) (2026-08-14)
+
+
+### Features
+
+* Decide same-ID collisions by order instead of load sequence ([81f39bf](https://github.com/MilliPress/MilliRules/commit/81f39bf942e043bd40fca4cf04e1828194e410eb))
+* Expose a catalog of available placeholders for rule builders ([1642240](https://github.com/MilliPress/MilliRules/commit/16422409658d491bd56162e8f28dbfec32bd6686))
+
+
+### Bug Fixes
+
+* Move a php rule to the WordPress phase when that phase is over ([0821a4a](https://github.com/MilliPress/MilliRules/commit/0821a4a65b4982ff3b41a391b7f79a9e300cd009))
+* Resolve {cookie.x} and {param.x} from the data the engine builds ([0d0ab85](https://github.com/MilliPress/MilliRules/commit/0d0ab85eeb01a7ec9f63d051e86a921d855f8a34))
+* Skip an action whose placeholder resolved to nothing ([949e7a2](https://github.com/MilliPress/MilliRules/commit/949e7a283599ec00b983c15ae5e0d031791a96c4))
+
+
+### Refactoring
+
+* **logger:** Standardize log message formatting for consistency ([54c6ba2](https://github.com/MilliPress/MilliRules/commit/54c6ba24c87d61dec044e817a34e07aa35b25470))
+* Register package placeholders when the package registers ([90385ea](https://github.com/MilliPress/MilliRules/commit/90385eaa1fc96a8fbb5ac90c78fba5776e71face))
+
 ## [1.2.1](https://github.com/MilliPress/MilliRules/compare/v1.2.0...v1.2.1) (2026-07-16)
 
 
