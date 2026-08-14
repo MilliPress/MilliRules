@@ -43,6 +43,14 @@ class TestAction extends BaseAction
     {
         return $this->get_arg($key, $default);
     }
+
+    /**
+     * Public wrapper for testing usable_arg() method.
+     */
+    public function test_usable_arg($key)
+    {
+        return $this->usable_arg($key);
+    }
 }
 
 /**
@@ -466,4 +474,35 @@ test('get_arg() positional fallback handles falsy values correctly', function ()
     expect($action->test_get_arg(0, 999)->int())->toBe(0)
         ->and($action->test_get_arg(1, true)->bool())->toBeFalse()
         ->and($action->test_get_arg(2, 'default')->string())->toBe('');
+});
+
+/**
+ * Test: usable_arg() refuses a value nothing resolved
+ */
+test('usable_arg returns null for an unresolved placeholder', function () {
+    // Writing the raw text would make every request without the cookie share
+    // one flag, which is the opposite of what a placeholder is for.
+    $action = new TestAction(['{cookie.absent}'], new Context());
+
+    expect($action->test_usable_arg(0))->toBeNull();
+});
+
+test('usable_arg returns null for an empty value', function () {
+    $action = new TestAction([''], new Context());
+
+    expect($action->test_usable_arg(0))->toBeNull();
+});
+
+test('usable_arg passes a plain value through', function () {
+    $action = new TestAction(['post:12'], new Context());
+
+    expect($action->test_usable_arg(0))->toBe('post:12');
+});
+
+test('usable_arg passes a placeholder that did resolve', function () {
+    $context = new Context();
+    $context->set('post.id', 42);
+    $action = new TestAction(['post:{post.id}'], $context);
+
+    expect($action->test_usable_arg(0))->toBe('post:42');
 });

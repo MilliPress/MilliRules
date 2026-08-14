@@ -14,6 +14,7 @@ namespace MilliRules\Actions;
 
 use MilliRules\ArgumentValue;
 use MilliRules\Context;
+use MilliRules\Logger;
 use MilliRules\PlaceholderResolver;
 
 /**
@@ -141,6 +142,33 @@ abstract class BaseAction implements ActionInterface
         }
 
         return new ArgumentValue($value, $default, $this->resolver);
+    }
+
+    /**
+     * An argument safe to use as a value, or null when it is empty or still
+     * holds an unresolved placeholder. Writing the raw text instead would give
+     * every request that lacks the cookie or parameter the same flag or bucket.
+     *
+     * @since 1.3.0
+     *
+     * @param int|string $key The argument key (positional or named).
+     * @return string|null The usable value, or null when there is none.
+     */
+    protected function usable_arg($key): ?string
+    {
+        $value = $this->get_arg($key)->string();
+
+        if ('' === $value) {
+            return null;
+        }
+
+        if (PlaceholderResolver::has_unresolved($value)) {
+            Logger::debug('Action ' . $this->get_type() . ' skipped: "' . $value . '" has a placeholder nothing resolved.');
+
+            return null;
+        }
+
+        return $value;
     }
 
     /**

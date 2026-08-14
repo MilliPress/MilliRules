@@ -11,8 +11,6 @@
 
 namespace MilliRules;
 
-use MilliRules\Logger;
-
 /**
  * Class PlaceholderResolver
  *
@@ -101,6 +99,22 @@ class PlaceholderResolver
     public static function get_registered_placeholders(): array
     {
         return array_keys(self::$custom_resolvers);
+    }
+
+    /**
+     * Whether a resolved value still carries a placeholder.
+     *
+     * resolve() re-emits what it cannot resolve verbatim, so anything left is
+     * unresolvable here.
+     *
+     * @since 1.3.0
+     *
+     * @param string $value A value that has already been through resolve().
+     * @return bool
+     */
+    public static function has_unresolved(string $value): bool
+    {
+        return 1 === preg_match('/\{[^}]+\}/', $value);
     }
 
     /**
