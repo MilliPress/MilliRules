@@ -301,6 +301,7 @@ abstract class BasePackage implements PackageInterface
                         );
                         return;
                     }
+
                     $rule['_overridden'] = true;
                     $this->rules[$index] = $rule;
                     return;

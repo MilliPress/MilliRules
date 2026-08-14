@@ -88,6 +88,23 @@ This is useful for:
 - Plugins modifying default rules
 - Environment-specific rule customization
 
+#### Which rule wins
+
+Both rules above use the default order of `10`, so the second replaces the first. When the orders differ, **the higher order wins** — regardless of which registered first:
+
+```php
+Rules::create('api_cache')->order(20)->then()->custom('a')->register();
+Rules::create('api_cache')->order(10)->then()->custom('b')->register();
+
+// The order 20 rule stays. The second registration is discarded
+// with a warning; its order is available via
+// PackageManager::discarded_orders('api_cache').
+```
+
+Deciding by order rather than by registration sequence keeps the outcome stable no matter which plugin or theme file loads first. A tie goes to the incoming rule, so a stored rule can still take over a built-in registered with the same number.
+
+If your override is being ignored, give it a **higher** order than the rule you are replacing. [Locked rules](./01-concepts.md#preventing-rule-replacement-with-rule-locking) are never replaced, at any order.
+
 #### Removing Rules
 
 To completely remove a rule, use `Rules::unregister()`:

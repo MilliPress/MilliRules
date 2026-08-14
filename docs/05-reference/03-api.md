@@ -375,7 +375,11 @@ Rules::create('my_rule', 'wp')
 
 Register rule with MilliRules.
 
-If a rule with the same ID already exists, it will be **replaced**.
+If a rule with the same ID already exists, the one with the **higher `order()` wins** — and on a tie the incoming rule replaces the existing one, so a stored rule can take over a built-in registered with the same number. Since the default order is `10` on both sides, re-registering an ID replaces it unless you have set the orders apart.
+
+A rule that loses is discarded with a warning; the ID keeps the rule that was already there. This makes the outcome independent of which file happened to load first. [Locked rules](#lock-rules) are never replaced, at any order.
+
+Use [`discarded_orders()`](#static-discarded_ordersstring-rule_id-array) to find out whether a rule you cannot see is competing for the same ID.
 
 **Returns**: `void`
 
@@ -386,12 +390,20 @@ Rules::create('my_rule')
     ->then()->custom('action')
     ->register(); // Must call to activate rule
 
-// Registering again with same ID replaces the rule
+// Same ID, same default order → replaces the rule
 Rules::create('my_rule')
     ->when()->request_url('/api/*')
     ->then()->custom('different_action')
     ->register(); // Replaces previous 'my_rule'
+
+// Same ID, lower order → discarded, the order 20 rule stays
+Rules::create('ranked')->order(20)->then()->custom('a')->register();
+Rules::create('ranked')->order(10)->then()->custom('b')->register(); // ignored
 ```
+
+> **Rules registered after their phase has run**
+>
+> A `php`-typed rule registered after the PHP phase has already executed can never run — that phase happens once, before the framework loads. Such a rule is moved to the WordPress phase automatically, with a debug log line, so it still governs the response instead of failing silently.
 
 ---
 
@@ -1574,6 +1586,40 @@ Check if any packages are loaded.
 Build context from all loaded packages.
 
 **Returns**: `array` - Aggregated context
+
+---
+
+##### `static discarded_orders(string $rule_id): array`
+
+The orders of registrations that lost this ID to another rule.
+
+The registry only ever holds the winner, so this is what tells a caller that a rule it cannot see is competing for the same ID — for example a stored rule whose `order()` sits below a built-in's. Each distinct order appears once, however many times it was attempted.
+
+**Parameters**:
+- `$rule_id` (string): The rule ID
+
+**Returns**: `array<int, int>` - Orders that were discarded, empty if none
+
+**Example**:
+```php
+Rules::create('ranked')->order(20)->then()->custom('a')->register();
+Rules::create('ranked')->order(10)->then()->custom('b')->register();
+
+PackageManager::discarded_orders('ranked'); // [10]
+```
+
+---
+
+##### `static has_executed(string $name): bool`
+
+Whether a package's rules have already run this request.
+
+A rule registered for that package afterwards can no longer execute, which is why a late `php` rule is [moved to the WordPress phase](#register-void).
+
+**Parameters**:
+- `$name` (string): Package name, e.g. `'PHP'` or `'WP'`
+
+**Returns**: `bool` - True if that phase has run
 
 ---
 

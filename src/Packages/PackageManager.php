@@ -94,6 +94,127 @@ class PackageManager
     private static array $pending_rules = array();
 
     /**
+     * Packages whose rules have already been executed this request.
+     *
+     * @since 1.3.0
+     * @var array<int, string>
+     */
+    private static array $executed_packages = array();
+
+    /**
+     * Orders of registrations that lost the id they were claiming.
+     *
+     * The registry only ever holds the winner, so without this a caller cannot
+     * see what it is up against once its own rule is the one in place.
+     *
+     * @since 1.3.0
+     * @var array<string, array<int, int>>
+     */
+    private static array $discarded_orders = array();
+
+    /**
+     * The orders of registrations discarded for an id.
+     *
+     * @since 1.3.0
+     *
+     * @param string $rule_id The rule id.
+     * @return array<int, int>
+     */
+    public static function discarded_orders(string $rule_id): array
+    {
+        return self::$discarded_orders[ $rule_id ] ?? array();
+    }
+
+    /**
+     * Whether a rule loses the id it is claiming to one already registered.
+     *
+     * Order decides, so the outcome does not depend on which file loaded
+     * first. Equal order still replaces: that is what lets a stored rule take
+     * over a built-in registered with the same number. A locked rule is never
+     * replaced, at any order.
+     *
+     * @since 1.3.0
+     *
+     * @param string               $rule_id  The id being claimed.
+     * @param array<string, mixed> $metadata The incoming rule's metadata.
+     * @return bool True when the incoming rule must be discarded.
+     */
+    private static function outranked_globally(string $rule_id, array $metadata): bool
+    {
+        $incoming = (int) ($metadata['order'] ?? 0);
+
+        foreach (self::get_loaded_packages() as $package) {
+            foreach (self::flatten_rules($package->get_rules()) as $existing) {
+                if (($existing['id'] ?? null) !== $rule_id) {
+                    continue;
+                }
+
+                if (! empty($existing['_locked'])) {
+                    Logger::warning(sprintf("Cannot overwrite locked rule '%s'", $rule_id));
+
+                    return true;
+                }
+
+                $held = (int) ($existing['_metadata']['order'] ?? 0);
+
+                if ($incoming < $held) {
+                    // A rule re-registered on several hooks loses once per
+                    // attempt; the caller wants the distinct orders it is up
+                    // against, not a tally.
+                    if (! in_array($incoming, self::$discarded_orders[ $rule_id ] ?? array(), true)) {
+                        self::$discarded_orders[ $rule_id ][] = $incoming;
+                    }
+
+                    Logger::warning(
+                        sprintf(
+                            "Rule '%s' was not replaced: the registered one has order %d and the new one only %d.",
+                            $rule_id,
+                            $held,
+                            $incoming
+                        )
+                    );
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Record that a package's rules have run.
+     *
+     * @since 1.3.0
+     *
+     * @param array<int, string> $names Package names.
+     * @return void
+     */
+    public static function mark_executed(array $names): void
+    {
+        foreach ($names as $name) {
+            if (is_string($name) && ! in_array($name, self::$executed_packages, true)) {
+                self::$executed_packages[] = $name;
+            }
+        }
+    }
+
+    /**
+     * Whether a package's rules have already run.
+     *
+     * A rule registered for that package afterwards can no longer execute.
+     *
+     * @since 1.3.0
+     *
+     * @param string $name Package name.
+     * @return bool
+     */
+    public static function has_executed(string $name): bool
+    {
+        return in_array($name, self::$executed_packages, true);
+    }
+
+    /**
      * Register a package with the manager.
      *
      * Stores package instance and maps its namespaces for fast lookup.
@@ -498,6 +619,13 @@ class PackageManager
             }
         }
 
+        // An id names one rule, not one per package. Comparing across all of
+        // them keeps a rule that changed phase from quietly living beside the
+        // one it was meant to replace, and running twice.
+        if ('unknown' !== $rule_id && self::outranked_globally($rule_id, $metadata)) {
+            return;
+        }
+
         // Remove rule from packages it's no longer targeting.
         // This handles the case where a rule overrides changes required_packages
         // (e.g., from WP to PHP), preventing duplicates across packages.
@@ -618,6 +746,10 @@ class PackageManager
                     'metadata'          => $metadata,
                     'required_packages' => $required_packages,
                 );
+                continue;
+            }
+
+            if ('unknown' !== $rule_id && self::outranked_globally($rule_id, $metadata)) {
                 continue;
             }
 
@@ -859,6 +991,9 @@ class PackageManager
         // Clear pending rules queue.
         self::$pending_rules = array();
 
+        self::$executed_packages = array();
+        self::$discarded_orders  = array();
+
         // Note: We keep $packages and $namespace_registry intact.
         // This allows packages to be re-loaded without re-registration.
     }
@@ -903,6 +1038,8 @@ class PackageManager
         self::$namespace_registry = array();
         self::$namespace_cache    = array();
         self::$pending_rules      = array();
+        self::$executed_packages  = array();
+        self::$discarded_orders   = array();
     }
 
     /**
