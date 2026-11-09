@@ -6,6 +6,13 @@ menu_order: 40
 
 # Changelog
 
+## [1.3.1](https://github.com/MilliPress/MilliRules/compare/v1.3.0...v1.3.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* keep a single list argument as one positional action argument ([9e17788](https://github.com/MilliPress/MilliRules/commit/9e177884cef767c8cdd496f7ce6aca0d9c214dfb))
+
 ## [1.3.0](https://github.com/MilliPress/MilliRules/compare/v1.2.1...v1.3.0) (2026-08-14)
 
 
