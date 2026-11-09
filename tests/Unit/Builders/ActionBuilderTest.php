@@ -157,3 +157,36 @@ test('ActionBuilder custom() inline action works without type hint', function ()
 
     expect($executed)->toBeTrue();
 });
+
+/**
+ * Test: a single list argument stays the first positional argument
+ */
+test('ActionBuilder keeps a single list argument as the first positional argument', function () {
+    $actions = Rules::create('test-list-arg')->then()->clear_cache(['post:1', 'home'])->get_actions();
+
+    expect($actions)->toBe([
+        ['type' => 'clear_cache', 0 => ['post:1', 'home']],
+    ]);
+});
+
+/**
+ * Test: a single associative array argument is stored as named arguments
+ */
+test('ActionBuilder stores a single associative array as named arguments', function () {
+    $actions = Rules::create('test-named-arg')->then()->clear_cache(['targets' => ['post:1'], 'expire' => true])->get_actions();
+
+    expect($actions)->toBe([
+        ['type' => 'clear_cache', 'targets' => ['post:1'], 'expire' => true],
+    ]);
+});
+
+/**
+ * Test: a list followed by further arguments stays positional
+ */
+test('ActionBuilder keeps a list with further arguments positional', function () {
+    $actions = Rules::create('test-list-and-flag')->then()->clear_cache(['post:1', 'home'], true)->get_actions();
+
+    expect($actions)->toBe([
+        ['type' => 'clear_cache', 0 => ['post:1', 'home'], 1 => true],
+    ]);
+});

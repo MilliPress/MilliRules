@@ -208,6 +208,8 @@ class ActionBuilder
      * Method name resolution:
      * - Converts camelCase to snake_case (e.g., sendEmail → send_email)
      * - Arguments are stored as numeric keys (0, 1, 2, etc.) for direct access
+ * - A single associative array is stored as named arguments; a single list
+ *   stays the first positional argument
      *
      * Auto-delegation:
      * - If method exists on Rules object, transfers actions and delegates the call
@@ -244,11 +246,11 @@ class ActionBuilder
 
         // Merge arguments directly into config.
         // This provides consistent structure with custom() method calls.
-        if (count($args) === 1 && is_array($args[0])) {
-            // Single array argument: merge as named parameters.
+        if (count($args) === 1 && is_array($args[0]) && $this->has_string_keys($args[0])) {
+            // Single associative array: merge as named parameters.
             $config = array_merge(array('type' => $type), $args[0]);
         } else {
-            // Multiple arguments or single scalar: store as positional.
+            // Positional arguments; a single list stays the first argument.
             $config = array('type' => $type);
             foreach ($args as $i => $arg) {
                 $config[$i] = $arg;
@@ -257,6 +259,28 @@ class ActionBuilder
 
         $this->actions[] = $config;
         return $this;
+    }
+
+    /**
+     * Whether an array carries named keys.
+     *
+     * A list such as ['post:1', 'home'] names nothing and is one positional
+     * argument; only an associative array is a set of named parameters.
+     *
+     * @since 1.3.1
+     *
+     * @param array<int|string, mixed> $array The array to inspect.
+     * @return bool True when at least one key is a string.
+     */
+    private function has_string_keys(array $array): bool
+    {
+        foreach (array_keys($array) as $key) {
+            if (is_string($key)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
